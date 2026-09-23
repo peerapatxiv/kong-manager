@@ -8,5 +8,6 @@ vite.config.js
 
 # Contains live credentials — never commit
 kong-config.yaml
+kong.yaml
 *.kong.yaml
 *-edited.yaml
