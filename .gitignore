@@ -1,0 +1,9 @@
+node_modules/
+dist/
+.dist/
+*.log
+
+# Contains live credentials — never commit
+kong-config.yaml
+*.kong.yaml
+*-edited.yaml
