@@ -2,6 +2,9 @@ node_modules/
 dist/
 .dist/
 *.log
+*.tsbuildinfo
+vite.config.d.ts
+vite.config.js
 
 # Contains live credentials — never commit
 kong-config.yaml
