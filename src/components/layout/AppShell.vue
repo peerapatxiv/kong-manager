@@ -1,8 +1,11 @@
 <script setup lang="ts">
+import { ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import { useConfigStore } from '../../stores/config'
+import ExportModal from '../ExportModal.vue'
 
 const configStore = useConfigStore()
+const exportModalOpen = ref(false)
 </script>
 
 <template>
@@ -31,11 +34,19 @@ const configStore = useConfigStore()
         </RouterLink>
       </nav>
       <div class="ml-auto">
-        <slot name="header-actions" />
+        <button
+          v-if="configStore.isLoaded"
+          type="button"
+          class="px-3 py-1.5 bg-slate-800 text-white text-sm rounded hover:bg-slate-700"
+          @click="exportModalOpen = true"
+        >
+          Generate new config
+        </button>
       </div>
     </header>
     <main class="flex-1">
       <slot />
     </main>
+    <ExportModal :open="exportModalOpen" @close="exportModalOpen = false" />
   </div>
 </template>
