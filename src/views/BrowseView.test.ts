@@ -4,6 +4,7 @@ import { createPinia, setActivePinia } from 'pinia'
 import { mount } from '@vue/test-utils'
 import BrowseView from './BrowseView.vue'
 import ServiceDetail from '../components/browse/ServiceDetail.vue'
+import ConsumerDetail from '../components/browse/ConsumerDetail.vue'
 import { useConfigStore } from '../stores/config'
 
 const SAMPLE = `_format_version: "3.0"
@@ -26,7 +27,15 @@ services:
 - name: reporting-service
   host: reporting.internal
   port: 9090
-consumers: []
+consumers:
+- username: alice
+  custom_id: cust-1
+  keyauth_credentials:
+  - key: abc123key
+- username: admin-user
+  basicauth_credentials:
+  - username: admin-user
+    password: 08f95a79a7b8e335fecb65e0a7ae65aec6780af7
 plugins:
 - name: rate-limiting
   enabled: true
@@ -121,5 +130,45 @@ describe('BrowseView', () => {
 
     expect(wrapper.text()).toContain('key-auth')
     expect(wrapper.text()).toContain('key_names')
+  })
+
+  it('Consumers tab: shows a placeholder until a consumer is selected, then its detail form', async () => {
+    const wrapper = mount(BrowseView)
+    await wrapper.findAll('button').find((b) => b.text() === 'Consumers')!.trigger('click')
+    expect(wrapper.text()).toContain('Select a consumer from the list.')
+
+    await wrapper.find('.font-mono.truncate').trigger('click')
+    expect(wrapper.text()).toContain('alice')
+  })
+
+  it('Consumers tab: masks credential secret fields by default, with a reveal toggle', async () => {
+    const wrapper = mount(BrowseView)
+    await wrapper.findAll('button').find((b) => b.text() === 'Consumers')!.trigger('click')
+    await wrapper.findAll('li').find((li) => li.text().includes('alice'))!.trigger('click')
+
+    const keyField = wrapper.findComponent(ConsumerDetail).find('input[type="password"]')
+    expect(keyField.exists()).toBe(true)
+    expect((keyField.element as HTMLInputElement).value).toBe('abc123key')
+    expect(keyField.attributes('placeholder')).toMatch(/^•+$/)
+
+    await wrapper.findComponent(ConsumerDetail).find('button').trigger('click')
+    expect(wrapper.findComponent(ConsumerDetail).find('input[type="password"]').exists()).toBe(false)
+    const revealedValues = wrapper
+      .findComponent(ConsumerDetail)
+      .findAll('input[type="text"]')
+      .map((i) => (i.element as HTMLInputElement).value)
+    expect(revealedValues).toContain('abc123key')
+  })
+
+  it('Consumers tab: editing a selected consumer marks it modified', async () => {
+    const wrapper = mount(BrowseView)
+    await wrapper.findAll('button').find((b) => b.text() === 'Consumers')!.trigger('click')
+    await wrapper.findAll('li').find((li) => li.text().includes('alice'))!.trigger('click')
+
+    const customIdInputs = wrapper.findComponent(ConsumerDetail).findAll('input[type="text"]')
+    await customIdInputs[1].setValue('cust-1-renamed')
+
+    const store = useConfigStore()
+    expect(store.isModified('consumer:alice')).toBe(true)
   })
 })

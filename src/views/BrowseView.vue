@@ -6,12 +6,15 @@ import PluginEditor from '../components/shared/PluginEditor.vue'
 import Badge from '../components/shared/Badge.vue'
 import ServiceList from '../components/browse/ServiceList.vue'
 import ServiceDetail from '../components/browse/ServiceDetail.vue'
-import type { KongService } from '../types/kong'
+import ConsumerList from '../components/browse/ConsumerList.vue'
+import ConsumerDetail from '../components/browse/ConsumerDetail.vue'
+import type { KongService, KongConsumer } from '../types/kong'
 
 const configStore = useConfigStore()
 const activeTab = ref('services')
 const pluginSearch = ref('')
 const selectedServiceName = ref<string | undefined>(undefined)
+const selectedConsumerUsername = ref<string | undefined>(undefined)
 
 const tabs = [
   { id: 'services', label: 'Services' },
@@ -22,12 +25,23 @@ const tabs = [
 const services = computed(() => configStore.primary?.config.services ?? [])
 const selectedService = computed(() => services.value.find((s) => s.name === selectedServiceName.value))
 
+const consumers = computed(() => configStore.primary?.config.consumers ?? [])
+const selectedConsumer = computed(() =>
+  consumers.value.find((c) => c.username === selectedConsumerUsername.value),
+)
+
 function onSelectService(service: KongService) {
   selectedServiceName.value = service.name
 }
-
 function onServiceModified() {
   if (selectedServiceName.value) configStore.markModified(`service:${selectedServiceName.value}`)
+}
+
+function onSelectConsumer(consumer: KongConsumer) {
+  selectedConsumerUsername.value = consumer.username
+}
+function onConsumerModified() {
+  if (selectedConsumerUsername.value) configStore.markModified(`consumer:${selectedConsumerUsername.value}`)
 }
 
 function filteredPlugins() {
@@ -57,7 +71,13 @@ function onPluginUpdate(index: number, updated: ReturnType<typeof filteredPlugin
           :selected-name="selectedServiceName"
           @select="onSelectService"
         />
-        <div v-else-if="activeTab === 'plugins'" class="p-3">
+        <ConsumerList
+          v-else-if="activeTab === 'consumers'"
+          :consumers="consumers"
+          :selected-username="selectedConsumerUsername"
+          @select="onSelectConsumer"
+        />
+        <div v-else class="p-3">
           <input
             v-model="pluginSearch"
             type="text"
@@ -76,21 +96,21 @@ function onPluginUpdate(index: number, updated: ReturnType<typeof filteredPlugin
           </ul>
           <p v-if="filteredPlugins().length === 0" class="text-xs text-slate-400 mt-2">No global plugins.</p>
         </div>
-        <div v-else class="p-3 text-sm text-slate-400">Coming in a later task.</div>
       </Sidebar>
     </div>
 
     <div class="flex-1 overflow-y-auto p-4">
       <div v-if="activeTab === 'services'">
-        <ServiceDetail
-          v-if="selectedService"
-          :model-value="selectedService"
-          @modified="onServiceModified"
-        />
+        <ServiceDetail v-if="selectedService" :model-value="selectedService" @modified="onServiceModified" />
         <p v-else class="text-sm text-slate-400">Select a service from the list.</p>
       </div>
 
-      <div v-else-if="activeTab === 'plugins'" class="space-y-3 max-w-2xl">
+      <div v-else-if="activeTab === 'consumers'">
+        <ConsumerDetail v-if="selectedConsumer" :model-value="selectedConsumer" @modified="onConsumerModified" />
+        <p v-else class="text-sm text-slate-400">Select a consumer from the list.</p>
+      </div>
+
+      <div v-else class="space-y-3 max-w-2xl">
         <PluginEditor
           v-for="(plugin, index) in filteredPlugins()"
           :key="plugin.name"
