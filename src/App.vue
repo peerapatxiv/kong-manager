@@ -1,5 +1,9 @@
-<script setup lang="ts"></script>
+<script setup lang="ts">
+import AppShell from './components/layout/AppShell.vue'
+</script>
 
 <template>
-  <div class="min-h-screen">Kong Config Viewer scaffold OK</div>
+  <AppShell>
+    <RouterView />
+  </AppShell>
 </template>
