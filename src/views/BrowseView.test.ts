@@ -118,6 +118,7 @@ describe('BrowseView', () => {
     await hostInput.setValue('billing.internal.new')
 
     const store = useConfigStore()
+    expect(store.primary?.config.services?.[0].host).toBe('billing.internal.new')
     expect(store.isModified('service:billing-service')).toBe(true)
     expect(wrapper.findComponent({ name: 'Badge' }).exists()).toBe(true)
   })
@@ -169,6 +170,22 @@ describe('BrowseView', () => {
     await customIdInputs[1].setValue('cust-1-renamed')
 
     const store = useConfigStore()
+    expect(store.primary?.config.consumers?.[0].custom_id).toBe('cust-1-renamed')
     expect(store.isModified('consumer:alice')).toBe(true)
+  })
+
+  it('Consumers tab: renaming a consumer keeps the same entry selected and marks the new name modified', async () => {
+    const wrapper = mount(BrowseView)
+    await wrapper.findAll('button').find((b) => b.text() === 'Consumers')!.trigger('click')
+    await wrapper.findAll('li').find((li) => li.text().includes('alice'))!.trigger('click')
+
+    const usernameInput = wrapper.findComponent(ConsumerDetail).findAll('input[type="text"]')[0]
+    await usernameInput.setValue('alice-renamed')
+
+    const store = useConfigStore()
+    expect(store.primary?.config.consumers?.[0].username).toBe('alice-renamed')
+    expect(store.isModified('consumer:alice-renamed')).toBe(true)
+    // The detail panel should still show the (renamed) entry, not fall back to the placeholder.
+    expect(wrapper.text()).not.toContain('Select a consumer from the list.')
   })
 })

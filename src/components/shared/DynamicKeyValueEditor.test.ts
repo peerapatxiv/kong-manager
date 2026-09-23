@@ -28,6 +28,30 @@ describe('DynamicKeyValueEditor', () => {
     expect(lastEmit.note).toBeNull()
   })
 
+  it('keeps a field that started null on the same nullable widget across edits, instead of swapping element type mid-typing (which drops keyboard focus in a real browser)', async () => {
+    // Simulates the real v-model round trip a parent (e.g. PluginEditor) performs:
+    // each emitted value is fed back in as the new modelValue prop, exactly like
+    // a live binding would, rather than a static prop the component never sees update.
+    const wrapper = mount(DynamicKeyValueEditor, { props: { modelValue: { note: null } } })
+
+    await wrapper.find('input[placeholder="null"]').setValue('h')
+    let emitted = wrapper.emitted('update:modelValue')!
+    await wrapper.setProps({ modelValue: emitted[emitted.length - 1][0] as Record<string, unknown> })
+
+    // If the widget had swapped to the plain string branch, this element would
+    // no longer exist (different v-if branch, different DOM node => focus lost).
+    expect(wrapper.find('input[placeholder="null"]').exists()).toBe(true)
+
+    await wrapper.find('input[placeholder="null"]').setValue('hello')
+    emitted = wrapper.emitted('update:modelValue')!
+    expect((emitted[emitted.length - 1][0] as Record<string, unknown>).note).toBe('hello')
+    await wrapper.setProps({ modelValue: emitted[emitted.length - 1][0] as Record<string, unknown> })
+
+    await wrapper.find('input[placeholder="null"]').setValue('')
+    const lastEmit = wrapper.emitted('update:modelValue')!.at(-1)![0] as Record<string, unknown>
+    expect(lastEmit.note).toBeNull()
+  })
+
   it('masks secret-like keys and reveals them on toggle', async () => {
     const wrapper = mount(DynamicKeyValueEditor, {
       props: { modelValue: { key: 'abc123key' } },

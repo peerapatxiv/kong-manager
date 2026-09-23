@@ -32,6 +32,9 @@ const diff = computed(() => {
       File A: <span class="font-mono">{{ configStore.primary?.fileName }}</span> (currently loaded, including
       in-app edits)
     </p>
+    <p v-if="configStore.compareTarget" class="text-sm text-slate-500">
+      File B: <span class="font-mono">{{ configStore.compareTarget.fileName }}</span>
+    </p>
 
     <FileDropZone label="Load File B to compare against" @file-selected="onFileSelected" />
 

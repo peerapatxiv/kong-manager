@@ -31,6 +31,7 @@ export const useConfigStore = defineStore('config', {
       const config = parseKongConfig(text)
       this.primary = { fileName, config }
       this.modifiedKeys = new Set()
+      this.compareTarget = null
     },
     loadCompareTarget(fileName: string, text: string) {
       const config = parseKongConfig(text)

@@ -36,12 +36,30 @@ function onSelectService(service: KongService) {
 function onServiceModified() {
   if (selectedServiceName.value) configStore.markModified(`service:${selectedServiceName.value}`)
 }
+function onServiceUpdate(updated: KongService) {
+  const list = configStore.primary?.config.services
+  const index = list?.findIndex((s) => s.name === selectedServiceName.value) ?? -1
+  if (!list || index === -1) return
+  list[index] = updated
+}
 
 function onSelectConsumer(consumer: KongConsumer) {
   selectedConsumerUsername.value = consumer.username
 }
 function onConsumerModified() {
   if (selectedConsumerUsername.value) configStore.markModified(`consumer:${selectedConsumerUsername.value}`)
+}
+function onConsumerUpdate(updated: KongConsumer) {
+  const list = configStore.primary?.config.consumers
+  const index = list?.findIndex((c) => c.username === selectedConsumerUsername.value) ?? -1
+  if (!list || index === -1) return
+  list[index] = updated
+  // Username is editable and doubles as the selection/identity key — keep the
+  // detail panel pointed at this entry, and mark modified under the new key,
+  // if it just changed.
+  if (updated.username !== selectedConsumerUsername.value) {
+    selectedConsumerUsername.value = updated.username
+  }
 }
 
 function filteredPlugins() {
@@ -62,8 +80,8 @@ function onPluginUpdate(index: number, updated: ReturnType<typeof filteredPlugin
 </script>
 
 <template>
-  <div class="flex h-[calc(100vh-3.5rem)]">
-    <div class="w-72 border-r border-slate-200 bg-white shrink-0">
+  <div class="flex flex-col lg:flex-row lg:h-[calc(100vh-3.5rem)]">
+    <div class="w-full h-80 lg:h-full lg:w-72 border-b lg:border-b-0 lg:border-r border-slate-200 bg-white shrink-0">
       <Sidebar :tabs="tabs" :active-tab="activeTab" @update:active-tab="(id) => (activeTab = id)">
         <ServiceList
           v-if="activeTab === 'services'"
@@ -99,14 +117,24 @@ function onPluginUpdate(index: number, updated: ReturnType<typeof filteredPlugin
       </Sidebar>
     </div>
 
-    <div class="flex-1 overflow-y-auto p-4">
+    <div class="flex-1 lg:overflow-y-auto p-4">
       <div v-if="activeTab === 'services'">
-        <ServiceDetail v-if="selectedService" :model-value="selectedService" @modified="onServiceModified" />
+        <ServiceDetail
+          v-if="selectedService"
+          :model-value="selectedService"
+          @update:model-value="onServiceUpdate"
+          @modified="onServiceModified"
+        />
         <p v-else class="text-sm text-slate-400">Select a service from the list.</p>
       </div>
 
       <div v-else-if="activeTab === 'consumers'">
-        <ConsumerDetail v-if="selectedConsumer" :model-value="selectedConsumer" @modified="onConsumerModified" />
+        <ConsumerDetail
+          v-if="selectedConsumer"
+          :model-value="selectedConsumer"
+          @update:model-value="onConsumerUpdate"
+          @modified="onConsumerModified"
+        />
         <p v-else class="text-sm text-slate-400">Select a consumer from the list.</p>
       </div>
 

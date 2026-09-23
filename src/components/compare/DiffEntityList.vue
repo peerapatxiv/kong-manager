@@ -1,5 +1,6 @@
 <script setup lang="ts" generic="T extends Record<string, unknown>">
 import type { EntityDiff } from '../../lib/diff'
+import { redactSecrets } from '../../lib/redact'
 import DiffField from './DiffField.vue'
 
 defineProps<{ title: string; diff: EntityDiff<T>; entityLabel: (entity: T) => string }>()
@@ -40,8 +41,12 @@ defineProps<{ title: string; diff: EntityDiff<T>; entityLabel: (entity: T) => st
     <div v-if="diff.unmatchedA.length > 0 || diff.unmatchedB.length > 0">
       <h4 class="text-xs uppercase tracking-wide text-amber-700 mb-1">Unmatched (no natural key)</h4>
       <ul class="text-sm space-y-0.5">
-        <li v-for="(entity, i) in diff.unmatchedA" :key="`a-${i}`" class="font-mono">File A: {{ JSON.stringify(entity) }}</li>
-        <li v-for="(entity, i) in diff.unmatchedB" :key="`b-${i}`" class="font-mono">File B: {{ JSON.stringify(entity) }}</li>
+        <li v-for="(entity, i) in diff.unmatchedA" :key="`a-${i}`" class="font-mono">
+          File A: {{ JSON.stringify(redactSecrets(entity)) }}
+        </li>
+        <li v-for="(entity, i) in diff.unmatchedB" :key="`b-${i}`" class="font-mono">
+          File B: {{ JSON.stringify(redactSecrets(entity)) }}
+        </li>
       </ul>
     </div>
 

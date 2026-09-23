@@ -10,6 +10,20 @@ const emit = defineEmits<{ 'update:modelValue': [value: Record<string, unknown>]
 
 const newKeyDraft = ref('')
 
+// Keys that were null when this editor first saw them stay on the nullable
+// text widget for the rest of the edit, even once the user has typed a
+// non-empty value into it (which makes inferValueType see a plain string).
+// Without this, typing a single character swaps the field to a different
+// v-if branch — a different DOM node — dropping keyboard focus after every
+// keystroke.
+const nullableKeys = ref<Set<string>>(
+  new Set(Object.keys(props.modelValue).filter((key) => props.modelValue[key] === null)),
+)
+
+function isNullable(key: string): boolean {
+  return nullableKeys.value.has(key)
+}
+
 function setField(key: string, value: unknown) {
   emit('update:modelValue', { ...props.modelValue, [key]: value })
 }
@@ -17,6 +31,7 @@ function setField(key: string, value: unknown) {
 function removeField(key: string) {
   const next = { ...props.modelValue }
   delete next[key]
+  nullableKeys.value.delete(key)
   emit('update:modelValue', next)
 }
 
@@ -46,6 +61,14 @@ function onNullableTextInput(key: string, raw: string) {
           @update:model-value="(v) => setField(String(key), v)"
         />
         <input
+          v-else-if="isNullable(String(key))"
+          type="text"
+          value=""
+          placeholder="null"
+          class="w-full border border-slate-300 rounded px-2 py-1 text-sm text-slate-400"
+          @input="onNullableTextInput(String(key), ($event.target as HTMLInputElement).value)"
+        />
+        <input
           v-else-if="inferValueType(String(key), value) === 'string'"
           type="text"
           :value="value as string"
@@ -72,14 +95,6 @@ function onNullableTextInput(key: string, raw: string) {
           :checked="value as boolean"
           class="h-4 w-4"
           @change="setField(String(key), ($event.target as HTMLInputElement).checked)"
-        />
-        <input
-          v-else-if="inferValueType(String(key), value) === 'null'"
-          type="text"
-          value=""
-          placeholder="null"
-          class="w-full border border-slate-300 rounded px-2 py-1 text-sm text-slate-400"
-          @input="onNullableTextInput(String(key), ($event.target as HTMLInputElement).value)"
         />
         <TagInput
           v-else-if="inferValueType(String(key), value) === 'string-array'"

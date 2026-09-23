@@ -34,7 +34,7 @@ describe('CompareView', () => {
     expect(wrapper.text()).toContain('Failed to parse YAML')
   })
 
-  it('diffs services/consumers/plugins/routes between the two fixtures', async () => {
+  it('diffs services/consumers/plugins/routes between the two fixtures and shows both filenames', async () => {
     const wrapper = mount(CompareView)
     await wrapper.findComponent(FileDropZone).vm.$emit('file-selected', {
       fileName: 'sample-b.yaml',
@@ -42,6 +42,8 @@ describe('CompareView', () => {
     })
 
     const text = wrapper.text()
+    expect(text).toContain('sample-a.yaml')
+    expect(text).toContain('sample-b.yaml')
     // Services: notifications-service added, reporting-service removed, billing-service changed.
     expect(text).toContain('notifications-service')
     expect(text).toContain('reporting-service')

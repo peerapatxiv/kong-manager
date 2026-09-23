@@ -1,13 +1,18 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { isSecretField } from '../../lib/secretFields'
+import { isSecretField, isCredentialListKey } from '../../lib/secretFields'
 
 const props = defineProps<{ path: string; before: unknown; after: unknown }>()
 const revealed = ref(false)
 
-const lastSegment = computed(() => props.path.split(/[.[]/).filter(Boolean).pop() ?? props.path)
+const pathSegments = computed(() => props.path.split(/[.[]/).filter(Boolean))
+const lastSegment = computed(() => pathSegments.value[pathSegments.value.length - 1] ?? props.path)
+// Mask on the field's own name, or if any ancestor in the path is a *_credentials
+// list — regardless of whether before/after happen to both be strings (an added,
+// removed, or newly-present secret field has an undefined/array counterpart, not
+// a matching string, and must still be masked).
 const shouldMask = computed(
-  () => isSecretField(lastSegment.value) && typeof props.before === 'string' && typeof props.after === 'string',
+  () => isSecretField(lastSegment.value) || pathSegments.value.some((segment) => isCredentialListKey(segment)),
 )
 
 function display(value: unknown): string {

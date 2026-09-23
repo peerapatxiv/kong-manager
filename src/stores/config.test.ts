@@ -61,4 +61,14 @@ describe('useConfigStore', () => {
     expect(fileName).toBe('kong-config-edited.yaml')
     expect(contents).toContain('edited.internal')
   })
+
+  it('clears a stale compareTarget when a new primary file is loaded', () => {
+    const store = useConfigStore()
+    store.loadPrimary('sample.yaml', SAMPLE)
+    store.loadCompareTarget('other.yaml', SAMPLE)
+    expect(store.compareTarget).not.toBeNull()
+
+    store.loadPrimary('sample.yaml', SAMPLE)
+    expect(store.compareTarget).toBeNull()
+  })
 })
