@@ -47,7 +47,7 @@ const linkDisabled =
       >
         K
       </span>
-      <span class="font-bold text-ink">Kong Manager</span>
+      <span class="font-bold text-ink">Kongsole</span>
     </div>
 
     <nav class="flex flex-col gap-0.5 px-3">
