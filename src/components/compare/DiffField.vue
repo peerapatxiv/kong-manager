@@ -22,12 +22,12 @@ function display(value: unknown): string {
 </script>
 
 <template>
-  <div class="flex items-center gap-2 text-xs font-mono">
-    <span class="text-slate-500 w-40 shrink-0 truncate" :title="path">{{ path }}</span>
-    <span class="text-red-600">{{ display(before) }}</span>
-    <span class="text-slate-400">→</span>
-    <span class="text-emerald-700">{{ display(after) }}</span>
-    <button v-if="shouldMask" type="button" class="text-slate-400 underline" @click="revealed = !revealed">
+  <div class="flex items-center gap-2 font-mono text-xs">
+    <span class="w-40 shrink-0 truncate text-ink-muted" :title="path">{{ path }}</span>
+    <span class="rounded bg-red-50 px-1.5 py-0.5 text-red-600">{{ display(before) }}</span>
+    <span class="text-ink-muted">→</span>
+    <span class="rounded bg-emerald-50 px-1.5 py-0.5 text-emerald-700">{{ display(after) }}</span>
+    <button v-if="shouldMask" type="button" class="text-ink-muted underline hover:text-link" @click="revealed = !revealed">
       {{ revealed ? 'hide' : 'reveal' }}
     </button>
   </div>

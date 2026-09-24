@@ -29,28 +29,20 @@ function confirmExport() {
 </script>
 
 <template>
-  <div v-if="open" class="fixed inset-0 bg-black/30 flex items-center justify-center z-50" @click.self="emit('close')">
-    <div class="bg-white rounded-lg shadow-xl p-5 w-full max-w-md space-y-4">
-      <h2 class="font-semibold text-slate-800">Generate new config</h2>
-      <label class="text-xs text-slate-500 block">
+  <div
+    v-if="open"
+    class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+    @click.self="emit('close')"
+  >
+    <div class="card w-full max-w-md space-y-4 p-6">
+      <h2 class="text-lg font-semibold text-ink">Generate new config</h2>
+      <label class="block text-xs text-ink-muted">
         Output filename
-        <input
-          v-model="fileName"
-          type="text"
-          class="w-full border border-slate-300 rounded px-2 py-1 text-sm mt-1"
-        />
+        <input v-model="fileName" type="text" class="input-field mt-1 font-mono" />
       </label>
-      <div class="flex justify-end gap-2">
-        <button type="button" class="px-3 py-1.5 text-sm text-slate-600 hover:text-slate-900" @click="emit('close')">
-          Cancel
-        </button>
-        <button
-          type="button"
-          class="px-3 py-1.5 bg-slate-800 text-white text-sm rounded hover:bg-slate-700"
-          @click="confirmExport"
-        >
-          Download
-        </button>
+      <div class="flex justify-end gap-2 pt-1">
+        <button type="button" class="btn-secondary" @click="emit('close')">Cancel</button>
+        <button type="button" class="btn-primary" @click="confirmExport">Download</button>
       </div>
     </div>
   </div>

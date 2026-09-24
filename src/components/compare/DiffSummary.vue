@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { KongConfigDiff } from '../../lib/diff'
+import StatTile from '../shared/StatTile.vue'
 
 const props = defineProps<{ diff: KongConfigDiff }>()
 
@@ -22,9 +23,9 @@ const totals = computed(() => {
 </script>
 
 <template>
-  <div class="flex gap-4 text-sm">
-    <span class="text-emerald-700">+{{ totals.added }} added</span>
-    <span class="text-red-700">-{{ totals.removed }} removed</span>
-    <span class="text-blue-700">~{{ totals.changed }} changed</span>
+  <div class="grid grid-cols-3 gap-3">
+    <StatTile label="Added" :value="totals.added" tone="emerald" />
+    <StatTile label="Removed" :value="totals.removed" tone="red" />
+    <StatTile label="Changed" :value="totals.changed" tone="blue" />
   </div>
 </template>

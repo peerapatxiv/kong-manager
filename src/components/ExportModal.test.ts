@@ -40,7 +40,7 @@ describe('ExportModal', () => {
     store.primary!.config.services![0].host = 'edited.internal'
 
     const wrapper = mount(ExportModal, { props: { open: true } })
-    await wrapper.find('button.bg-slate-800').trigger('click')
+    await wrapper.findAll('button').find((b) => b.text() === 'Download')!.trigger('click')
 
     expect(createObjectURL).toHaveBeenCalledTimes(1)
     const blobArg = createObjectURL.mock.calls[0][0] as Blob
@@ -60,7 +60,7 @@ describe('ExportModal', () => {
 
   it('closing without downloading emits close and does not touch the store', async () => {
     const wrapper = mount(ExportModal, { props: { open: true } })
-    await wrapper.find('button.text-slate-600').trigger('click')
+    await wrapper.findAll('button').find((b) => b.text() === 'Cancel')!.trigger('click')
 
     expect(wrapper.emitted('close')).toBeTruthy()
   })

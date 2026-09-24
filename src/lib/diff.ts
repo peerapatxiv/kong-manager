@@ -52,6 +52,16 @@ export function diffLeaves(a: unknown, b: unknown, path = ''): DiffChange[] {
   return [{ path, before: a, after: b }]
 }
 
+export function hasDiff<T>(diff: EntityDiff<T>): boolean {
+  return (
+    diff.added.length > 0 ||
+    diff.removed.length > 0 ||
+    diff.changed.length > 0 ||
+    diff.unmatchedA.length > 0 ||
+    diff.unmatchedB.length > 0
+  )
+}
+
 export function diffEntities<T extends Record<string, unknown>>(
   listA: T[] | undefined,
   listB: T[] | undefined,

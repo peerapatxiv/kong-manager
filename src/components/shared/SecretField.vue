@@ -13,13 +13,13 @@ const masked = computed(() => '•'.repeat(Math.max(8, (props.modelValue ?? '').
     <input
       :type="revealed ? 'text' : 'password'"
       :value="modelValue ?? ''"
-      class="flex-1 border border-slate-300 rounded px-2 py-1 text-sm font-mono"
+      class="input-field flex-1 font-mono"
       :placeholder="revealed ? '' : masked"
       @input="emit('update:modelValue', ($event.target as HTMLInputElement).value)"
     />
     <button
       type="button"
-      class="text-xs text-slate-500 hover:text-slate-800 underline"
+      class="text-xs text-link hover:text-accent-hover underline"
       @click="revealed = !revealed"
     >
       {{ revealed ? 'hide' : 'reveal' }}

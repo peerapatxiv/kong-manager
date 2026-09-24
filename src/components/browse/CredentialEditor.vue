@@ -21,9 +21,9 @@ function removeEntry(index: number) {
 
 <template>
   <div class="space-y-2">
-    <div v-for="(entry, index) in modelValue" :key="index" class="border border-slate-200 rounded p-2 space-y-1.5">
+    <div v-for="(entry, index) in modelValue" :key="index" class="card space-y-1.5 p-3">
       <div v-for="(value, key) in entry" :key="key" class="flex items-center gap-2">
-        <label class="w-24 shrink-0 text-xs font-mono text-slate-500">{{ key }}</label>
+        <label class="w-24 shrink-0 text-xs font-mono text-ink-muted">{{ key }}</label>
         <SecretField
           v-if="isSecretField(String(key)) && typeof value === 'string'"
           :model-value="value"
@@ -38,14 +38,23 @@ function removeEntry(index: number) {
           v-else
           type="text"
           :value="value as string"
-          class="flex-1 border border-slate-300 rounded px-2 py-1 text-sm"
+          class="input-field flex-1"
           @input="updateEntry(index, String(key), ($event.target as HTMLInputElement).value)"
         />
       </div>
-      <button type="button" class="text-xs text-slate-400 hover:text-red-600" @click="removeEntry(index)">
-        remove {{ listKey.replace(/_credentials$/, '') }} entry
-      </button>
+      <div class="flex justify-end border-t border-border pt-1.5">
+        <button
+          type="button"
+          class="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-xs text-ink-muted hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/50 dark:hover:text-red-400"
+          @click="removeEntry(index)"
+        >
+          <svg viewBox="0 0 16 16" fill="none" class="h-3.5 w-3.5">
+            <path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+          </svg>
+          Remove {{ listKey.replace(/_credentials$/, '') }} entry
+        </button>
+      </div>
     </div>
-    <p v-if="modelValue.length === 0" class="text-xs text-slate-400">No {{ listKey }}.</p>
+    <p v-if="modelValue.length === 0" class="text-xs text-ink-muted">No {{ listKey }}.</p>
   </div>
 </template>

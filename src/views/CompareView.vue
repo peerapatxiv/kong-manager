@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useConfigStore } from '../stores/config'
-import { diffKongConfigs } from '../lib/diff'
+import { diffKongConfigs, hasDiff } from '../lib/diff'
 import FileDropZone from '../components/FileDropZone.vue'
 import DiffSummary from '../components/compare/DiffSummary.vue'
 import DiffEntityList from '../components/compare/DiffEntityList.vue'
@@ -22,46 +22,105 @@ const diff = computed(() => {
   if (!configStore.primary || !configStore.compareTarget) return null
   return diffKongConfigs(configStore.primary.config, configStore.compareTarget.config)
 })
+
+// Same filename doesn't strictly mean identical content (in-app edits can
+// diverge File A from disk), but it's the single most common way someone
+// accidentally compares a file against itself — worth a heads-up either way.
+const sameFileName = computed(
+  () =>
+    !!configStore.compareTarget &&
+    configStore.compareTarget.fileName === configStore.primary?.fileName,
+)
+
+const changedRoutesByService = computed(() => {
+  if (!diff.value) return []
+  return [...diff.value.routesByService].filter(([, routeDiff]) => hasDiff(routeDiff))
+})
+
+const anyDiff = computed(() => {
+  if (!diff.value) return false
+  return (
+    hasDiff(diff.value.services) ||
+    hasDiff(diff.value.consumers) ||
+    hasDiff(diff.value.globalPlugins) ||
+    changedRoutesByService.value.length > 0
+  )
+})
 </script>
 
 <template>
-  <div class="p-6 max-w-4xl mx-auto space-y-6">
-    <h1 class="text-lg font-semibold">Compare</h1>
-
-    <p class="text-sm text-slate-500">
-      File A: <span class="font-mono">{{ configStore.primary?.fileName }}</span> (currently loaded, including
-      in-app edits)
-    </p>
-    <p v-if="configStore.compareTarget" class="text-sm text-slate-500">
-      File B: <span class="font-mono">{{ configStore.compareTarget.fileName }}</span>
-    </p>
+  <div class="mx-auto max-w-4xl space-y-6 p-8">
+    <div class="card space-y-1.5 p-4 text-sm text-ink-muted">
+      <p>
+        File A: <span class="font-mono text-ink">{{ configStore.primary?.fileName }}</span> (currently
+        loaded, including in-app edits)
+      </p>
+      <p v-if="configStore.compareTarget">
+        File B: <span class="font-mono text-ink">{{ configStore.compareTarget.fileName }}</span>
+      </p>
+      <p v-if="sameFileName" class="flex items-center gap-1.5 text-amber-700">
+        <svg viewBox="0 0 16 16" fill="none" class="h-3.5 w-3.5 shrink-0">
+          <path
+            d="M8 5.5v3.25M8 11.25h.01M2.5 13.5h11a1 1 0 00.87-1.5l-5.5-9.5a1 1 0 00-1.74 0l-5.5 9.5a1 1 0 00.87 1.5z"
+            stroke="currentColor"
+            stroke-width="1.3"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </svg>
+        Both files are named "{{ configStore.compareTarget?.fileName }}" — make sure File B is the one you meant
+        to compare against.
+      </p>
+    </div>
 
     <FileDropZone label="Load File B to compare against" @file-selected="onFileSelected" />
 
-    <div v-if="errorMessage" class="border border-red-300 bg-red-50 text-red-800 rounded p-3 text-sm">
+    <div v-if="errorMessage" class="rounded-xl border border-red-300 bg-red-50 p-3.5 text-sm text-red-800">
       Failed to parse YAML: {{ errorMessage }}
     </div>
 
     <template v-if="diff">
       <DiffSummary :diff="diff" />
-      <DiffEntityList title="Services" :diff="diff.services" :entity-label="(s) => s.name ?? '(unnamed)'" />
-      <DiffEntityList
-        title="Consumers"
-        :diff="diff.consumers"
-        :entity-label="(c) => c.username ?? '(unnamed)'"
-      />
-      <DiffEntityList
-        title="Global Plugins"
-        :diff="diff.globalPlugins"
-        :entity-label="(p) => p.name"
-      />
-      <div v-for="[serviceName, routeDiff] in diff.routesByService" :key="serviceName">
+
+      <div v-if="!anyDiff" class="card flex items-center gap-3 p-5">
+        <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent/15 text-accent-secondary">
+          <svg viewBox="0 0 16 16" fill="none" class="h-4 w-4">
+            <path d="M3.5 8.5l3 3 6-7" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+        </span>
+        <div>
+          <p class="font-bold text-ink">No differences found</p>
+          <p class="text-sm text-ink-muted">Every service, consumer, global plugin, and route matches between the two files.</p>
+        </div>
+      </div>
+
+      <template v-else>
         <DiffEntityList
+          v-if="hasDiff(diff.services)"
+          title="Services"
+          :diff="diff.services"
+          :entity-label="(s) => s.name ?? '(unnamed)'"
+        />
+        <DiffEntityList
+          v-if="hasDiff(diff.consumers)"
+          title="Consumers"
+          :diff="diff.consumers"
+          :entity-label="(c) => c.username ?? '(unnamed)'"
+        />
+        <DiffEntityList
+          v-if="hasDiff(diff.globalPlugins)"
+          title="Global Plugins"
+          :diff="diff.globalPlugins"
+          :entity-label="(p) => p.name"
+        />
+        <DiffEntityList
+          v-for="[serviceName, routeDiff] in changedRoutesByService"
+          :key="serviceName"
           :title="`Routes — ${serviceName}`"
           :diff="routeDiff"
           :entity-label="(r) => r.name ?? '(unnamed)'"
         />
-      </div>
+      </template>
     </template>
   </div>
 </template>

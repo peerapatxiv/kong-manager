@@ -4,13 +4,14 @@ const emit = defineEmits<{ 'update:activeTab': [id: string] }>()
 </script>
 
 <template>
-  <div class="flex flex-col h-full">
-    <div class="flex border-b border-slate-200">
+  <div class="flex h-full flex-col">
+    <div class="flex gap-1 overflow-x-auto border-b border-border p-2">
       <button
         v-for="tab in tabs"
         :key="tab.id"
-        class="flex-1 px-3 py-2 text-sm"
-        :class="activeTab === tab.id ? 'border-b-2 border-slate-800 font-medium text-slate-900' : 'text-slate-500'"
+        type="button"
+        class="pill-tab whitespace-nowrap"
+        :class="activeTab === tab.id ? 'pill-tab-active' : 'pill-tab-inactive'"
         @click="emit('update:activeTab', tab.id)"
       >
         {{ tab.label }}

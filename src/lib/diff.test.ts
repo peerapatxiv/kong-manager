@@ -1,6 +1,6 @@
 // src/lib/diff.test.ts
 import { describe, it, expect } from 'vitest'
-import { diffLeaves, diffEntities, diffKongConfigs } from './diff'
+import { diffLeaves, diffEntities, diffKongConfigs, hasDiff } from './diff'
 import type { KongConfig, KongService } from '../types/kong'
 
 describe('diffLeaves', () => {
@@ -62,6 +62,22 @@ describe('diffEntities', () => {
   it('handles undefined lists as empty', () => {
     const result = diffEntities(undefined, [{ name: 'only-in-b' }], 'name')
     expect(result.added).toEqual([{ name: 'only-in-b' }])
+  })
+})
+
+describe('hasDiff', () => {
+  it('is false for an entity diff with nothing in any bucket', () => {
+    expect(hasDiff({ added: [], removed: [], changed: [], unmatchedA: [], unmatchedB: [] })).toBe(false)
+  })
+
+  it('is true when any single bucket is non-empty', () => {
+    expect(hasDiff({ added: [{}], removed: [], changed: [], unmatchedA: [], unmatchedB: [] })).toBe(true)
+    expect(hasDiff({ added: [], removed: [{}], changed: [], unmatchedA: [], unmatchedB: [] })).toBe(true)
+    expect(
+      hasDiff({ added: [], removed: [], changed: [{ key: 'x', before: {}, after: {}, changes: [] }], unmatchedA: [], unmatchedB: [] }),
+    ).toBe(true)
+    expect(hasDiff({ added: [], removed: [], changed: [], unmatchedA: [{}], unmatchedB: [] })).toBe(true)
+    expect(hasDiff({ added: [], removed: [], changed: [], unmatchedA: [], unmatchedB: [{}] })).toBe(true)
   })
 })
 

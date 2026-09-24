@@ -1,6 +1,6 @@
 // src/lib/valueType.test.ts
 import { describe, it, expect } from 'vitest'
-import { inferValueType, isMultilineString } from './valueType'
+import { inferValueType, isMultilineString, isCodeStringArray } from './valueType'
 
 describe('inferValueType', () => {
   it('classifies primitives', () => {
@@ -39,5 +39,28 @@ describe('isMultilineString', () => {
   it('leaves plain short strings alone', () => {
     expect(isMultilineString('path', '/dev/stdout')).toBe(false)
     expect(isMultilineString('policy', 'local')).toBe(false)
+  })
+})
+
+describe('isCodeStringArray', () => {
+  it('flags known serverless-functions keys even when empty, so "add function" is still offered', () => {
+    expect(isCodeStringArray('access', [])).toBe(true)
+    expect(isCodeStringArray('body_filter', [])).toBe(true)
+    expect(isCodeStringArray('header_filter', [])).toBe(true)
+    expect(isCodeStringArray('rewrite', [])).toBe(true)
+    expect(isCodeStringArray('log', [])).toBe(true)
+  })
+
+  it('flags an array under any other key if an item looks like Lua source', () => {
+    expect(isCodeStringArray('custom_phase', ['local ctx = kong.ctx.plugin'])).toBe(true)
+  })
+
+  it('leaves ordinary short-string arrays alone', () => {
+    expect(isCodeStringArray('key_names', ['apikey'])).toBe(false)
+    expect(isCodeStringArray('protocols', ['http', 'https'])).toBe(false)
+  })
+
+  it('is false for non-arrays', () => {
+    expect(isCodeStringArray('access', 'not an array')).toBe(false)
   })
 })

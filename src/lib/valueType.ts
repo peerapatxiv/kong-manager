@@ -17,6 +17,15 @@ export function isMultilineString(key: string, value: string): boolean {
   return LUA_LOOKING_PATTERN.test(value)
 }
 
+// Kong's serverless-functions plugins (pre-function/post-function) store each
+// phase as an array of Lua source strings. A plain tag-pill widget is unusable
+// for that — this flags arrays that should get a code-block editor instead.
+export function isCodeStringArray(key: string, value: unknown): boolean {
+  if (!Array.isArray(value)) return false
+  if (SCRIPTY_KEY_PATTERN.test(key)) return true
+  return value.some((item) => typeof item === 'string' && isMultilineString(key, item))
+}
+
 export function inferValueType(key: string, value: unknown): ValueType {
   if (value === null || value === undefined) return 'null'
   if (typeof value === 'boolean') return 'boolean'

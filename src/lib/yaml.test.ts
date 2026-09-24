@@ -1,6 +1,6 @@
 // src/lib/yaml.test.ts
 import { describe, it, expect } from 'vitest'
-import { parseKongConfig, serializeKongConfig, YamlParseError } from './yaml'
+import { parseKongConfig, serializeKongConfig, parseYamlEntity, dumpYamlEntity, YamlParseError } from './yaml'
 
 const SAMPLE = `_format_version: "3.0"
 services:
@@ -29,6 +29,28 @@ describe('parseKongConfig', () => {
 
   it('throws YamlParseError when the document is not an object', () => {
     expect(() => parseKongConfig('- just\n- a\n- list\n')).toThrow(YamlParseError)
+  })
+})
+
+describe('parseYamlEntity', () => {
+  it('parses a single entity to an object', () => {
+    const entity = parseYamlEntity('name: svc-a\nhost: a.internal\n')
+    expect(entity).toEqual({ name: 'svc-a', host: 'a.internal' })
+  })
+
+  it('throws YamlParseError on malformed YAML', () => {
+    expect(() => parseYamlEntity('name: [unclosed')).toThrow(YamlParseError)
+  })
+
+  it('throws YamlParseError when the document is not an object', () => {
+    expect(() => parseYamlEntity('- just\n- a\n- list\n')).toThrow(YamlParseError)
+  })
+})
+
+describe('dumpYamlEntity', () => {
+  it('round-trips an entity through dump -> parse', () => {
+    const entity = { name: 'svc-a', host: 'a.internal', routes: [{ name: 'route-a', paths: ['/a'] }] }
+    expect(parseYamlEntity(dumpYamlEntity(entity))).toEqual(entity)
   })
 })
 

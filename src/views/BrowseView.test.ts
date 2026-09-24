@@ -65,15 +65,21 @@ describe('BrowseView', () => {
     expect(wrapper.text()).not.toContain('rate-limiting')
   })
 
-  it('shows plugin editors after selecting the Global Plugins tab', async () => {
+  it('Global Plugins tab: lists plugins and shows a placeholder until one is selected, then its editor', async () => {
     const wrapper = mount(BrowseView)
     await wrapper.findAll('button').find((b) => b.text() === 'Global Plugins')!.trigger('click')
 
     expect(wrapper.text()).toContain('rate-limiting')
     expect(wrapper.text()).toContain('key-auth')
+    expect(wrapper.text()).toContain('Select a plugin from the list to view and edit it.')
+
+    await wrapper.findAll('li').find((li) => li.text().includes('rate-limiting'))!.trigger('click')
+
+    expect(wrapper.text()).not.toContain('Select a plugin from the list to view and edit it.')
+    expect(wrapper.find('input[type="number"]').exists()).toBe(true)
   })
 
-  it('filters the plugin list by name and marks an edited plugin as modified', async () => {
+  it('Global Plugins tab: filters the plugin list by name and marks the selected plugin modified when edited', async () => {
     const wrapper = mount(BrowseView)
     await wrapper.findAll('button').find((b) => b.text() === 'Global Plugins')!.trigger('click')
 
@@ -81,19 +87,25 @@ describe('BrowseView', () => {
     expect(wrapper.text()).toContain('rate-limiting')
     expect(wrapper.text()).not.toContain('key-auth')
 
+    await wrapper.findAll('li').find((li) => li.text().includes('rate-limiting'))!.trigger('click')
     await wrapper.find('input[placeholder="Search plugins…"]').setValue('')
 
     const minuteInput = wrapper.find('input[type="number"]')
     await minuteInput.setValue(250)
 
     const store = useConfigStore()
+    // Editing only touches the local draft — nothing commits until Save.
+    expect(store.isModified('plugin:global/rate-limiting')).toBe(false)
+
+    await wrapper.findAll('button').find((b) => b.text() === 'Save')!.trigger('click')
+
     expect(store.isModified('plugin:global/rate-limiting')).toBe(true)
     expect(store.primary?.config.plugins?.[0].config?.minute).toBe(250)
   })
 
   it('Services tab: shows a placeholder until a service is selected, then its detail form', async () => {
     const wrapper = mount(BrowseView)
-    expect(wrapper.text()).toContain('Select a service from the list.')
+    expect(wrapper.text()).toContain('Select a service from the list to view and edit it.')
 
     await wrapper.find('.font-mono.truncate').trigger('click')
     expect(wrapper.text()).toContain('billing-service')
@@ -108,7 +120,7 @@ describe('BrowseView', () => {
     expect(wrapper.text()).not.toContain('billing-service')
   })
 
-  it('Services tab: editing a selected service marks it modified in the sidebar list', async () => {
+  it('Services tab: editing a selected service marks it modified in the sidebar list only after Save', async () => {
     const wrapper = mount(BrowseView)
     await wrapper.findAll('li').find((li) => li.text().includes('billing-service'))!.trigger('click')
 
@@ -118,9 +130,53 @@ describe('BrowseView', () => {
     await hostInput.setValue('billing.internal.new')
 
     const store = useConfigStore()
+    // Editing only touches the local draft — nothing commits until Save.
+    expect(store.primary?.config.services?.[0].host).toBe('billing.internal')
+    expect(store.isModified('service:billing-service')).toBe(false)
+
+    await wrapper.findComponent(ServiceDetail).findAll('button').find((b) => b.text() === 'Save')!.trigger('click')
+
     expect(store.primary?.config.services?.[0].host).toBe('billing.internal.new')
     expect(store.isModified('service:billing-service')).toBe(true)
     expect(wrapper.findComponent({ name: 'Badge' }).exists()).toBe(true)
+  })
+
+  it('Services tab: switching to Code view and saving edited YAML updates the store', async () => {
+    const wrapper = mount(BrowseView)
+    await wrapper.find('.font-mono.truncate').trigger('click')
+
+    await wrapper.findComponent(ServiceDetail).findAll('button').find((b) => b.text() === 'Code')!.trigger('click')
+    const textarea = wrapper.findComponent(ServiceDetail).find('textarea')
+    expect(textarea.element.value).toContain('billing.internal')
+
+    await textarea.setValue(textarea.element.value.replace('billing.internal', 'billing.internal.new'))
+
+    const store = useConfigStore()
+    // Editing the YAML text alone doesn't commit anything yet.
+    expect(store.primary?.config.services?.[0].host).toBe('billing.internal')
+
+    await wrapper.findComponent(ServiceDetail).findAll('button').find((b) => b.text() === 'Save')!.trigger('click')
+
+    expect(store.primary?.config.services?.[0].host).toBe('billing.internal.new')
+    expect(store.isModified('service:billing-service')).toBe(true)
+    // Saving returns to the form view.
+    expect(wrapper.findComponent(ServiceDetail).find('textarea').exists()).toBe(false)
+  })
+
+  it('Services tab: Code view shows an inline error and leaves the store untouched on invalid YAML', async () => {
+    const wrapper = mount(BrowseView)
+    await wrapper.find('.font-mono.truncate').trigger('click')
+
+    await wrapper.findComponent(ServiceDetail).findAll('button').find((b) => b.text() === 'Code')!.trigger('click')
+    await wrapper.findComponent(ServiceDetail).find('textarea').setValue('host: [unclosed')
+    await wrapper.findComponent(ServiceDetail).findAll('button').find((b) => b.text() === 'Save')!.trigger('click')
+
+    expect(wrapper.text()).toContain('Failed to parse YAML')
+    const store = useConfigStore()
+    expect(store.primary?.config.services?.[0].host).toBe('billing.internal')
+    expect(store.isModified('service:billing-service')).toBe(false)
+    // Stays in Code view so the user can fix the mistake.
+    expect(wrapper.findComponent(ServiceDetail).find('textarea').exists()).toBe(true)
   })
 
   it('Services tab: expanding a route renders its route-level plugin as a multi-line-capable editor', async () => {
@@ -136,7 +192,7 @@ describe('BrowseView', () => {
   it('Consumers tab: shows a placeholder until a consumer is selected, then its detail form', async () => {
     const wrapper = mount(BrowseView)
     await wrapper.findAll('button').find((b) => b.text() === 'Consumers')!.trigger('click')
-    expect(wrapper.text()).toContain('Select a consumer from the list.')
+    expect(wrapper.text()).toContain('Select a consumer from the list to view and edit it.')
 
     await wrapper.find('.font-mono.truncate').trigger('click')
     expect(wrapper.text()).toContain('alice')
@@ -152,7 +208,7 @@ describe('BrowseView', () => {
     expect((keyField.element as HTMLInputElement).value).toBe('abc123key')
     expect(keyField.attributes('placeholder')).toMatch(/^•+$/)
 
-    await wrapper.findComponent(ConsumerDetail).find('button').trigger('click')
+    await wrapper.findComponent(ConsumerDetail).findAll('button').find((b) => b.text() === 'reveal')!.trigger('click')
     expect(wrapper.findComponent(ConsumerDetail).find('input[type="password"]').exists()).toBe(false)
     const revealedValues = wrapper
       .findComponent(ConsumerDetail)
@@ -161,7 +217,7 @@ describe('BrowseView', () => {
     expect(revealedValues).toContain('abc123key')
   })
 
-  it('Consumers tab: editing a selected consumer marks it modified', async () => {
+  it('Consumers tab: editing a selected consumer marks it modified only after Save', async () => {
     const wrapper = mount(BrowseView)
     await wrapper.findAll('button').find((b) => b.text() === 'Consumers')!.trigger('click')
     await wrapper.findAll('li').find((li) => li.text().includes('alice'))!.trigger('click')
@@ -170,6 +226,11 @@ describe('BrowseView', () => {
     await customIdInputs[1].setValue('cust-1-renamed')
 
     const store = useConfigStore()
+    // Editing only touches the local draft — nothing commits until Save.
+    expect(store.primary?.config.consumers?.[0].custom_id).not.toBe('cust-1-renamed')
+
+    await wrapper.findComponent(ConsumerDetail).findAll('button').find((b) => b.text() === 'Save')!.trigger('click')
+
     expect(store.primary?.config.consumers?.[0].custom_id).toBe('cust-1-renamed')
     expect(store.isModified('consumer:alice')).toBe(true)
   })
@@ -181,11 +242,12 @@ describe('BrowseView', () => {
 
     const usernameInput = wrapper.findComponent(ConsumerDetail).findAll('input[type="text"]')[0]
     await usernameInput.setValue('alice-renamed')
+    await wrapper.findComponent(ConsumerDetail).findAll('button').find((b) => b.text() === 'Save')!.trigger('click')
 
     const store = useConfigStore()
     expect(store.primary?.config.consumers?.[0].username).toBe('alice-renamed')
     expect(store.isModified('consumer:alice-renamed')).toBe(true)
     // The detail panel should still show the (renamed) entry, not fall back to the placeholder.
-    expect(wrapper.text()).not.toContain('Select a consumer from the list.')
+    expect(wrapper.text()).not.toContain('Select a consumer from the list to view and edit it.')
   })
 })

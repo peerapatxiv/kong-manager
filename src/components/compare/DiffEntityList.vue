@@ -7,26 +7,26 @@ defineProps<{ title: string; diff: EntityDiff<T>; entityLabel: (entity: T) => st
 </script>
 
 <template>
-  <div class="space-y-3">
-    <h3 class="font-medium text-slate-800">{{ title }}</h3>
+  <div class="card space-y-4 p-4">
+    <h3 class="font-bold text-ink">{{ title }}</h3>
 
-    <div v-if="diff.added.length > 0">
-      <h4 class="text-xs uppercase tracking-wide text-emerald-700 mb-1">Added</h4>
-      <ul class="text-sm space-y-0.5">
+    <div v-if="diff.added.length > 0" class="border-l-2 border-emerald-400 pl-3">
+      <h4 class="mb-1 text-xs font-medium uppercase tracking-wide text-emerald-700">Added</h4>
+      <ul class="space-y-0.5 text-sm">
         <li v-for="(entity, i) in diff.added" :key="i" class="font-mono">{{ entityLabel(entity) }}</li>
       </ul>
     </div>
 
-    <div v-if="diff.removed.length > 0">
-      <h4 class="text-xs uppercase tracking-wide text-red-700 mb-1">Removed</h4>
-      <ul class="text-sm space-y-0.5">
+    <div v-if="diff.removed.length > 0" class="border-l-2 border-red-400 pl-3">
+      <h4 class="mb-1 text-xs font-medium uppercase tracking-wide text-red-700">Removed</h4>
+      <ul class="space-y-0.5 text-sm">
         <li v-for="(entity, i) in diff.removed" :key="i" class="font-mono">{{ entityLabel(entity) }}</li>
       </ul>
     </div>
 
-    <div v-if="diff.changed.length > 0" class="space-y-2">
-      <h4 class="text-xs uppercase tracking-wide text-blue-700 mb-1">Changed</h4>
-      <div v-for="entry in diff.changed" :key="entry.key" class="border border-slate-200 rounded p-2 space-y-1">
+    <div v-if="diff.changed.length > 0" class="space-y-2 border-l-2 border-blue-400 pl-3">
+      <h4 class="mb-1 text-xs font-medium uppercase tracking-wide text-blue-700">Changed</h4>
+      <div v-for="entry in diff.changed" :key="entry.key" class="rounded-lg bg-elevated p-2.5 space-y-1">
         <p class="font-mono text-sm">{{ entry.key }}</p>
         <DiffField
           v-for="change in entry.changes"
@@ -38,9 +38,9 @@ defineProps<{ title: string; diff: EntityDiff<T>; entityLabel: (entity: T) => st
       </div>
     </div>
 
-    <div v-if="diff.unmatchedA.length > 0 || diff.unmatchedB.length > 0">
-      <h4 class="text-xs uppercase tracking-wide text-amber-700 mb-1">Unmatched (no natural key)</h4>
-      <ul class="text-sm space-y-0.5">
+    <div v-if="diff.unmatchedA.length > 0 || diff.unmatchedB.length > 0" class="border-l-2 border-amber-400 pl-3">
+      <h4 class="mb-1 text-xs font-medium uppercase tracking-wide text-amber-700">Unmatched (no natural key)</h4>
+      <ul class="space-y-0.5 text-sm">
         <li v-for="(entity, i) in diff.unmatchedA" :key="`a-${i}`" class="font-mono">
           File A: {{ JSON.stringify(redactSecrets(entity)) }}
         </li>
@@ -49,18 +49,5 @@ defineProps<{ title: string; diff: EntityDiff<T>; entityLabel: (entity: T) => st
         </li>
       </ul>
     </div>
-
-    <p
-      v-if="
-        diff.added.length === 0 &&
-        diff.removed.length === 0 &&
-        diff.changed.length === 0 &&
-        diff.unmatchedA.length === 0 &&
-        diff.unmatchedB.length === 0
-      "
-      class="text-sm text-slate-400"
-    >
-      No differences.
-    </p>
   </div>
 </template>
