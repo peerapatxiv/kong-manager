@@ -48,7 +48,7 @@ function onSelectSaved({ baseUrl, username, password }: { baseUrl: string; usern
 </script>
 
 <template>
-  <div class="mx-auto max-w-5xl space-y-4 p-4 sm:p-6">
+  <div class="space-y-4 p-4 sm:p-6">
     <div>
       <h2 class="text-xl font-bold text-ink">Load a Kong declarative config</h2>
       <p class="mt-1 text-sm text-ink-muted">
