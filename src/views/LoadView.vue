@@ -5,6 +5,7 @@ import FileDropZone from '../components/FileDropZone.vue'
 import KongConnectForm from '../components/KongConnectForm.vue'
 import StatTile from '../components/shared/StatTile.vue'
 import { useConfigStore } from '../stores/config'
+import type { KongAdminAuth } from '../lib/kongAdminApi'
 
 const configStore = useConfigStore()
 const router = useRouter()
@@ -21,11 +22,11 @@ function onFileSelected({ fileName, text }: { fileName: string; text: string }) 
   }
 }
 
-async function onConnect({ baseUrl, token }: { baseUrl: string; token: string | undefined }) {
+async function onConnect({ baseUrl, auth }: { baseUrl: string; auth: KongAdminAuth }) {
   connecting.value = true
   connectErrorMessage.value = null
   try {
-    await configStore.loadFromKongAdmin(baseUrl, token)
+    await configStore.loadFromKongAdmin(baseUrl, auth)
   } catch (err) {
     connectErrorMessage.value = err instanceof Error ? err.message : String(err)
   } finally {

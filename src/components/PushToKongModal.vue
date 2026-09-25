@@ -9,6 +9,8 @@ const configStore = useConfigStore()
 
 const baseUrl = ref('')
 const token = ref<string | undefined>(undefined)
+const username = ref('')
+const password = ref<string | undefined>(undefined)
 const confirming = ref(false)
 const pushing = ref(false)
 const errorMessage = ref<string | null>(null)
@@ -20,6 +22,8 @@ watch(
     if (!isOpen) return
     baseUrl.value = configStore.primary?.origin === 'kong-admin' ? configStore.primary.baseUrl ?? '' : ''
     token.value = undefined
+    username.value = ''
+    password.value = undefined
     confirming.value = false
     errorMessage.value = null
     success.value = false
@@ -36,7 +40,11 @@ async function confirmPush() {
   pushing.value = true
   errorMessage.value = null
   try {
-    await configStore.pushToKongAdmin(baseUrl.value.trim(), token.value || undefined)
+    await configStore.pushToKongAdmin(baseUrl.value.trim(), {
+      token: token.value || undefined,
+      username: username.value.trim() || undefined,
+      password: password.value || undefined,
+    })
     success.value = true
     confirming.value = false
   } catch (err) {
@@ -75,6 +83,14 @@ function close() {
         <label class="block">
           <span class="field-label">Admin token (optional)</span>
           <SecretField v-model="token" />
+        </label>
+        <label class="block">
+          <span class="field-label">Username (optional)</span>
+          <input v-model="username" type="text" placeholder="Username" class="input-field" />
+        </label>
+        <label class="block">
+          <span class="field-label">Password (optional)</span>
+          <SecretField v-model="password" />
         </label>
 
         <div v-if="!confirming" class="flex justify-end gap-2 pt-1">

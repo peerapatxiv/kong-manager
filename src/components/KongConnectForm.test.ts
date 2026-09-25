@@ -15,16 +15,38 @@ describe('KongConnectForm', () => {
     await wrapper.find('input[type="password"]').setValue('secret-token')
     await findConnectButton(wrapper).trigger('click')
 
-    expect(wrapper.emitted('connect')).toEqual([[{ baseUrl: 'http://localhost:8001', token: 'secret-token' }]])
+    expect(wrapper.emitted('connect')).toEqual([
+      [{ baseUrl: 'http://localhost:8001', auth: { token: 'secret-token', username: undefined, password: undefined } }],
+    ])
   })
 
-  it('trims the base URL and emits an undefined token when the token field is left blank', async () => {
+  it('trims the base URL and emits undefined auth fields when everything else is left blank', async () => {
     const wrapper = mount(KongConnectForm, { props: { connecting: false } })
 
     await wrapper.find('input[placeholder="http://localhost:8001"]').setValue('  http://localhost:8001  ')
     await findConnectButton(wrapper).trigger('click')
 
-    expect(wrapper.emitted('connect')).toEqual([[{ baseUrl: 'http://localhost:8001', token: undefined }]])
+    expect(wrapper.emitted('connect')).toEqual([
+      [{ baseUrl: 'http://localhost:8001', auth: { token: undefined, username: undefined, password: undefined } }],
+    ])
+  })
+
+  it('emits username and password when entered, alongside the token', async () => {
+    const wrapper = mount(KongConnectForm, { props: { connecting: false } })
+
+    await wrapper.find('input[placeholder="http://localhost:8001"]').setValue('http://localhost:8001')
+    await wrapper.find('input[placeholder="Username"]').setValue('admin')
+    await wrapper.findAll('input[type="password"]')[1].setValue('hunter2')
+    await findConnectButton(wrapper).trigger('click')
+
+    expect(wrapper.emitted('connect')).toEqual([
+      [
+        {
+          baseUrl: 'http://localhost:8001',
+          auth: { token: undefined, username: 'admin', password: 'hunter2' },
+        },
+      ],
+    ])
   })
 
   it('does not emit when the base URL is blank or whitespace-only', async () => {

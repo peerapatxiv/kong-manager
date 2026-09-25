@@ -59,8 +59,35 @@ describe('PushToKongModal', () => {
       .trigger('click')
     await flushPromises()
 
-    expect(kongAdminApi.setConfig).toHaveBeenCalledWith('http://localhost:8001', expect.any(Object), undefined)
+    expect(kongAdminApi.setConfig).toHaveBeenCalledWith('http://localhost:8001', expect.any(Object), {
+      token: undefined,
+      username: undefined,
+      password: undefined,
+    })
     expect(wrapper.text()).toContain('Config pushed')
+  })
+
+  it('passes username and password through as Basic Auth when entered', async () => {
+    const wrapper = mount(PushToKongModal, { props: { open: true } })
+    await wrapper.find('input[type="text"]').setValue('http://localhost:8001')
+    await wrapper.find('input[placeholder="Username"]').setValue('admin')
+    await wrapper.findAll('input[type="password"]')[1].setValue('hunter2')
+
+    await wrapper
+      .findAll('button')
+      .find((b) => b.text() === 'Push to Kong')!
+      .trigger('click')
+    await wrapper
+      .findAll('button')
+      .find((b) => b.text() === 'Confirm push')!
+      .trigger('click')
+    await flushPromises()
+
+    expect(kongAdminApi.setConfig).toHaveBeenCalledWith('http://localhost:8001', expect.any(Object), {
+      token: undefined,
+      username: 'admin',
+      password: 'hunter2',
+    })
   })
 
   it('does not advance to the confirm step when the base URL is blank', async () => {

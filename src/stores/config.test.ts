@@ -83,9 +83,9 @@ describe('useConfigStore', () => {
       const pulled: KongConfig = { _format_version: '3.0', services: [{ host: 'live.internal', name: 'svc-live' }] }
       vi.mocked(kongAdminApi.getConfig).mockResolvedValue(pulled)
 
-      await store.loadFromKongAdmin('http://localhost:8001', 'token-123')
+      await store.loadFromKongAdmin('http://localhost:8001', { token: 'token-123' })
 
-      expect(kongAdminApi.getConfig).toHaveBeenCalledWith('http://localhost:8001', 'token-123')
+      expect(kongAdminApi.getConfig).toHaveBeenCalledWith('http://localhost:8001', { token: 'token-123' })
       expect(store.isLoaded).toBe(true)
       expect(store.primary!.origin).toBe('kong-admin')
       expect(store.primary!.baseUrl).toBe('http://localhost:8001')
@@ -118,15 +118,27 @@ describe('useConfigStore', () => {
       store.primary!.config.services![0].host = 'edited.internal'
       vi.mocked(kongAdminApi.setConfig).mockResolvedValue(undefined)
 
-      await store.pushToKongAdmin('http://localhost:8001', 'token-123')
+      await store.pushToKongAdmin('http://localhost:8001', { token: 'token-123' })
 
       expect(kongAdminApi.setConfig).toHaveBeenCalledWith(
         'http://localhost:8001',
         expect.objectContaining({
           services: expect.arrayContaining([expect.objectContaining({ host: 'edited.internal' })]),
         }),
-        'token-123',
+        { token: 'token-123' },
       )
+    })
+
+    it('passes username/password Basic Auth through to the Kong Admin API client', async () => {
+      const store = useConfigStore()
+      vi.mocked(kongAdminApi.getConfig).mockResolvedValue({ _format_version: '3.0' })
+
+      await store.loadFromKongAdmin('http://localhost:8001', { username: 'admin', password: 'hunter2' })
+
+      expect(kongAdminApi.getConfig).toHaveBeenCalledWith('http://localhost:8001', {
+        username: 'admin',
+        password: 'hunter2',
+      })
     })
 
     it('throws and leaves state untouched when pushing with nothing loaded', async () => {

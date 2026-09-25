@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { parseKongConfig, serializeKongConfig } from '../lib/yaml'
 import { getConfig, setConfig } from '../lib/kongAdminApi'
+import type { KongAdminAuth } from '../lib/kongAdminApi'
 import type { KongConfig } from '../types/kong'
 
 export type LoadedFile = {
@@ -40,15 +41,15 @@ export const useConfigStore = defineStore('config', {
       const config = parseKongConfig(text)
       this.compareTarget = { fileName, origin: 'file', config }
     },
-    async loadFromKongAdmin(baseUrl: string, token?: string) {
-      const config = await getConfig(baseUrl, token)
+    async loadFromKongAdmin(baseUrl: string, auth?: KongAdminAuth) {
+      const config = await getConfig(baseUrl, auth)
       this.primary = { fileName: `Kong Admin @ ${baseUrl}`, origin: 'kong-admin', baseUrl, config }
       this.modifiedKeys = new Set()
       this.compareTarget = null
     },
-    async pushToKongAdmin(baseUrl: string, token?: string) {
+    async pushToKongAdmin(baseUrl: string, auth?: KongAdminAuth) {
       if (!this.primary) throw new Error('No config loaded')
-      await setConfig(baseUrl, this.primary.config, token)
+      await setConfig(baseUrl, this.primary.config, auth)
     },
     markModified(entityKey: string) {
       this.modifiedKeys.add(entityKey)
