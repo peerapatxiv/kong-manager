@@ -27,24 +27,6 @@ function submit() {
 
 <template>
   <div class="card space-y-4 p-4">
-    <div class="flex items-start gap-2.5">
-      <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-accent/15 text-accent-secondary">
-        <svg viewBox="0 0 20 20" fill="none" class="h-3.5 w-3.5">
-          <path
-            d="M7.5 12.5l5-5M6.5 8.379L5.086 6.964a2.5 2.5 0 113.535-3.535l1.415 1.414M13.5 11.621l1.414 1.415a2.5 2.5 0 11-3.535 3.535l-1.415-1.414"
-            stroke="currentColor"
-            stroke-width="1.5"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          />
-        </svg>
-      </span>
-      <div>
-        <h3 class="text-sm font-semibold text-ink">Connect to Kong Admin API</h3>
-        <p class="text-xs text-ink-muted">Pull the live declarative config from a running Kong instance (DB-less mode).</p>
-      </div>
-    </div>
-
     <label class="block">
       <span class="field-label">Admin API base URL</span>
       <input

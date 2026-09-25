@@ -43,7 +43,7 @@ async function onConnect({ baseUrl, auth }: { baseUrl: string; auth: KongAdminAu
       <p class="mt-1 text-sm text-ink-muted">
         {{
           mode === 'connect'
-            ? 'Connect to a running Kong instance, or switch to load a YAML file.'
+            ? 'Pull the live declarative config from a running Kong instance (DB-less mode), or switch to load a YAML file.'
             : 'Drop in a YAML file to browse, edit, and compare its entities.'
         }}
       </p>
