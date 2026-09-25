@@ -85,6 +85,12 @@ describe('denormalizeKongConfig', () => {
     expect(alice.keyauth_credentials).toEqual([{ key: 'abc123key' }])
   })
 
+  it('removes the top-level credentials key once its entries are nested under consumers', () => {
+    const config = denormalizeKongConfig(EXPANDED)
+
+    expect(config.keyauth_credentials).toBeUndefined()
+  })
+
   it('drops a credential whose consumer id does not resolve, instead of crashing', () => {
     const config = denormalizeKongConfig(EXPANDED)
 

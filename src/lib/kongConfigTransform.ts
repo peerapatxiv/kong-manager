@@ -45,8 +45,10 @@ export function denormalizeKongConfig(expanded: Record<string, unknown>): KongCo
   const consumers: KongConsumer[] = rawConsumers.map((c) => stripKeys(c, []) as KongConsumer)
   const consumerById = new Map<string, KongConsumer>(rawConsumers.map((c, i) => [c.id as string, consumers[i]]))
 
+  const credentialListKeys: string[] = []
   for (const [key, value] of Object.entries(expanded)) {
     if (!key.endsWith('_credentials') || !Array.isArray(value)) continue
+    credentialListKeys.push(key)
     for (const raw of value as Record<string, unknown>[]) {
       const owner = typeof raw.consumer === 'string' ? consumerById.get(raw.consumer) : undefined
       if (!owner) continue
@@ -72,7 +74,7 @@ export function denormalizeKongConfig(expanded: Record<string, unknown>): KongCo
   }
 
   const denormalized: KongConfig = {
-    ...stripKeys(expanded, ['services', 'routes', 'consumers', 'plugins']),
+    ...stripKeys(expanded, ['services', 'routes', 'consumers', 'plugins', ...credentialListKeys]),
     _format_version: (expanded._format_version as string | undefined) ?? '3.0',
     services,
     consumers,
