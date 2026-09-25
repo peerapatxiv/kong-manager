@@ -113,26 +113,32 @@ Architecture).
     hand-written file. Called out here so it isn't a surprise, same
     spirit as the existing comment-loss limitation.
 
-- **Config store (`src/stores/config.ts`)** — `LoadedFile` is
-  generalized to carry an origin discriminant instead of a bare
-  filename:
+- **Config store (`src/stores/config.ts`)** — `LoadedFile` keeps its
+  existing `fileName` field as the single display label (every current
+  read site — `AppSidebar.vue`, `CompareView.vue`, `ExportModal.vue`,
+  `LoadView.vue` — keeps working unchanged), and gains an origin tag
+  plus the connection's base URL for Push-modal prefill:
   ```ts
-  type LoadedSource = { config: KongConfig } & (
-    | { origin: 'file'; fileName: string }
-    | { origin: 'kong-admin'; baseUrl: string }
-  )
+  export type LoadedFile = {
+    fileName: string          // real filename, or `Kong Admin @ <baseUrl>`
+    origin: 'file' | 'kong-admin'
+    baseUrl?: string          // set only when origin === 'kong-admin'
+    config: KongConfig
+  }
   ```
-  A `sourceLabel` getter replaces direct `fileName` reads in the UI
-  (`kong-config.yaml` for file sources, `Kong Admin @ <baseUrl>` for
-  API sources). Two new actions:
+  Two new store actions:
   - `loadFromKongAdmin(baseUrl, token?)` — calls `kongAdminApi.getConfig`,
-    sets `primary` with `origin: 'kong-admin'`, clears `modifiedKeys`
-    and `compareTarget` (mirrors `loadPrimary`).
+    sets `primary` to `{ fileName: `Kong Admin @ ${baseUrl}`, origin:
+    'kong-admin', baseUrl, config }`, clears `modifiedKeys` and
+    `compareTarget` (mirrors `loadPrimary`).
   - `pushToKongAdmin(baseUrl, token?)` — calls `kongAdminApi.setConfig`
     with the current `primary.config`. Does not mutate any store state
     on success or failure; it only talks to the remote instance. (No
     "un-modified" reset on push — matches the existing precedent that
     the app never overwrites the reference file after export either.)
+  - `loadPrimary` and `loadCompareTarget` are updated to set
+    `origin: 'file'` (and no `baseUrl`) so every `LoadedFile` always
+    carries a valid origin.
 
 ## UI changes
 
@@ -145,8 +151,9 @@ Architecture).
   the existing `SecretField` component), and a "Connect" button.
 - On success, behaves exactly like a file load: the summary card
   (services/routes/consumers/plugins counts) and "Browse this config"
-  CTA appear, with the loaded-file heading showing `sourceLabel`
-  instead of a raw filename.
+  CTA appear, with the loaded-file heading showing `Kong Admin @
+  <baseUrl>` in place of a filename (via the existing `fileName`
+  field — see Architecture).
 - On failure: the same inline error banner pattern as YAML parse
   failures, showing the underlying HTTP/network error.
 
