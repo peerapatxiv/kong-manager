@@ -49,7 +49,7 @@ const anyDiff = computed(() => {
 </script>
 
 <template>
-  <div class="mx-auto max-w-4xl space-y-6 p-8">
+  <div class="space-y-6 p-4 sm:p-8">
     <div class="card space-y-1.5 p-4 text-sm text-ink-muted">
       <p>
         File A: <span class="font-mono text-ink">{{ configStore.primary?.fileName }}</span> (currently
