@@ -78,7 +78,7 @@ function submit() {
     <div class="flex justify-end pt-1">
       <button
         type="button"
-        class="btn-secondary w-full sm:w-auto"
+        class="btn-primary w-full sm:w-auto"
         :disabled="connecting || !baseUrl.trim()"
         @click="submit"
       >

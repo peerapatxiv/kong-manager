@@ -62,6 +62,10 @@ describe('LoadView', () => {
       global: { plugins: [testRouter()] },
     })
 
+    await wrapper
+      .findAll('button')
+      .find((b) => b.text() === 'Upload file')!
+      .trigger('click')
     await wrapper.findComponent(FileDropZone).vm.$emit('file-selected', {
       fileName: 'bad.yaml',
       text: 'services: [unclosed',
@@ -88,6 +92,29 @@ describe('LoadView', () => {
 
     expect(wrapper.text()).toContain('Loaded: Kong Admin @ http://localhost:8001')
     expect(wrapper.text()).toContain('Services: 1')
+  })
+
+  it('defaults to the Connect tab, and switches to the Upload file tab and back', async () => {
+    const wrapper = mount(LoadView, { global: { plugins: [testRouter()] } })
+
+    expect(wrapper.find('input[placeholder="http://localhost:8001"]').exists()).toBe(true)
+    expect(wrapper.findComponent(FileDropZone).exists()).toBe(false)
+
+    await wrapper
+      .findAll('button')
+      .find((b) => b.text() === 'Upload file')!
+      .trigger('click')
+
+    expect(wrapper.findComponent(FileDropZone).exists()).toBe(true)
+    expect(wrapper.find('input[placeholder="http://localhost:8001"]').exists()).toBe(false)
+
+    await wrapper
+      .findAll('button')
+      .find((b) => b.text() === 'Connect to Kong')!
+      .trigger('click')
+
+    expect(wrapper.find('input[placeholder="http://localhost:8001"]').exists()).toBe(true)
+    expect(wrapper.findComponent(FileDropZone).exists()).toBe(false)
   })
 
   it('shows a connect error banner instead of crashing when the connection fails', async () => {

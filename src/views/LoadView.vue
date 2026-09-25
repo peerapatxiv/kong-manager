@@ -12,6 +12,7 @@ const router = useRouter()
 const errorMessage = ref<string | null>(null)
 const connectErrorMessage = ref<string | null>(null)
 const connecting = ref(false)
+const mode = ref<'connect' | 'file'>('connect')
 
 function onFileSelected({ fileName, text }: { fileName: string; text: string }) {
   try {
@@ -39,29 +40,52 @@ async function onConnect({ baseUrl, auth }: { baseUrl: string; auth: KongAdminAu
   <div class="mx-auto max-w-3xl space-y-6 p-4 sm:p-8">
     <div>
       <h2 class="text-xl font-bold text-ink">Load a Kong declarative config</h2>
-      <p class="mt-1 text-sm text-ink-muted">Drop in a YAML file to browse, edit, and compare its entities.</p>
+      <p class="mt-1 text-sm text-ink-muted">
+        {{
+          mode === 'connect'
+            ? 'Connect to a running Kong instance, or switch to load a YAML file.'
+            : 'Drop in a YAML file to browse, edit, and compare its entities.'
+        }}
+      </p>
     </div>
 
-    <FileDropZone label="Load your kong-config.yaml" @file-selected="onFileSelected" />
-
-    <div v-if="errorMessage" class="rounded-xl border border-red-300 bg-red-50 p-3.5 text-sm text-red-800 dark:border-red-900 dark:bg-red-950/50 dark:text-red-300">
-      Failed to parse YAML: {{ errorMessage }}
+    <div class="inline-flex gap-1 rounded-xl border border-border bg-surface p-1">
+      <button
+        type="button"
+        class="pill-tab"
+        :class="mode === 'connect' ? 'pill-tab-active' : 'pill-tab-inactive'"
+        @click="mode = 'connect'"
+      >
+        Connect to Kong
+      </button>
+      <button
+        type="button"
+        class="pill-tab"
+        :class="mode === 'file' ? 'pill-tab-active' : 'pill-tab-inactive'"
+        @click="mode = 'file'"
+      >
+        Upload file
+      </button>
     </div>
 
-    <div class="flex items-center gap-3 text-xs font-medium uppercase tracking-wide text-ink-muted">
-      <span class="h-px flex-1 bg-border" />
-      or
-      <span class="h-px flex-1 bg-border" />
-    </div>
+    <template v-if="mode === 'connect'">
+      <KongConnectForm :connecting="connecting" @connect="onConnect" />
 
-    <KongConnectForm :connecting="connecting" @connect="onConnect" />
+      <div
+        v-if="connectErrorMessage"
+        class="rounded-xl border border-red-300 bg-red-50 p-3.5 text-sm text-red-800 dark:border-red-900 dark:bg-red-950/50 dark:text-red-300"
+      >
+        Failed to connect to Kong Admin API: {{ connectErrorMessage }}
+      </div>
+    </template>
 
-    <div
-      v-if="connectErrorMessage"
-      class="rounded-xl border border-red-300 bg-red-50 p-3.5 text-sm text-red-800 dark:border-red-900 dark:bg-red-950/50 dark:text-red-300"
-    >
-      Failed to connect to Kong Admin API: {{ connectErrorMessage }}
-    </div>
+    <template v-else>
+      <FileDropZone label="Load your kong-config.yaml" @file-selected="onFileSelected" />
+
+      <div v-if="errorMessage" class="rounded-xl border border-red-300 bg-red-50 p-3.5 text-sm text-red-800 dark:border-red-900 dark:bg-red-950/50 dark:text-red-300">
+        Failed to parse YAML: {{ errorMessage }}
+      </div>
+    </template>
 
     <div v-if="!configStore.isLoaded" class="grid grid-cols-1 gap-3 sm:grid-cols-3">
       <div class="card space-y-2 p-4">
