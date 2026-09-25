@@ -54,18 +54,36 @@ async function onConnect({ baseUrl, auth }: { baseUrl: string; auth: KongAdminAu
         <div class="inline-flex gap-1 rounded-xl border border-border bg-surface p-1">
           <button
             type="button"
-            class="pill-tab"
+            class="pill-tab inline-flex items-center gap-1.5"
             :class="mode === 'connect' ? 'pill-tab-active' : 'pill-tab-inactive'"
             @click="mode = 'connect'"
           >
+            <svg viewBox="0 0 20 20" fill="none" class="h-3.5 w-3.5">
+              <path
+                d="M7.5 12.5l5-5M6.5 8.379L5.086 6.964a2.5 2.5 0 113.535-3.535l1.415 1.414M13.5 11.621l1.414 1.415a2.5 2.5 0 11-3.535 3.535l-1.415-1.414"
+                stroke="currentColor"
+                stroke-width="1.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
             Connect to Kong
           </button>
           <button
             type="button"
-            class="pill-tab"
+            class="pill-tab inline-flex items-center gap-1.5"
             :class="mode === 'file' ? 'pill-tab-active' : 'pill-tab-inactive'"
             @click="mode = 'file'"
           >
+            <svg viewBox="0 0 20 20" fill="none" class="h-3.5 w-3.5">
+              <path
+                d="M10 13V4m0 0L6.5 7.5M10 4l3.5 3.5M4 14v1a1 1 0 001 1h10a1 1 0 001-1v-1"
+                stroke="currentColor"
+                stroke-width="1.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
             Upload file
           </button>
         </div>

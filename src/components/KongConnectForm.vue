@@ -26,7 +26,7 @@ function submit() {
 </script>
 
 <template>
-  <div class="card space-y-3 p-4">
+  <div class="card space-y-4 border-t-2 border-t-accent p-5">
     <label class="block">
       <span class="field-label">Admin API base URL</span>
       <input
@@ -38,7 +38,7 @@ function submit() {
       />
     </label>
 
-    <div class="space-y-2 border-t border-border pt-2.5">
+    <div class="space-y-2.5 rounded-lg bg-elevated/60 p-3">
       <p class="section-heading">Authentication (optional)</p>
       <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
         <label class="block">
