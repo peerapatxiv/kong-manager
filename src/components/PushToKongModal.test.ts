@@ -60,7 +60,6 @@ describe('PushToKongModal', () => {
     await flushPromises()
 
     expect(kongAdminApi.setConfig).toHaveBeenCalledWith('http://localhost:8001', expect.any(Object), {
-      token: undefined,
       username: undefined,
       password: undefined,
     })
@@ -71,7 +70,7 @@ describe('PushToKongModal', () => {
     const wrapper = mount(PushToKongModal, { props: { open: true } })
     await wrapper.find('input[type="text"]').setValue('http://localhost:8001')
     await wrapper.find('input[placeholder="Username"]').setValue('admin')
-    await wrapper.findAll('input[type="password"]')[1].setValue('hunter2')
+    await wrapper.find('input[type="password"]').setValue('hunter2')
 
     await wrapper
       .findAll('button')
@@ -84,7 +83,6 @@ describe('PushToKongModal', () => {
     await flushPromises()
 
     expect(kongAdminApi.setConfig).toHaveBeenCalledWith('http://localhost:8001', expect.any(Object), {
-      token: undefined,
       username: 'admin',
       password: 'hunter2',
     })

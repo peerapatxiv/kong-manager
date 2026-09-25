@@ -8,7 +8,6 @@ const emit = defineEmits<{ close: [] }>()
 const configStore = useConfigStore()
 
 const baseUrl = ref('')
-const token = ref<string | undefined>(undefined)
 const username = ref('')
 const password = ref<string | undefined>(undefined)
 const confirming = ref(false)
@@ -21,7 +20,6 @@ watch(
   (isOpen) => {
     if (!isOpen) return
     baseUrl.value = configStore.primary?.origin === 'kong-admin' ? configStore.primary.baseUrl ?? '' : ''
-    token.value = undefined
     username.value = ''
     password.value = undefined
     confirming.value = false
@@ -41,7 +39,6 @@ async function confirmPush() {
   errorMessage.value = null
   try {
     await configStore.pushToKongAdmin(baseUrl.value.trim(), {
-      token: token.value || undefined,
       username: username.value.trim() || undefined,
       password: password.value || undefined,
     })
@@ -79,10 +76,6 @@ function close() {
         <label class="block">
           <span class="field-label">Admin API base URL</span>
           <input v-model="baseUrl" type="text" placeholder="http://localhost:8001" class="input-field font-mono" />
-        </label>
-        <label class="block">
-          <span class="field-label">Admin token (optional)</span>
-          <SecretField v-model="token" />
         </label>
         <label class="block">
           <span class="field-label">Username (optional)</span>

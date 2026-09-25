@@ -6,6 +6,7 @@ import { mount, flushPromises } from '@vue/test-utils'
 import LoadView from './LoadView.vue'
 import FileDropZone from '../components/FileDropZone.vue'
 import { useConfigStore } from '../stores/config'
+import { useSavedConnectionsStore } from '../stores/savedConnections'
 import * as kongAdminApi from '../lib/kongAdminApi'
 
 vi.mock('../lib/kongAdminApi')
@@ -36,6 +37,7 @@ plugins:
 
 describe('LoadView', () => {
   beforeEach(() => {
+    localStorage.clear()
     setActivePinia(createPinia())
     vi.clearAllMocks()
   })
@@ -92,6 +94,44 @@ describe('LoadView', () => {
 
     expect(wrapper.text()).toContain('Loaded: Kong Admin @ http://localhost:8001')
     expect(wrapper.text()).toContain('Services: 1')
+  })
+
+  it('auto-saves the connection after a successful connect', async () => {
+    vi.mocked(kongAdminApi.getConfig).mockResolvedValue({ _format_version: '3.0', services: [] })
+    const wrapper = mount(LoadView, { global: { plugins: [testRouter()] } })
+
+    await wrapper.find('input[placeholder="http://localhost:8001"]').setValue('http://localhost:8001')
+    await wrapper.find('input[placeholder="Username"]').setValue('admin')
+    await wrapper.find('input[type="password"]').setValue('hunter2')
+    await wrapper
+      .findAll('button')
+      .find((b) => b.text() === 'Connect')!
+      .trigger('click')
+    await flushPromises()
+
+    const savedConnectionsStore = useSavedConnectionsStore()
+    expect(savedConnectionsStore.connections).toEqual([
+      expect.objectContaining({ baseUrl: 'http://localhost:8001', username: 'admin', password: 'hunter2' }),
+    ])
+  })
+
+  it('reconnects instantly using stored credentials when a saved connection is clicked', async () => {
+    const savedConnectionsStore = useSavedConnectionsStore()
+    savedConnectionsStore.upsert({ baseUrl: 'http://localhost:8001', username: 'admin', password: 'hunter2' })
+    vi.mocked(kongAdminApi.getConfig).mockResolvedValue({
+      _format_version: '3.0',
+      services: [{ host: 'live.internal', name: 'svc-live' }],
+    })
+
+    const wrapper = mount(LoadView, { global: { plugins: [testRouter()] } })
+    await wrapper.find('li').trigger('click')
+    await flushPromises()
+
+    expect(kongAdminApi.getConfig).toHaveBeenCalledWith('http://localhost:8001', {
+      username: 'admin',
+      password: 'hunter2',
+    })
+    expect(wrapper.text()).toContain('Loaded: Kong Admin @ http://localhost:8001')
   })
 
   it('defaults to the Connect tab, and switches to the Upload file tab and back', async () => {

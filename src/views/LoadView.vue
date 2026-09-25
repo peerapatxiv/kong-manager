@@ -3,11 +3,14 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import FileDropZone from '../components/FileDropZone.vue'
 import KongConnectForm from '../components/KongConnectForm.vue'
+import SavedConnectionsList from '../components/SavedConnectionsList.vue'
 import StatTile from '../components/shared/StatTile.vue'
 import { useConfigStore } from '../stores/config'
+import { useSavedConnectionsStore } from '../stores/savedConnections'
 import type { KongAdminAuth } from '../lib/kongAdminApi'
 
 const configStore = useConfigStore()
+const savedConnectionsStore = useSavedConnectionsStore()
 const router = useRouter()
 const errorMessage = ref<string | null>(null)
 const connectErrorMessage = ref<string | null>(null)
@@ -28,11 +31,16 @@ async function onConnect({ baseUrl, auth }: { baseUrl: string; auth: KongAdminAu
   connectErrorMessage.value = null
   try {
     await configStore.loadFromKongAdmin(baseUrl, auth)
+    savedConnectionsStore.upsert({ baseUrl, username: auth.username, password: auth.password })
   } catch (err) {
     connectErrorMessage.value = err instanceof Error ? err.message : String(err)
   } finally {
     connecting.value = false
   }
+}
+
+function onSelectSaved({ baseUrl, username, password }: { baseUrl: string; username?: string; password?: string }) {
+  onConnect({ baseUrl, auth: { username, password } })
 }
 </script>
 
@@ -109,6 +117,8 @@ async function onConnect({ baseUrl, auth }: { baseUrl: string; auth: KongAdminAu
       </div>
 
       <div v-if="!configStore.isLoaded" class="space-y-3">
+        <SavedConnectionsList v-if="mode === 'connect'" @connect="onSelectSaved" />
+
         <div class="card space-y-1.5 p-3">
           <div class="flex h-7 w-7 items-center justify-center rounded-lg bg-accent/15 text-accent-secondary">
             <svg viewBox="0 0 20 20" fill="none" class="h-3.5 w-3.5">

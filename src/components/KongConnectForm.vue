@@ -7,7 +7,6 @@ defineProps<{ connecting: boolean }>()
 const emit = defineEmits<{ connect: [payload: { baseUrl: string; auth: KongAdminAuth }] }>()
 
 const baseUrl = ref('')
-const token = ref<string | undefined>(undefined)
 const username = ref('')
 const password = ref<string | undefined>(undefined)
 
@@ -17,7 +16,6 @@ function submit() {
   emit('connect', {
     baseUrl: trimmed,
     auth: {
-      token: token.value || undefined,
       username: username.value.trim() || undefined,
       password: password.value || undefined,
     },
@@ -39,12 +37,8 @@ function submit() {
     </label>
 
     <div class="space-y-2.5 rounded-lg bg-elevated/60 p-3">
-      <p class="section-heading">Authentication (optional)</p>
-      <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
-        <label class="block">
-          <span class="field-label">Admin token</span>
-          <SecretField v-model="token" />
-        </label>
+      <p class="section-heading">Authentication</p>
+      <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <label class="block">
           <span class="field-label">Username</span>
           <input v-model="username" type="text" placeholder="Username" class="input-field" @keyup.enter="submit" />
@@ -54,7 +48,7 @@ function submit() {
           <SecretField v-model="password" />
         </label>
       </div>
-      <p class="field-help">Not saved — you'll re-enter these next time you connect.</p>
+      <p class="field-help">Saved locally after a successful connect — see Saved Connections.</p>
     </div>
 
     <div class="flex justify-end">

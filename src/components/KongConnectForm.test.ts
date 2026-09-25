@@ -8,44 +8,27 @@ function findConnectButton(wrapper: ReturnType<typeof mount>) {
 }
 
 describe('KongConnectForm', () => {
-  it('emits connect with the entered base URL and token', async () => {
+  it('emits connect with the entered base URL, username, and password', async () => {
     const wrapper = mount(KongConnectForm, { props: { connecting: false } })
 
     await wrapper.find('input[placeholder="http://localhost:8001"]').setValue('http://localhost:8001')
-    await wrapper.find('input[type="password"]').setValue('secret-token')
+    await wrapper.find('input[placeholder="Username"]').setValue('admin')
+    await wrapper.find('input[type="password"]').setValue('hunter2')
     await findConnectButton(wrapper).trigger('click')
 
     expect(wrapper.emitted('connect')).toEqual([
-      [{ baseUrl: 'http://localhost:8001', auth: { token: 'secret-token', username: undefined, password: undefined } }],
+      [{ baseUrl: 'http://localhost:8001', auth: { username: 'admin', password: 'hunter2' } }],
     ])
   })
 
-  it('trims the base URL and emits undefined auth fields when everything else is left blank', async () => {
+  it('trims the base URL and emits undefined username/password when left blank', async () => {
     const wrapper = mount(KongConnectForm, { props: { connecting: false } })
 
     await wrapper.find('input[placeholder="http://localhost:8001"]').setValue('  http://localhost:8001  ')
     await findConnectButton(wrapper).trigger('click')
 
     expect(wrapper.emitted('connect')).toEqual([
-      [{ baseUrl: 'http://localhost:8001', auth: { token: undefined, username: undefined, password: undefined } }],
-    ])
-  })
-
-  it('emits username and password when entered, alongside the token', async () => {
-    const wrapper = mount(KongConnectForm, { props: { connecting: false } })
-
-    await wrapper.find('input[placeholder="http://localhost:8001"]').setValue('http://localhost:8001')
-    await wrapper.find('input[placeholder="Username"]').setValue('admin')
-    await wrapper.findAll('input[type="password"]')[1].setValue('hunter2')
-    await findConnectButton(wrapper).trigger('click')
-
-    expect(wrapper.emitted('connect')).toEqual([
-      [
-        {
-          baseUrl: 'http://localhost:8001',
-          auth: { token: undefined, username: 'admin', password: 'hunter2' },
-        },
-      ],
+      [{ baseUrl: 'http://localhost:8001', auth: { username: undefined, password: undefined } }],
     ])
   })
 
