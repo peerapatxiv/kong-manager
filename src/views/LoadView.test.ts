@@ -1,11 +1,14 @@
 // @vitest-environment jsdom
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
 import { createRouter, createMemoryHistory } from 'vue-router'
-import { mount } from '@vue/test-utils'
+import { mount, flushPromises } from '@vue/test-utils'
 import LoadView from './LoadView.vue'
 import FileDropZone from '../components/FileDropZone.vue'
 import { useConfigStore } from '../stores/config'
+import * as kongAdminApi from '../lib/kongAdminApi'
+
+vi.mock('../lib/kongAdminApi')
 
 function testRouter() {
   return createRouter({
@@ -34,6 +37,7 @@ plugins:
 describe('LoadView', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
+    vi.clearAllMocks()
   })
 
   it('shows the summary card and no error banner after a successful load', async () => {
@@ -65,6 +69,39 @@ describe('LoadView', () => {
 
     expect(wrapper.text()).toContain('Failed to parse YAML')
     expect(wrapper.find('.border-red-300').exists()).toBe(true)
+    expect(wrapper.text()).not.toContain('Loaded:')
+  })
+
+  it('connects to a live Kong Admin API and shows it as the loaded source', async () => {
+    vi.mocked(kongAdminApi.getConfig).mockResolvedValue({
+      _format_version: '3.0',
+      services: [{ host: 'live.internal', name: 'svc-live' }],
+    })
+    const wrapper = mount(LoadView, { global: { plugins: [testRouter()] } })
+
+    await wrapper.find('input[placeholder="http://localhost:8001"]').setValue('http://localhost:8001')
+    await wrapper
+      .findAll('button')
+      .find((b) => b.text() === 'Connect')!
+      .trigger('click')
+    await flushPromises()
+
+    expect(wrapper.text()).toContain('Loaded: Kong Admin @ http://localhost:8001')
+    expect(wrapper.text()).toContain('Services: 1')
+  })
+
+  it('shows a connect error banner instead of crashing when the connection fails', async () => {
+    vi.mocked(kongAdminApi.getConfig).mockRejectedValue(new Error('connection refused'))
+    const wrapper = mount(LoadView, { global: { plugins: [testRouter()] } })
+
+    await wrapper.find('input[placeholder="http://localhost:8001"]').setValue('http://localhost:8001')
+    await wrapper
+      .findAll('button')
+      .find((b) => b.text() === 'Connect')!
+      .trigger('click')
+    await flushPromises()
+
+    expect(wrapper.text()).toContain('connection refused')
     expect(wrapper.text()).not.toContain('Loaded:')
   })
 })

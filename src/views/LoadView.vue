@@ -2,12 +2,15 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import FileDropZone from '../components/FileDropZone.vue'
+import KongConnectForm from '../components/KongConnectForm.vue'
 import StatTile from '../components/shared/StatTile.vue'
 import { useConfigStore } from '../stores/config'
 
 const configStore = useConfigStore()
 const router = useRouter()
 const errorMessage = ref<string | null>(null)
+const connectErrorMessage = ref<string | null>(null)
+const connecting = ref(false)
 
 function onFileSelected({ fileName, text }: { fileName: string; text: string }) {
   try {
@@ -15,6 +18,18 @@ function onFileSelected({ fileName, text }: { fileName: string; text: string }) 
     errorMessage.value = null
   } catch (err) {
     errorMessage.value = err instanceof Error ? err.message : String(err)
+  }
+}
+
+async function onConnect({ baseUrl, token }: { baseUrl: string; token: string | undefined }) {
+  connecting.value = true
+  connectErrorMessage.value = null
+  try {
+    await configStore.loadFromKongAdmin(baseUrl, token)
+  } catch (err) {
+    connectErrorMessage.value = err instanceof Error ? err.message : String(err)
+  } finally {
+    connecting.value = false
   }
 }
 </script>
@@ -30,6 +45,15 @@ function onFileSelected({ fileName, text }: { fileName: string; text: string }) 
 
     <div v-if="errorMessage" class="rounded-xl border border-red-300 bg-red-50 p-3.5 text-sm text-red-800 dark:border-red-900 dark:bg-red-950/50 dark:text-red-300">
       Failed to parse YAML: {{ errorMessage }}
+    </div>
+
+    <KongConnectForm :connecting="connecting" @connect="onConnect" />
+
+    <div
+      v-if="connectErrorMessage"
+      class="rounded-xl border border-red-300 bg-red-50 p-3.5 text-sm text-red-800 dark:border-red-900 dark:bg-red-950/50 dark:text-red-300"
+    >
+      Failed to connect to Kong Admin API: {{ connectErrorMessage }}
     </div>
 
     <div v-if="!configStore.isLoaded" class="grid grid-cols-1 gap-3 sm:grid-cols-3">
