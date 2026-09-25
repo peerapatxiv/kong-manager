@@ -20,7 +20,7 @@ const pageTitle = computed(() => {
 </script>
 
 <template>
-  <div class="flex min-h-screen bg-bg">
+  <div class="flex h-screen bg-bg">
     <div
       v-if="mobileNavOpen"
       class="fixed inset-0 z-30 bg-black/50 md:hidden"
