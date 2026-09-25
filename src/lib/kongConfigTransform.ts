@@ -15,6 +15,11 @@ function asArray(value: unknown): Record<string, unknown>[] {
   return Array.isArray(value) ? (value as Record<string, unknown>[]) : []
 }
 
+// Kong entities that nest under a consumer but whose collection name doesn't
+// end in "_credentials" (keyauth_credentials, basicauth_credentials, etc.
+// already match that suffix and need no special-casing here).
+const CONSUMER_CHILD_EXTRA_KEYS = new Set(['acls', 'jwt_secrets'])
+
 // Kong's GET /config returns routes/credentials/scoped-plugins flattened at
 // the top level, each referencing its parent by a bare id string. This
 // rebuilds the nested authoring shape (services[].routes,
@@ -47,7 +52,7 @@ export function denormalizeKongConfig(expanded: Record<string, unknown>): KongCo
 
   const credentialListKeys: string[] = []
   for (const [key, value] of Object.entries(expanded)) {
-    if (!key.endsWith('_credentials') || !Array.isArray(value)) continue
+    if ((!key.endsWith('_credentials') && !CONSUMER_CHILD_EXTRA_KEYS.has(key)) || !Array.isArray(value)) continue
     credentialListKeys.push(key)
     for (const raw of value as Record<string, unknown>[]) {
       const owner = typeof raw.consumer === 'string' ? consumerById.get(raw.consumer) : undefined
@@ -63,14 +68,24 @@ export function denormalizeKongConfig(expanded: Record<string, unknown>): KongCo
     const plugin = stripKeys(raw, ['service', 'route', 'consumer']) as KongPlugin
     const routeOwner = typeof raw.route === 'string' ? routeById.get(raw.route) : undefined
     const serviceOwner = typeof raw.service === 'string' ? serviceById.get(raw.service) : undefined
+    const consumerOwner = typeof raw.consumer === 'string' ? consumerById.get(raw.consumer) : undefined
+    const hasScopeRef = raw.service != null || raw.route != null || raw.consumer != null
+
     if (routeOwner) {
       routeOwner.plugins = [...(routeOwner.plugins ?? []), plugin]
     } else if (serviceOwner) {
       const existing = (serviceOwner.plugins as KongPlugin[] | undefined) ?? []
       serviceOwner.plugins = [...existing, plugin]
-    } else {
+    } else if (consumerOwner) {
+      const existing = (consumerOwner.plugins as KongPlugin[] | undefined) ?? []
+      consumerOwner.plugins = [...existing, plugin]
+    } else if (!hasScopeRef) {
       globalPlugins.push(plugin)
     }
+    // else: the plugin had a service/route/consumer reference that didn't
+    // resolve to a known entity (stale data) — dropped rather than silently
+    // widening its enforcement scope to every request by treating it as
+    // global, consistent with how an orphaned credential is dropped above.
   }
 
   const denormalized: KongConfig = {

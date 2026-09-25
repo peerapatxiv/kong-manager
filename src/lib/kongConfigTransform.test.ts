@@ -24,6 +24,8 @@ const EXPANDED = {
     { id: 'cred-1', consumer: 'cons-1', key: 'abc123key', created_at: 1 },
     { id: 'cred-orphan', consumer: 'cons-missing', key: 'orphan-key', created_at: 1 },
   ],
+  acls: [{ id: 'acl-1', consumer: 'cons-1', group: 'admins', created_at: 1 }],
+  jwt_secrets: [{ id: 'jwt-1', consumer: 'cons-1', key: 'alice-issuer', secret: 'shh', created_at: 1 }],
   plugins: [
     {
       id: 'plug-global',
@@ -49,6 +51,26 @@ const EXPANDED = {
       id: 'plug-service',
       name: 'cors',
       service: 'svc-2',
+      route: null,
+      consumer: null,
+      config: {},
+      created_at: 1,
+      updated_at: 1,
+    },
+    {
+      id: 'plug-consumer',
+      name: 'rate-limiting',
+      service: null,
+      route: null,
+      consumer: 'cons-1',
+      config: { minute: 5 },
+      created_at: 1,
+      updated_at: 1,
+    },
+    {
+      id: 'plug-orphan-scope',
+      name: 'request-termination',
+      service: 'svc-missing-plugin',
       route: null,
       consumer: null,
       config: {},
@@ -108,6 +130,37 @@ describe('denormalizeKongConfig', () => {
 
     const reporting = config.services!.find((s) => s.name === 'reporting-service')!
     expect(reporting.plugins).toEqual([expect.objectContaining({ name: 'cors' })])
+  })
+
+  it('nests a consumer-scoped plugin under its consumer instead of treating it as global', () => {
+    const config = denormalizeKongConfig(EXPANDED)
+
+    const alice = config.consumers!.find((c) => c.username === 'alice')!
+    expect((alice.plugins as unknown[]) ?? []).toEqual([
+      expect.objectContaining({ name: 'rate-limiting', config: { minute: 5 } }),
+    ])
+    // the global rate-limiting plugin must still be the only one in the global list —
+    // the consumer-scoped one must not also appear there.
+    expect(config.plugins).toEqual([expect.objectContaining({ name: 'rate-limiting', config: { minute: 100 } })])
+  })
+
+  it('drops a plugin whose scope reference does not resolve, instead of silently making it global', () => {
+    const config = denormalizeKongConfig(EXPANDED)
+
+    const pluginNames = (config.plugins ?? []).map((p) => p.name)
+    expect(pluginNames).not.toContain('request-termination')
+    const allServicePlugins = config.services!.flatMap((s) => (s.plugins as unknown[] | undefined) ?? [])
+    expect(allServicePlugins).toHaveLength(1)
+  })
+
+  it('nests acls and jwt_secrets under their owning consumer and strips the top-level keys', () => {
+    const config = denormalizeKongConfig(EXPANDED)
+
+    const alice = config.consumers!.find((c) => c.username === 'alice')!
+    expect(alice.acls).toEqual([{ group: 'admins' }])
+    expect(alice.jwt_secrets).toEqual([{ key: 'alice-issuer', secret: 'shh' }])
+    expect(config.acls).toBeUndefined()
+    expect(config.jwt_secrets).toBeUndefined()
   })
 
   it('preserves unrecognized top-level fields untouched', () => {
