@@ -1,6 +1,7 @@
 node_modules/
 dist/
 .dist/
+.superpowers/
 *.log
 *.tsbuildinfo
 vite.config.d.ts
