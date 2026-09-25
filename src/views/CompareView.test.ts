@@ -24,6 +24,14 @@ describe('CompareView', () => {
     expect(wrapper.text()).not.toContain('added')
   })
 
+  it('fills the full content width instead of a narrow centered column', () => {
+    const wrapper = mount(CompareView)
+    const root = wrapper.element as HTMLElement
+
+    expect(root.classList.contains('mx-auto')).toBe(false)
+    expect(Array.from(root.classList).some((c) => c.startsWith('max-w-'))).toBe(false)
+  })
+
   it('shows a parse-error banner instead of crashing on a bad File B', async () => {
     const wrapper = mount(CompareView)
     await wrapper.findComponent(FileDropZone).vm.$emit('file-selected', {

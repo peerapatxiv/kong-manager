@@ -78,6 +78,14 @@ describe('LoadView', () => {
     expect(wrapper.text()).not.toContain('Loaded:')
   })
 
+  it('fills the full content width instead of a narrow centered column', () => {
+    const wrapper = mount(LoadView, { global: { plugins: [testRouter()] } })
+    const root = wrapper.element as HTMLElement
+
+    expect(root.classList.contains('mx-auto')).toBe(false)
+    expect(Array.from(root.classList).some((c) => c.startsWith('max-w-'))).toBe(false)
+  })
+
   it('connects to a live Kong Admin API and shows it as the loaded source', async () => {
     vi.mocked(kongAdminApi.getConfig).mockResolvedValue({
       _format_version: '3.0',
