@@ -108,7 +108,12 @@ function onSelectSaved({ baseUrl, username, password }: { baseUrl: string; usern
         </template>
 
         <template v-else>
-          <FileDropZone label="Load your kong-config.yaml" @file-selected="onFileSelected" />
+          <div class="card space-y-4 border-t-2 border-t-accent p-5">
+            <FileDropZone label="Load your kong-config.yaml" @file-selected="onFileSelected" />
+            <p class="field-help">
+              Runs entirely in your browser — the file and its secrets never leave your machine.
+            </p>
+          </div>
 
           <div v-if="errorMessage" class="rounded-xl border border-red-300 bg-red-50 p-3.5 text-sm text-red-800 dark:border-red-900 dark:bg-red-950/50 dark:text-red-300">
             Failed to parse YAML: {{ errorMessage }}
@@ -116,7 +121,7 @@ function onSelectSaved({ baseUrl, username, password }: { baseUrl: string; usern
         </template>
       </div>
 
-      <div v-if="!configStore.isLoaded" class="space-y-3">
+      <div v-if="!configStore.isLoaded" class="space-y-3 lg:mt-14">
         <SavedConnectionsList v-if="mode === 'connect'" @connect="onSelectSaved" />
 
         <div class="card space-y-1.5 p-3">
