@@ -18,9 +18,10 @@ existing Browse/Edit/Compare/Diff code.
 for the Kong Admin API. It confirms this is a known, well-scoped
 feature category (a GUI for Kong administration) and validates the
 overall direction; its own docs are too sparse to borrow concrete
-wire-format details from, so those are taken from Kong's own DB-less
-`/config` contract instead and confirmed against a live instance during
-implementation (see Testing plan).
+wire-format details from, so those were verified directly against a
+real Kong 3.7.1 DB-less container instead of assumed from
+documentation (CORS behavior, `GET`/`POST /config` shapes — see
+Architecture).
 
 ## Non-goals
 
@@ -28,10 +29,6 @@ implementation (see Testing plan).
   CRUD against `/services`, `/routes`, `/consumers`, etc.). This
   targets DB-less mode only, matching the declarative-YAML model the
   app is already built around.
-- No production reverse-proxy or CORS story. The Admin API connection
-  is a **dev-only** feature, used via `npm run dev`, routed through a
-  Vite dev-server proxy. It is not expected to work from a built/static
-  deployment of this app.
 - No saved/persisted connection profiles. Base URL and token are
   session-only, in memory (Pinia state), never written to
   localStorage or disk — consistent with the app's existing
@@ -45,38 +42,76 @@ implementation (see Testing plan).
 
 ## Architecture
 
+- **CORS — verified, no proxy needed.** Kong's Admin API sends
+  permissive CORS headers by default: `Access-Control-Allow-Origin`
+  echoes the request's `Origin`, `Access-Control-Allow-Credentials:
+  true`, and preflight `OPTIONS` responses echo back whatever
+  `Access-Control-Request-Headers` was asked for (verified against a
+  real Kong 3.7.1 DB-less container — a preflight requesting
+  `kong-admin-token` gets it back in `Access-Control-Allow-Headers`,
+  and the actual cross-origin `GET`/`POST` succeed). The browser can
+  therefore call the Admin API's base URL directly; no Vite dev-proxy,
+  no dev-only restriction. If an operator has hardened CORS on their
+  own Admin API, a connect attempt fails like any other network error
+  (see Error handling) — that's a property of their deployment, not
+  something this feature needs to route around.
+
 - **`src/lib/kongAdminApi.ts`** — a small fetch-based client,
   independent of Vue, mirroring the existing `lib/yaml.ts` /
   `lib/diff.ts` pattern (pure functions, unit-testable in isolation):
-  - `getConfig(baseUrl, token?)`: `GET {baseUrl}/config`, attaches
-    `Kong-Admin-Token` header when `token` is set, returns the parsed
-    `KongConfig`. Non-2xx or network errors throw with a message
-    surfaced verbatim to the UI (same pattern as YAML parse errors
-    today).
+  - `getConfig(baseUrl, token?)`: `GET {baseUrl}/config` directly,
+    attaches a `Kong-Admin-Token` header when `token` is set. Kong
+    responds `{"config": "<yaml string>"}` — the YAML inside is
+    Kong's **expanded/flattened** internal representation, not the
+    nested authoring shape (verified: routes and credentials sit at
+    the top level referencing their parent by id, e.g. `route.service
+    = {id: "<uuid>"}`, rather than nested under `services[].routes`).
+    `getConfig` parses that inner YAML with the existing
+    `parseKongConfig`-equivalent loader and passes it through
+    `denormalizeKongConfig` (new, below) to produce the nested
+    `KongConfig` shape the rest of the app already understands.
+    Non-2xx or network errors throw with a message surfaced verbatim
+    to the UI (same pattern as YAML parse errors today).
   - `setConfig(baseUrl, config, token?)`: serializes `config` via the
-    existing `serializeKongConfig` and `POST`s it to `{baseUrl}/config`
-    per Kong's documented DB-less config-replace contract. Throws on
-    non-2xx with the response body surfaced to the UI.
-  - Both calls go through the dev-proxy path (below), not directly to
-    `baseUrl`, so the browser never makes a genuine cross-origin
-    request.
+    **existing, unmodified** `serializeKongConfig` (no transform
+    needed for push — verified: `POST {baseUrl}/config` with a plain
+    nested-shape YAML string, wrapped as `{"config": "<yaml
+    string>"}` and sent as `application/json`, returns `201 Created`
+    and Kong correctly resolves the nested structure into its
+    internal model). Throws on non-2xx with the response body
+    surfaced to the UI.
 
-- **Dev-server proxy (`vite.config.ts`)** — Kong's Admin API does not
-  send CORS headers, and the target host is chosen live in the app UI
-  rather than fixed at build time. The proxy is configured with a
-  `router` function (Vite's proxy is `http-proxy-middleware` under the
-  hood, which supports this): the browser always calls a fixed local
-  path, `/kong-admin-proxy/*`, carrying the user-entered base URL in a
-  request header (`X-Kong-Admin-Target`); the proxy's `router` reads
-  that header and returns it as the real target for that request, and
-  a `pathRewrite` strips the `/kong-admin-proxy` prefix. This requires
-  no restart when switching Kong instances and keeps all of this
-  inside dev-server config — no app server code to maintain, no change
-  to the "runs entirely in the browser" model for anything other than
-  this optional dev-only bridge.
-  - `kongAdminApi.ts` therefore calls `/kong-admin-proxy/config` with
-    the `X-Kong-Admin-Target` header set to the user's entered base
-    URL, not the base URL directly.
+- **`src/lib/kongConfigTransform.ts`** (new) — pure function
+  `denormalizeKongConfig(expanded: Record<string, unknown>):
+  KongConfig`, unit-testable in isolation like `diff.ts`:
+  - Groups top-level `routes` into their owning `services[].routes` by
+    matching `route.service.id === service.id`; routes whose service
+    id doesn't match any service go into a top-level `routes` array
+    (unmatched, preserved rather than dropped).
+  - Groups top-level `keyauth_credentials` / `basicauth_credentials`
+    (and any other `*_credentials` collection present) into their
+    owning `consumers[].<type>_credentials` by matching
+    `credential.consumer.id === consumer.id`.
+  - Groups top-level `plugins` into `services[].plugins` or
+    `services[].routes[].plugins` when their `service`/`route`
+    reference matches an entity being assembled; plugins with no
+    `service`, `route`, or `consumer` reference stay in the top-level
+    `plugins` array (global plugins), matching today's model.
+  - Strips the now-redundant back-reference field (`service`, `route`,
+    `consumer`) plus Kong's bookkeeping fields (`id`, `created_at`,
+    `updated_at`) from each entity — these are server-generated, never
+    hand-authored, and would otherwise show up as pure noise in
+    Compare when diffing a live pull against a hand-authored file.
+    Everything else (including arbitrary plugin `config` contents) is
+    passed through untouched, preserving round-trip fidelity for
+    anything the transform doesn't know about.
+  - **Known limitation**: Kong's expanded form always includes fields
+    a hand-authored file typically omits (e.g. explicit `tags: null`
+    vs. the key being absent). These are left as-is rather than
+    scrubbed — Compare may show a handful of such cosmetic
+    added/removed entries when diffing a live pull against a
+    hand-written file. Called out here so it isn't a surprise, same
+    spirit as the existing comment-loss limitation.
 
 - **Config store (`src/stores/config.ts`)** — `LoadedFile` is
   generalized to carry an origin discriminant instead of a bare
@@ -138,8 +173,9 @@ implementation (see Testing plan).
 ## Error handling
 
 - Connect failures (network error, non-2xx, invalid token, unreachable
-  proxy target): inline error banner on Load view, never crashes the
-  app — same posture as existing YAML parse failures.
+  host, CORS rejection from a hardened Admin API): inline error banner
+  on Load view, never crashes the app — same posture as existing YAML
+  parse failures.
 - Push failures: inline error in the Push modal, local state untouched.
 - A successful `GET /config` that lacks the expected top-level Kong
   keys is treated like a structurally-empty-but-valid file today:
@@ -154,28 +190,36 @@ implementation (see Testing plan).
 - The Admin Token field reuses the existing `SecretField` masking
   component, consistent with how credential secrets are already
   handled in Browse/Compare.
-- The dev-proxy bridge only exists under `npm run dev`; it is not part
-  of the production build output, so it doesn't expand the attack
-  surface of a deployed instance of this app (there is no deployed
-  instance in this feature's scope — see Non-goals).
+- Requests go straight from the browser to the Admin API base URL the
+  user enters — there is no intermediary of any kind, so the token
+  never transits anything but the user's own machine and the Kong
+  instance they pointed at.
 
 ## Testing plan
 
 - **Vitest unit tests**:
+  - `kongConfigTransform.ts`: `denormalizeKongConfig` — routes grouped
+    under the right service (and left unmatched when their `service.id`
+    doesn't resolve), credentials grouped under the right consumer,
+    plugins routed to global/service/route scope correctly, bookkeeping
+    fields (`id`, `created_at`, `updated_at`, back-references) stripped,
+    unrelated fields passed through untouched.
   - `kongAdminApi.ts`: request construction (URL, headers, method,
-    body), success parsing, and error surfacing for both `getConfig`
-    and `setConfig`, against a mocked `fetch`.
+    body), response parsing (including the `{"config": "<yaml
+    string>"}` envelope and the denormalize call), and error surfacing
+    for both `getConfig` and `setConfig`, against a mocked `fetch`.
   - New store actions (`loadFromKongAdmin`, `pushToKongAdmin`):
     correct state transitions on success, no state mutation on
     failure.
-- **Manual verification**: against a real DB-less Kong instance (e.g.
-  a local Docker Kong container) — connect, confirm the live config
-  loads into Browse correctly, edit a field, push back, then re-fetch
-  independently (e.g. `curl {baseUrl}/config`) to confirm the change
-  landed. This step also confirms the exact `/config` wire format
-  (JSON vs. YAML body, field naming) against the real Admin API rather
-  than assumed from documentation, and any adjustment needed to
-  `kongAdminApi.ts` is made at that point.
+- **Manual verification**: against a real DB-less Kong instance (a
+  local Docker container, e.g. `kong:3.7` with `KONG_DATABASE=off`,
+  `KONG_DECLARATIVE_CONFIG` pointed at one of the `fixtures/*.yaml`
+  files, `KONG_ADMIN_LISTEN=0.0.0.0:8001` — the exact setup used to
+  verify the wire format for this spec) — connect from the running
+  app, confirm the live config loads into Browse correctly (services,
+  routes under the right service, consumer credentials under the right
+  consumer), edit a field, push back, then re-fetch independently
+  (`curl {baseUrl}/config`) to confirm the change landed.
 
 ## Project structure (additions)
 
@@ -183,6 +227,7 @@ implementation (see Testing plan).
 src/
   lib/
     kongAdminApi.ts          # GET/POST /config client
+    kongConfigTransform.ts   # denormalizeKongConfig: expanded -> nested KongConfig
   stores/
     config.ts                # LoadedSource origin discriminant, new actions
   components/
@@ -191,5 +236,4 @@ src/
     PushToKongModal.vue      # parallel to ExportModal.vue
   views/
     LoadView.vue             # + KongConnectForm section
-vite.config.ts                # + dynamic /kong-admin-proxy router
 ```
