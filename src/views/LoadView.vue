@@ -37,7 +37,7 @@ async function onConnect({ baseUrl, auth }: { baseUrl: string; auth: KongAdminAu
 </script>
 
 <template>
-  <div class="mx-auto max-w-3xl space-y-6 p-4 sm:p-8">
+  <div class="mx-auto max-w-3xl space-y-4 p-4 sm:p-6">
     <div>
       <h2 class="text-xl font-bold text-ink">Load a Kong declarative config</h2>
       <p class="mt-1 text-sm text-ink-muted">
@@ -88,9 +88,9 @@ async function onConnect({ baseUrl, auth }: { baseUrl: string; auth: KongAdminAu
     </template>
 
     <div v-if="!configStore.isLoaded" class="grid grid-cols-1 gap-3 sm:grid-cols-3">
-      <div class="card space-y-2 p-4">
-        <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-accent/15 text-accent-secondary">
-          <svg viewBox="0 0 20 20" fill="none" class="h-4 w-4">
+      <div class="card space-y-1.5 p-3">
+        <div class="flex h-7 w-7 items-center justify-center rounded-lg bg-accent/15 text-accent-secondary">
+          <svg viewBox="0 0 20 20" fill="none" class="h-3.5 w-3.5">
             <rect x="3" y="4" width="14" height="3.2" rx="1" stroke="currentColor" stroke-width="1.5" />
             <rect x="3" y="9" width="14" height="3.2" rx="1" stroke="currentColor" stroke-width="1.5" />
             <rect x="3" y="14" width="8" height="3.2" rx="1" stroke="currentColor" stroke-width="1.5" />
@@ -99,9 +99,9 @@ async function onConnect({ baseUrl, auth }: { baseUrl: string; auth: KongAdminAu
         <h3 class="text-sm font-medium text-ink">Browse</h3>
         <p class="text-xs text-ink-muted">Inspect services, routes, consumers, and global plugins.</p>
       </div>
-      <div class="card space-y-2 p-4">
-        <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-accent/15 text-accent-secondary">
-          <svg viewBox="0 0 20 20" fill="none" class="h-4 w-4">
+      <div class="card space-y-1.5 p-3">
+        <div class="flex h-7 w-7 items-center justify-center rounded-lg bg-accent/15 text-accent-secondary">
+          <svg viewBox="0 0 20 20" fill="none" class="h-3.5 w-3.5">
             <path d="M4 6h9M4 10h6M4 14h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
             <path d="M13 13l3 3 3-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
           </svg>
@@ -109,9 +109,9 @@ async function onConnect({ baseUrl, auth }: { baseUrl: string; auth: KongAdminAu
         <h3 class="text-sm font-medium text-ink">Edit</h3>
         <p class="text-xs text-ink-muted">Use guided forms, or drop into raw YAML with syntax highlighting.</p>
       </div>
-      <div class="card space-y-2 p-4">
-        <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-accent/15 text-accent-secondary">
-          <svg viewBox="0 0 20 20" fill="none" class="h-4 w-4">
+      <div class="card space-y-1.5 p-3">
+        <div class="flex h-7 w-7 items-center justify-center rounded-lg bg-accent/15 text-accent-secondary">
+          <svg viewBox="0 0 20 20" fill="none" class="h-3.5 w-3.5">
             <path d="M7 3v14M7 3L4 6M7 3l3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
             <path d="M13 17V3M13 17l3-3M13 17l-3-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
           </svg>

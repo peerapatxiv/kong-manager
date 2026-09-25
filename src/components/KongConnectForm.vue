@@ -26,7 +26,7 @@ function submit() {
 </script>
 
 <template>
-  <div class="card space-y-4 p-4">
+  <div class="card space-y-3 p-4">
     <label class="block">
       <span class="field-label">Admin API base URL</span>
       <input
@@ -38,13 +38,13 @@ function submit() {
       />
     </label>
 
-    <div class="space-y-3 border-t border-border pt-3">
+    <div class="space-y-2 border-t border-border pt-2.5">
       <p class="section-heading">Authentication (optional)</p>
-      <label class="block">
-        <span class="field-label">Admin token</span>
-        <SecretField v-model="token" />
-      </label>
-      <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+      <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <label class="block">
+          <span class="field-label">Admin token</span>
+          <SecretField v-model="token" />
+        </label>
         <label class="block">
           <span class="field-label">Username</span>
           <input v-model="username" type="text" placeholder="Username" class="input-field" @keyup.enter="submit" />
@@ -57,7 +57,7 @@ function submit() {
       <p class="field-help">Not saved — you'll re-enter these next time you connect.</p>
     </div>
 
-    <div class="flex justify-end pt-1">
+    <div class="flex justify-end">
       <button
         type="button"
         class="btn-primary w-full sm:w-auto"
