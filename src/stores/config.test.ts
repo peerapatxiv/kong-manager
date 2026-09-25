@@ -1,7 +1,11 @@
 // src/stores/config.test.ts
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
 import { useConfigStore } from './config'
+import * as kongAdminApi from '../lib/kongAdminApi'
+import type { KongConfig } from '../types/kong'
+
+vi.mock('../lib/kongAdminApi')
 
 const SAMPLE = `_format_version: "3.0"
 services:
@@ -20,6 +24,7 @@ plugins:
 describe('useConfigStore', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
+    vi.clearAllMocks()
   })
 
   it('starts empty and unloaded', () => {
@@ -70,5 +75,73 @@ describe('useConfigStore', () => {
 
     store.loadPrimary('sample.yaml', SAMPLE)
     expect(store.compareTarget).toBeNull()
+  })
+
+  describe('Kong Admin API integration', () => {
+    it('loads a config pulled from a live Kong Admin API as the primary source', async () => {
+      const store = useConfigStore()
+      const pulled: KongConfig = { _format_version: '3.0', services: [{ host: 'live.internal', name: 'svc-live' }] }
+      vi.mocked(kongAdminApi.getConfig).mockResolvedValue(pulled)
+
+      await store.loadFromKongAdmin('http://localhost:8001', 'token-123')
+
+      expect(kongAdminApi.getConfig).toHaveBeenCalledWith('http://localhost:8001', 'token-123')
+      expect(store.isLoaded).toBe(true)
+      expect(store.primary!.origin).toBe('kong-admin')
+      expect(store.primary!.baseUrl).toBe('http://localhost:8001')
+      expect(store.primary!.fileName).toBe('Kong Admin @ http://localhost:8001')
+      expect(store.primary!.config).toEqual(pulled)
+    })
+
+    it('clears a stale compareTarget when loading from Kong Admin API', async () => {
+      const store = useConfigStore()
+      store.loadPrimary('sample.yaml', SAMPLE)
+      store.loadCompareTarget('other.yaml', SAMPLE)
+      vi.mocked(kongAdminApi.getConfig).mockResolvedValue({ _format_version: '3.0' })
+
+      await store.loadFromKongAdmin('http://localhost:8001')
+
+      expect(store.compareTarget).toBeNull()
+    })
+
+    it('propagates getConfig errors instead of silently loading nothing', async () => {
+      const store = useConfigStore()
+      vi.mocked(kongAdminApi.getConfig).mockRejectedValue(new Error('connection refused'))
+
+      await expect(store.loadFromKongAdmin('http://localhost:8001')).rejects.toThrow('connection refused')
+      expect(store.isLoaded).toBe(false)
+    })
+
+    it('pushes the current in-memory config to the given Kong Admin API', async () => {
+      const store = useConfigStore()
+      store.loadPrimary('kong-config.yaml', SAMPLE)
+      store.primary!.config.services![0].host = 'edited.internal'
+      vi.mocked(kongAdminApi.setConfig).mockResolvedValue(undefined)
+
+      await store.pushToKongAdmin('http://localhost:8001', 'token-123')
+
+      expect(kongAdminApi.setConfig).toHaveBeenCalledWith(
+        'http://localhost:8001',
+        expect.objectContaining({
+          services: expect.arrayContaining([expect.objectContaining({ host: 'edited.internal' })]),
+        }),
+        'token-123',
+      )
+    })
+
+    it('throws and leaves state untouched when pushing with nothing loaded', async () => {
+      const store = useConfigStore()
+
+      await expect(store.pushToKongAdmin('http://localhost:8001')).rejects.toThrow('No config loaded')
+      expect(kongAdminApi.setConfig).not.toHaveBeenCalled()
+    })
+
+    it('marks file-loaded configs with origin "file" and no baseUrl', () => {
+      const store = useConfigStore()
+      store.loadPrimary('sample.yaml', SAMPLE)
+
+      expect(store.primary!.origin).toBe('file')
+      expect(store.primary!.baseUrl).toBeUndefined()
+    })
   })
 })
