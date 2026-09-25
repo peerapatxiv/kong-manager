@@ -4,10 +4,12 @@ import { useRoute } from 'vue-router'
 import { useConfigStore } from '../../stores/config'
 import AppSidebar from './AppSidebar.vue'
 import ExportModal from '../ExportModal.vue'
+import PushToKongModal from '../PushToKongModal.vue'
 
 const configStore = useConfigStore()
 const route = useRoute()
 const exportModalOpen = ref(false)
+const pushModalOpen = ref(false)
 const mobileNavOpen = ref(false)
 
 const pageTitle = computed(() => {
@@ -44,7 +46,10 @@ const pageTitle = computed(() => {
           </svg>
         </button>
         <h1 class="text-lg font-bold text-ink">{{ pageTitle }}</h1>
-        <div class="ml-auto">
+        <div class="ml-auto flex gap-2">
+          <button v-if="configStore.isLoaded" type="button" class="btn-secondary" @click="pushModalOpen = true">
+            Push to Kong
+          </button>
           <button v-if="configStore.isLoaded" type="button" class="btn-primary" @click="exportModalOpen = true">
             Generate new config
           </button>
@@ -56,5 +61,6 @@ const pageTitle = computed(() => {
     </div>
 
     <ExportModal :open="exportModalOpen" @close="exportModalOpen = false" />
+    <PushToKongModal :open="pushModalOpen" @close="pushModalOpen = false" />
   </div>
 </template>
