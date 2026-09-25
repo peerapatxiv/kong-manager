@@ -36,7 +36,7 @@ async function onConnect({ baseUrl, auth }: { baseUrl: string; auth: KongAdminAu
 </script>
 
 <template>
-  <div class="mx-auto max-w-3xl space-y-6 p-8">
+  <div class="mx-auto max-w-3xl space-y-6 p-4 sm:p-8">
     <div>
       <h2 class="text-xl font-bold text-ink">Load a Kong declarative config</h2>
       <p class="mt-1 text-sm text-ink-muted">Drop in a YAML file to browse, edit, and compare its entities.</p>
@@ -46,6 +46,12 @@ async function onConnect({ baseUrl, auth }: { baseUrl: string; auth: KongAdminAu
 
     <div v-if="errorMessage" class="rounded-xl border border-red-300 bg-red-50 p-3.5 text-sm text-red-800 dark:border-red-900 dark:bg-red-950/50 dark:text-red-300">
       Failed to parse YAML: {{ errorMessage }}
+    </div>
+
+    <div class="flex items-center gap-3 text-xs font-medium uppercase tracking-wide text-ink-muted">
+      <span class="h-px flex-1 bg-border" />
+      or
+      <span class="h-px flex-1 bg-border" />
     </div>
 
     <KongConnectForm :connecting="connecting" @connect="onConnect" />

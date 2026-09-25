@@ -76,7 +76,12 @@ function submit() {
     </div>
 
     <div class="flex justify-end pt-1">
-      <button type="button" class="btn-secondary" :disabled="connecting || !baseUrl.trim()" @click="submit">
+      <button
+        type="button"
+        class="btn-secondary w-full sm:w-auto"
+        :disabled="connecting || !baseUrl.trim()"
+        @click="submit"
+      >
         {{ connecting ? 'Connecting…' : 'Connect' }}
       </button>
     </div>
