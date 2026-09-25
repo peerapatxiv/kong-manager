@@ -64,8 +64,9 @@ Architecture).
     responds `{"config": "<yaml string>"}` — the YAML inside is
     Kong's **expanded/flattened** internal representation, not the
     nested authoring shape (verified: routes and credentials sit at
-    the top level referencing their parent by id, e.g. `route.service
-    = {id: "<uuid>"}`, rather than nested under `services[].routes`).
+    the top level, each referencing its parent by a bare id string —
+    e.g. a route has `service: "<uuid>"` — rather than being nested
+    under `services[].routes`).
     `getConfig` parses that inner YAML with the existing
     `parseKongConfig`-equivalent loader and passes it through
     `denormalizeKongConfig` (new, below) to produce the nested
@@ -85,18 +86,20 @@ Architecture).
   `denormalizeKongConfig(expanded: Record<string, unknown>):
   KongConfig`, unit-testable in isolation like `diff.ts`:
   - Groups top-level `routes` into their owning `services[].routes` by
-    matching `route.service.id === service.id`; routes whose service
-    id doesn't match any service go into a top-level `routes` array
-    (unmatched, preserved rather than dropped).
+    matching `route.service === service.id` (bare id-string
+    reference); routes whose `service` id doesn't match any service go
+    into a top-level `routes` array (unmatched, preserved rather than
+    dropped).
   - Groups top-level `keyauth_credentials` / `basicauth_credentials`
     (and any other `*_credentials` collection present) into their
     owning `consumers[].<type>_credentials` by matching
-    `credential.consumer.id === consumer.id`.
+    `credential.consumer === consumer.id`.
   - Groups top-level `plugins` into `services[].plugins` or
     `services[].routes[].plugins` when their `service`/`route`
-    reference matches an entity being assembled; plugins with no
-    `service`, `route`, or `consumer` reference stay in the top-level
-    `plugins` array (global plugins), matching today's model.
+    reference (bare id string) matches an entity being assembled;
+    plugins with no `service`, `route`, or `consumer` reference (`~`/
+    `null` in Kong's output) stay in the top-level `plugins` array
+    (global plugins), matching today's model.
   - Strips the now-redundant back-reference field (`service`, `route`,
     `consumer`) plus Kong's bookkeeping fields (`id`, `created_at`,
     `updated_at`) from each entity — these are server-generated, never
