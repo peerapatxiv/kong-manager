@@ -16,11 +16,13 @@ const errorMessage = ref<string | null>(null)
 const connectErrorMessage = ref<string | null>(null)
 const connecting = ref(false)
 const mode = ref<'connect' | 'file'>('connect')
+const formExpanded = ref(true)
 
 function onFileSelected({ fileName, text }: { fileName: string; text: string }) {
   try {
     configStore.loadPrimary(fileName, text)
     errorMessage.value = null
+    formExpanded.value = false
   } catch (err) {
     errorMessage.value = err instanceof Error ? err.message : String(err)
   }
@@ -32,6 +34,7 @@ async function onConnect({ baseUrl, auth }: { baseUrl: string; auth: KongAdminAu
   try {
     await configStore.loadFromKongAdmin(baseUrl, auth)
     savedConnectionsStore.upsert({ baseUrl, username: auth.username, password: auth.password })
+    formExpanded.value = false
   } catch (err) {
     connectErrorMessage.value = err instanceof Error ? err.message : String(err)
   } finally {
@@ -50,14 +53,16 @@ function onSelectSaved({ baseUrl, username, password }: { baseUrl: string; usern
       <h2 class="text-xl font-bold text-ink">Load a Kong declarative config</h2>
       <p class="mt-1 text-sm text-ink-muted">
         {{
-          mode === 'connect'
-            ? 'Pull the live declarative config from a running Kong instance (DB-less mode), or switch to load a YAML file.'
-            : 'Drop in a YAML file to browse, edit, and compare its entities.'
+          !formExpanded
+            ? 'Browse this config below, or change your source to load something else.'
+            : mode === 'connect'
+              ? 'Pull the live declarative config from a running Kong instance (DB-less mode), or switch to load a YAML file.'
+              : 'Drop in a YAML file to browse, edit, and compare its entities.'
         }}
       </p>
     </div>
 
-    <div :class="configStore.isLoaded ? '' : 'grid grid-cols-1 gap-4 lg:grid-cols-3 lg:gap-6'">
+    <div v-if="formExpanded" :class="configStore.isLoaded ? '' : 'grid grid-cols-1 gap-4 lg:grid-cols-3 lg:gap-6'">
       <div class="space-y-4" :class="{ 'lg:col-span-2': !configStore.isLoaded }">
         <div class="inline-flex gap-1 rounded-xl border border-border bg-surface p-1">
           <button
@@ -159,15 +164,25 @@ function onSelectSaved({ baseUrl, username, password }: { baseUrl: string; usern
     </div>
 
     <div v-if="configStore.isLoaded" class="card space-y-5 p-5">
-      <div class="flex items-center gap-2.5">
-        <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-accent/15 text-accent-secondary">
-          <svg viewBox="0 0 16 16" fill="none" class="h-3.5 w-3.5">
-            <path d="M3.5 8.5l3 3 6-7" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" />
-          </svg>
-        </span>
-        <h3 class="font-bold text-ink">
-          Loaded: <span class="font-mono">{{ configStore.primary?.fileName }}</span>
-        </h3>
+      <div class="flex items-center justify-between gap-2.5">
+        <div class="flex items-center gap-2.5">
+          <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-accent/15 text-accent-secondary">
+            <svg viewBox="0 0 16 16" fill="none" class="h-3.5 w-3.5">
+              <path d="M3.5 8.5l3 3 6-7" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+          </span>
+          <h3 class="font-bold text-ink">
+            Loaded: <span class="font-mono">{{ configStore.primary?.fileName }}</span>
+          </h3>
+        </div>
+        <button
+          v-if="!formExpanded"
+          type="button"
+          class="shrink-0 text-xs font-medium text-link underline hover:text-accent-hover"
+          @click="formExpanded = true"
+        >
+          Change source
+        </button>
       </div>
 
       <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">

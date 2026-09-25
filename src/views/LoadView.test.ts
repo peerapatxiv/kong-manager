@@ -157,6 +157,27 @@ describe('LoadView', () => {
     expect(wrapper.findComponent(FileDropZone).exists()).toBe(false)
   })
 
+  it('collapses the form after a successful load, and re-expands it via Change source', async () => {
+    const wrapper = mount(LoadView, { global: { plugins: [testRouter()] } })
+
+    await wrapper
+      .findAll('button')
+      .find((b) => b.text() === 'Upload file')!
+      .trigger('click')
+    await wrapper.findComponent(FileDropZone).vm.$emit('file-selected', { fileName: 'sample-a.yaml', text: SAMPLE })
+    await wrapper.vm.$nextTick()
+
+    expect(wrapper.findComponent(FileDropZone).exists()).toBe(false)
+    expect(wrapper.text()).toContain('Loaded: sample-a.yaml')
+
+    await wrapper
+      .findAll('button')
+      .find((b) => b.text() === 'Change source')!
+      .trigger('click')
+
+    expect(wrapper.findComponent(FileDropZone).exists()).toBe(true)
+  })
+
   it('shows a connect error banner instead of crashing when the connection fails', async () => {
     vi.mocked(kongAdminApi.getConfig).mockRejectedValue(new Error('connection refused'))
     const wrapper = mount(LoadView, { global: { plugins: [testRouter()] } })
