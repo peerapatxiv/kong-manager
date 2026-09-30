@@ -107,16 +107,29 @@ describe('createEntityClient', () => {
     expect(urlOf(f)).toBe('http://localhost:8001/upstreams/up%201/targets')
   })
 
+  it('lists a service\'s routes through the nested service_routes path, parent id encoded', async () => {
+    const f = mockFetch({ data: [] })
+
+    await createEntityClient(conn, 'service_routes', 'svc 1').list()
+
+    expect(urlOf(f)).toBe('http://localhost:8001/services/svc%201/routes')
+  })
+
+  it('gives service_routes the same defaults as routes', () => {
+    expect(ENTITY_RESOURCES.service_routes.nested).toBe(true)
+    expect(ENTITY_RESOURCES.service_routes.defaults).toEqual(ENTITY_RESOURCES.routes.defaults)
+  })
+
   it('throws at creation when a nested resource has no parent id', () => {
     expect(() => createEntityClient(conn, 'targets')).toThrow(/parentId/)
   })
 })
 
 describe('ENTITY_RESOURCES', () => {
-  it('has all nine collections, each with a defaults object free of "__none__" sentinels', () => {
+  it('has all ten collections, each with a defaults object free of "__none__" sentinels', () => {
     const names = Object.keys(ENTITY_RESOURCES).sort()
     expect(names).toEqual(
-      ['ca_certificates', 'certificates', 'consumers', 'plugins', 'routes', 'services', 'snis', 'targets', 'upstreams'].sort(),
+      ['ca_certificates', 'certificates', 'consumers', 'plugins', 'routes', 'service_routes', 'services', 'snis', 'targets', 'upstreams'].sort(),
     )
     for (const name of names as EntityResourceName[]) {
       expect(typeof ENTITY_RESOURCES[name].defaults).toBe('object')

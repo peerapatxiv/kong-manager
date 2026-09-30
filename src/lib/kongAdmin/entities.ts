@@ -4,6 +4,7 @@ import type { KongAdminConnection } from './http'
 export type EntityResourceName =
   | 'services'
   | 'routes'
+  | 'service_routes'
   | 'upstreams'
   | 'targets'
   | 'consumers'
@@ -16,6 +17,28 @@ export type EntityResourceConfig = {
   path: string
   nested: boolean
   defaults: Record<string, unknown>
+}
+
+function routeDefaults(): Record<string, unknown> {
+  return {
+    name: '',
+    protocols: [],
+    methods: [],
+    hosts: [],
+    paths: [],
+    headers: {},
+    https_redirect_status_code: 426,
+    regex_priority: 0,
+    strip_path: true,
+    path_handling: 'v0',
+    preserve_host: false,
+    request_buffering: true,
+    response_buffering: true,
+    snis: [],
+    sources: [],
+    destinations: [],
+    tags: [],
+  }
 }
 
 // Defaults are ported from Primate's models. Its '__none__' sentinels for unset
@@ -42,25 +65,12 @@ export const ENTITY_RESOURCES: Record<EntityResourceName, EntityResourceConfig> 
   routes: {
     path: 'routes',
     nested: false,
-    defaults: {
-      name: '',
-      protocols: [],
-      methods: [],
-      hosts: [],
-      paths: [],
-      headers: {},
-      https_redirect_status_code: 426,
-      regex_priority: 0,
-      strip_path: true,
-      path_handling: 'v0',
-      preserve_host: false,
-      request_buffering: true,
-      response_buffering: true,
-      snis: [],
-      sources: [],
-      destinations: [],
-      tags: [],
-    },
+    defaults: routeDefaults(),
+  },
+  service_routes: {
+    path: 'services/:parentId/routes',
+    nested: true,
+    defaults: routeDefaults(),
   },
   upstreams: {
     path: 'upstreams',
