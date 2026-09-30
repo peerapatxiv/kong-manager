@@ -40,7 +40,7 @@ const dotStyles: Record<string, string> = {
       </slot>
     </div>
     <p class="text-sm text-ink-muted" :class="compact ? 'flex items-baseline gap-1.5' : ''">
-      {{ label }}:
+      {{ label }}{{ compact ? ':' : '' }}
       <span
         class="font-bold leading-tight text-ink"
         :class="compact ? 'text-base' : 'block text-2xl'"

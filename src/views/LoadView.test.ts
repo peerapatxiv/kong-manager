@@ -63,10 +63,10 @@ describe('LoadView', () => {
     await wrapper.vm.$nextTick()
 
     expect(wrapper.text()).toContain('Loaded: sample-a.yaml')
-    expect(wrapper.text()).toContain('Services: 1')
-    expect(wrapper.text()).toContain('Routes: 1')
-    expect(wrapper.text()).toContain('Consumers: 1')
-    expect(wrapper.text()).toContain('Global plugins: 1')
+    expect(wrapper.text()).toMatch(/Services\s+1/)
+    expect(wrapper.text()).toMatch(/Routes\s+1/)
+    expect(wrapper.text()).toMatch(/Consumers\s+1/)
+    expect(wrapper.text()).toMatch(/Global plugins\s+1/)
     expect(wrapper.text()).not.toContain('Failed to parse YAML')
   })
 
@@ -112,7 +112,7 @@ describe('LoadView', () => {
     await flushPromises()
 
     expect(wrapper.text()).toContain('Loaded: Kong Admin @ http://localhost:8001')
-    expect(wrapper.text()).toContain('Services: 1')
+    expect(wrapper.text()).toMatch(/Services\s+1/)
   })
 
   it('auto-saves the connection after a successful connect', async () => {
@@ -173,10 +173,10 @@ describe('LoadView', () => {
 
   it('drops a previous live connection when the node probe for a newly loaded Kong fails', async () => {
     vi.mocked(kongAdminApi.getConfig).mockResolvedValue({ _format_version: '3.0', services: [] })
+    const wrapper = mount(LoadView, { global: { plugins: [testRouter()] } })
     const connectionStore = useConnectionStore()
     await connectionStore.connect({ baseUrl: 'http://kong-a:8001' })
     expect(connectionStore.active?.baseUrl).toBe('http://kong-a:8001')
-    const wrapper = mount(LoadView, { global: { plugins: [testRouter()] } })
     vi.mocked(adminJson).mockRejectedValue(new Error('probe failed'))
 
     await wrapper.find('[data-testid="host"]').setValue('http://kong-b:8001')
@@ -275,6 +275,48 @@ describe('LoadView', () => {
       expect(grid.className).not.toContain('grid-cols-3')
       expect(columns(wrapper).main.classes()).not.toContain('lg:col-span-2')
       expect(columns(wrapper).side.exists()).toBe(false)
+    })
+  })
+
+  describe('opening the page when something is already loaded', () => {
+    it('starts with the source form collapsed when a config is already loaded', () => {
+      useConfigStore().loadPrimary('sample-a.yaml', SAMPLE)
+
+      const wrapper = mount(LoadView, { global: { plugins: [testRouter()] } })
+
+      expect(wrapper.text()).toContain('Loaded: sample-a.yaml')
+      expect(wrapper.text()).toContain('Change source')
+      expect(wrapper.text()).not.toContain('New Connection')
+    })
+
+    it('starts with the source form collapsed when a live connection already exists', () => {
+      useConnectionStore().$patch({
+        active: { baseUrl: 'http://kong:8001' },
+        info: { version: '3.4.0', database: 'postgres' },
+      })
+
+      const wrapper = mount(LoadView, { global: { plugins: [testRouter()] } })
+
+      expect(wrapper.text()).toContain('Connected: http://kong:8001')
+      expect(wrapper.text()).not.toContain('New Connection')
+    })
+
+    it('starts with the form open when nothing is loaded or connected', () => {
+      const wrapper = mount(LoadView, { global: { plugins: [testRouter()] } })
+
+      expect(wrapper.text()).toContain('New Connection')
+    })
+
+    it('brings the form back from Change source', async () => {
+      useConfigStore().loadPrimary('sample-a.yaml', SAMPLE)
+      const wrapper = mount(LoadView, { global: { plugins: [testRouter()] } })
+
+      await wrapper
+        .findAll('button')
+        .find((b) => b.text() === 'Change source')!
+        .trigger('click')
+
+      expect(wrapper.text()).toContain('New Connection')
     })
   })
 

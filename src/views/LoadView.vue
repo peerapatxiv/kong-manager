@@ -20,7 +20,9 @@ const errorMessage = ref<string | null>(null)
 const connectErrorMessage = ref<string | null>(null)
 const connecting = ref(false)
 const mode = ref<'connect' | 'file'>('connect')
-const formExpanded = ref(true)
+// Coming back to this page with a config or connection already in place should show
+// it, not a blank form; "Change source" opens the form when wanted.
+const formExpanded = ref(!(configStore.isLoaded || connectionStore.isConnected))
 
 function onFileSelected({ fileName, text }: { fileName: string; text: string }) {
   try {
