@@ -46,8 +46,10 @@ function normalizeBaseUrl(baseUrl: string): string {
   return baseUrl.replace(/\/+$/, '')
 }
 
-function buildHeaders(auth?: KongAdminAuth): Record<string, string> {
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+// Content-Type is sent only with a body. Without it, a read with no credentials is a
+// "simple" cross-origin request, so the browser skips the CORS preflight.
+function buildHeaders(auth: KongAdminAuth | undefined, hasBody: boolean): Record<string, string> {
+  const headers: Record<string, string> = hasBody ? { 'Content-Type': 'application/json' } : {}
   if (auth?.token) headers['Kong-Admin-Token'] = auth.token
   if (auth?.username) headers['Authorization'] = `Basic ${btoa(`${auth.username}:${auth.password ?? ''}`)}`
   return headers
@@ -101,7 +103,7 @@ export async function adminFetch(
   try {
     response = await fetch(buildUrl(conn.baseUrl, path, options.query), {
       method,
-      headers: buildHeaders(conn.auth),
+      headers: buildHeaders(conn.auth, options.body !== undefined),
       body: options.body === undefined ? undefined : JSON.stringify(options.body),
       signal: controller.signal,
     })

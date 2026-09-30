@@ -59,7 +59,30 @@ describe('adminFetch', () => {
     const without = (fetchMock.mock.calls[1][1] as RequestInit).headers as Record<string, string>
     expect(without['Kong-Admin-Token']).toBeUndefined()
     expect(without['Authorization']).toBeUndefined()
-    expect(without['Content-Type']).toBe('application/json')
+    expect(without['Content-Type']).toBeUndefined()
+  })
+
+  it('sends no Content-Type on reads, so a plain GET stays a simple cross-origin request', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(okResponse())
+    vi.stubGlobal('fetch', fetchMock)
+
+    await adminFetch(conn, 'GET', '/')
+    await adminFetch(conn, 'DELETE', '/services/s1')
+
+    for (const call of fetchMock.mock.calls) {
+      const headers = (call[1] as RequestInit).headers as Record<string, string>
+      expect(headers['Content-Type']).toBeUndefined()
+    }
+  })
+
+  it('sends Content-Type application/json only when there is a body', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(okResponse())
+    vi.stubGlobal('fetch', fetchMock)
+
+    await adminFetch(conn, 'POST', '/services', { body: { name: 'svc' } })
+
+    const headers = (fetchMock.mock.calls[0][1] as RequestInit).headers as Record<string, string>
+    expect(headers['Content-Type']).toBe('application/json')
   })
 
   it('sends the method and a JSON-stringified body', async () => {
