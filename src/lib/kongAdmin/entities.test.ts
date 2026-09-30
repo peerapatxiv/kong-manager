@@ -120,16 +120,42 @@ describe('createEntityClient', () => {
     expect(ENTITY_RESOURCES.service_routes.defaults).toEqual(ENTITY_RESOURCES.routes.defaults)
   })
 
+  it.each([
+    ['key_auth', 'key-auth'],
+    ['basic_auth', 'basic-auth'],
+    ['oauth2_credentials', 'oauth2'],
+    ['hmac_auth', 'hmac-auth'],
+    ['jwt_credentials', 'jwt'],
+    ['acls', 'acls'],
+  ] as const)('lists %s under the consumer at /consumers/:id/%s, with the parent id encoded', async (resource, segment) => {
+    const f = mockFetch({ data: [] })
+
+    await createEntityClient(conn, resource, 'con 1/x%').list()
+
+    expect(urlOf(f)).toBe(`http://localhost:8001/consumers/con%201%2Fx%25/${segment}`)
+  })
+
+  it('encodes a credential id when deleting it, and requires a parent id', async () => {
+    const f = vi.fn().mockResolvedValue({ ok: true, status: 204, text: async () => '' })
+    vi.stubGlobal('fetch', f)
+
+    await createEntityClient(conn, 'key_auth', 'c1').remove('k 1')
+
+    expect(urlOf(f)).toBe('http://localhost:8001/consumers/c1/key-auth/k%201')
+    expect(initOf(f).method).toBe('DELETE')
+    expect(() => createEntityClient(conn, 'jwt_credentials')).toThrow(/parentId/)
+  })
+
   it('throws at creation when a nested resource has no parent id', () => {
     expect(() => createEntityClient(conn, 'targets')).toThrow(/parentId/)
   })
 })
 
 describe('ENTITY_RESOURCES', () => {
-  it('has all ten collections, each with a defaults object free of "__none__" sentinels', () => {
+  it('has all sixteen collections, each with a defaults object free of "__none__" sentinels', () => {
     const names = Object.keys(ENTITY_RESOURCES).sort()
     expect(names).toEqual(
-      ['ca_certificates', 'certificates', 'consumers', 'plugins', 'routes', 'service_routes', 'services', 'snis', 'targets', 'upstreams'].sort(),
+      ['acls', 'basic_auth', 'ca_certificates', 'certificates', 'consumers', 'hmac_auth', 'jwt_credentials', 'key_auth', 'oauth2_credentials', 'plugins', 'routes', 'service_routes', 'services', 'snis', 'targets', 'upstreams'].sort(),
     )
     for (const name of names as EntityResourceName[]) {
       expect(typeof ENTITY_RESOURCES[name].defaults).toBe('object')

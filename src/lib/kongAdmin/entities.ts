@@ -12,6 +12,12 @@ export type EntityResourceName =
   | 'certificates'
   | 'ca_certificates'
   | 'snis'
+  | 'key_auth'
+  | 'basic_auth'
+  | 'oauth2_credentials'
+  | 'hmac_auth'
+  | 'jwt_credentials'
+  | 'acls'
 
 export type EntityResourceConfig = {
   path: string
@@ -136,6 +142,12 @@ export const ENTITY_RESOURCES: Record<EntityResourceName, EntityResourceConfig> 
     nested: false,
     defaults: { name: '', tags: [] },
   },
+  key_auth: { path: 'consumers/:parentId/key-auth', nested: true, defaults: {} },
+  basic_auth: { path: 'consumers/:parentId/basic-auth', nested: true, defaults: {} },
+  oauth2_credentials: { path: 'consumers/:parentId/oauth2', nested: true, defaults: {} },
+  hmac_auth: { path: 'consumers/:parentId/hmac-auth', nested: true, defaults: {} },
+  jwt_credentials: { path: 'consumers/:parentId/jwt', nested: true, defaults: {} },
+  acls: { path: 'consumers/:parentId/acls', nested: true, defaults: {} },
 }
 
 export type ListOptions = { size?: number; offset?: string; tags?: string[] }
