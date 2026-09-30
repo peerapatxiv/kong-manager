@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { onBeforeRouteLeave, useRoute, useRouter } from 'vue-router'
 import { useConnectionStore } from '../../stores/connection'
 import { useLiveEntities } from '../../composables/useLiveEntities'
 import type { LiveEntity } from '../../composables/useLiveEntities'
@@ -177,6 +177,9 @@ function start() {
   void loadServices()
   void load()
 }
+
+// Leaving the page would silently drop unsaved edits, so ask first (false cancels).
+onBeforeRouteLeave(() => confirmDiscard())
 
 onMounted(() => {
   if (connection.isConnected) start()

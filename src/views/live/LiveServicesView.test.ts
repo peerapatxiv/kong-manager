@@ -257,4 +257,54 @@ describe('LiveServicesView', () => {
     expect(patch.url).toBe('http://kong:8001/services/svc-1')
     expect(patch.body).toEqual({ enabled: false })
   })
+
+  it('asks before leaving the page with unsaved edits, and stays when cancelled', async () => {
+    connect()
+    fakeKong(SERVICES)
+    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(false)
+    const router = createRouter({
+      history: createMemoryHistory(),
+      routes: [
+        { path: '/', component: { template: '<div>home</div>' } },
+        { path: '/live/services', component: LiveServicesView },
+      ],
+    })
+    router.push('/live/services')
+    await router.isReady()
+    const wrapper = mount({ template: '<RouterView />' }, { global: { plugins: [router] } })
+    await flushPromises()
+
+    await wrapper.findAll('[data-testid="service-row"]')[0].trigger('click')
+    await wrapper.find('[data-testid="service-host"]').setValue('edited.internal')
+    await router.push('/')
+    expect(confirm).toHaveBeenCalled()
+    expect(router.currentRoute.value.path).toBe('/live/services')
+
+    confirm.mockReturnValue(true)
+    await router.push('/')
+    expect(router.currentRoute.value.path).toBe('/')
+  })
+
+  it('leaves the page without asking when there are no unsaved edits', async () => {
+    connect()
+    fakeKong(SERVICES)
+    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(false)
+    const router = createRouter({
+      history: createMemoryHistory(),
+      routes: [
+        { path: '/', component: { template: '<div>home</div>' } },
+        { path: '/live/services', component: LiveServicesView },
+      ],
+    })
+    router.push('/live/services')
+    await router.isReady()
+    const wrapper = mount({ template: '<RouterView />' }, { global: { plugins: [router] } })
+    await flushPromises()
+
+    await wrapper.findAll('[data-testid="service-row"]')[0].trigger('click')
+    await router.push('/')
+
+    expect(confirm).not.toHaveBeenCalled()
+    expect(router.currentRoute.value.path).toBe('/')
+  })
 })

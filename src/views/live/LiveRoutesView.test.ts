@@ -270,4 +270,54 @@ describe('LiveRoutesView', () => {
     await byId(wrapper, 'discard').trigger('click')
     expect(valueOf(wrapper, 'route-name')).toBe('billing-route')
   })
+
+  it('asks before leaving the page with unsaved edits, and stays when cancelled', async () => {
+    connect()
+    fakeKong()
+    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(false)
+    const router = createRouter({
+      history: createMemoryHistory(),
+      routes: [
+        { path: '/', component: { template: '<div>home</div>' } },
+        { path: '/live/routes', component: LiveRoutesView },
+      ],
+    })
+    router.push('/live/routes')
+    await router.isReady()
+    const wrapper = mount({ template: '<RouterView />' }, { global: { plugins: [router] } })
+    await flushPromises()
+
+    await wrapper.findAll('[data-testid="route-row"]')[0].trigger('click')
+    await wrapper.find('[data-testid="route-name"]').setValue('edited')
+    await router.push('/')
+    expect(confirm).toHaveBeenCalled()
+    expect(router.currentRoute.value.path).toBe('/live/routes')
+
+    confirm.mockReturnValue(true)
+    await router.push('/')
+    expect(router.currentRoute.value.path).toBe('/')
+  })
+
+  it('leaves the page without asking when there are no unsaved edits', async () => {
+    connect()
+    fakeKong()
+    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(false)
+    const router = createRouter({
+      history: createMemoryHistory(),
+      routes: [
+        { path: '/', component: { template: '<div>home</div>' } },
+        { path: '/live/routes', component: LiveRoutesView },
+      ],
+    })
+    router.push('/live/routes')
+    await router.isReady()
+    const wrapper = mount({ template: '<RouterView />' }, { global: { plugins: [router] } })
+    await flushPromises()
+
+    await wrapper.findAll('[data-testid="route-row"]')[0].trigger('click')
+    await router.push('/')
+
+    expect(confirm).not.toHaveBeenCalled()
+    expect(router.currentRoute.value.path).toBe('/')
+  })
 })
