@@ -208,7 +208,7 @@ describe('BrowseView', () => {
     expect((keyField.element as HTMLInputElement).value).toBe('abc123key')
     expect(keyField.attributes('placeholder')).toMatch(/^•+$/)
 
-    await wrapper.findComponent(ConsumerDetail).findAll('button').find((b) => b.text() === 'reveal')!.trigger('click')
+    await wrapper.findComponent(ConsumerDetail).find('button[aria-label="Reveal value"]').trigger('click')
     expect(wrapper.findComponent(ConsumerDetail).find('input[type="password"]').exists()).toBe(false)
     const revealedValues = wrapper
       .findComponent(ConsumerDetail)
