@@ -102,7 +102,7 @@ describe('LoadView', () => {
     })
     const wrapper = mount(LoadView, { global: { plugins: [testRouter()] } })
 
-    await wrapper.find('input[placeholder="http://localhost:8001"]').setValue('http://localhost:8001')
+    await wrapper.find('[data-testid="host"]').setValue('http://localhost:8001')
     await wrapper
       .findAll('button')
       .find((b) => b.text() === 'Connect')!
@@ -117,8 +117,8 @@ describe('LoadView', () => {
     vi.mocked(kongAdminApi.getConfig).mockResolvedValue({ _format_version: '3.0', services: [] })
     const wrapper = mount(LoadView, { global: { plugins: [testRouter()] } })
 
-    await wrapper.find('input[placeholder="http://localhost:8001"]').setValue('http://localhost:8001')
-    await wrapper.find('input[placeholder="Username"]').setValue('admin')
+    await wrapper.find('[data-testid="host"]').setValue('http://localhost:8001')
+    await wrapper.find('[data-testid="username"]').setValue('admin')
     await wrapper.find('input[type="password"]').setValue('hunter2')
     await wrapper
       .findAll('button')
@@ -136,7 +136,7 @@ describe('LoadView', () => {
     vi.mocked(kongAdminApi.getConfig).mockResolvedValue({ _format_version: '3.0', services: [] })
     const wrapper = mount(LoadView, { global: { plugins: [testRouter()] } })
 
-    await wrapper.find('input[placeholder="http://localhost:8001"]').setValue('http://localhost:8001')
+    await wrapper.find('[data-testid="host"]').setValue('http://localhost:8001')
     await wrapper
       .findAll('button')
       .find((b) => b.text() === 'Connect')!
@@ -157,7 +157,7 @@ describe('LoadView', () => {
     vi.mocked(adminJson).mockRejectedValue(new Error('probe failed'))
     const wrapper = mount(LoadView, { global: { plugins: [testRouter()] } })
 
-    await wrapper.find('input[placeholder="http://localhost:8001"]').setValue('http://localhost:8001')
+    await wrapper.find('[data-testid="host"]').setValue('http://localhost:8001')
     await wrapper
       .findAll('button')
       .find((b) => b.text() === 'Connect')!
@@ -177,7 +177,7 @@ describe('LoadView', () => {
     const wrapper = mount(LoadView, { global: { plugins: [testRouter()] } })
     vi.mocked(adminJson).mockRejectedValue(new Error('probe failed'))
 
-    await wrapper.find('input[placeholder="http://localhost:8001"]').setValue('http://kong-b:8001')
+    await wrapper.find('[data-testid="host"]').setValue('http://kong-b:8001')
     await wrapper
       .findAll('button')
       .find((b) => b.text() === 'Connect')!
@@ -185,6 +185,109 @@ describe('LoadView', () => {
     await flushPromises()
 
     expect(connectionStore.isConnected).toBe(false)
+  })
+
+  it('no longer shows the Browse, Edit and Compare feature cards, only the New Connection form and saved list', () => {
+    const wrapper = mount(LoadView, { global: { plugins: [testRouter()] } })
+
+    expect(wrapper.text()).not.toContain('Inspect services, routes, consumers')
+    expect(wrapper.text()).not.toContain('Use guided forms')
+    expect(wrapper.text()).not.toContain('Diff two configs')
+    expect(wrapper.text()).toContain('New Connection')
+    expect(wrapper.text()).toContain('Saved Connections')
+  })
+
+  it('saves the connection name, colour and automatic flag after a successful connect', async () => {
+    vi.mocked(kongAdminApi.getConfig).mockResolvedValue({ _format_version: '3.0', services: [] })
+    const wrapper = mount(LoadView, { global: { plugins: [testRouter()] } })
+
+    await wrapper.find('[data-testid="host"]').setValue('localhost:8001')
+    await wrapper.find('[data-testid="connection-name"]').setValue('Staging')
+    await wrapper.find('[data-testid="connection-color"]').setValue('#ff0000')
+    await wrapper.find('[data-testid="auto-connect"]').setValue(true)
+    await wrapper
+      .findAll('button')
+      .find((b) => b.text() === 'Connect')!
+      .trigger('click')
+    await flushPromises()
+
+    expect(useSavedConnectionsStore().connections[0]).toMatchObject({
+      baseUrl: 'http://localhost:8001',
+      name: 'Staging',
+      colorCode: '#ff0000',
+      autoConnect: true,
+    })
+  })
+
+  it('keeps a saved connection name and colour when reconnecting from the saved list', async () => {
+    vi.mocked(kongAdminApi.getConfig).mockResolvedValue({ _format_version: '3.0', services: [] })
+    useSavedConnectionsStore().upsert({ baseUrl: 'http://localhost:8001', name: 'Staging', colorCode: '#ff0000' })
+    const wrapper = mount(LoadView, { global: { plugins: [testRouter()] } })
+
+    await wrapper.find('li').trigger('click')
+    await flushPromises()
+
+    expect(useSavedConnectionsStore().connections[0]).toMatchObject({ name: 'Staging', colorCode: '#ff0000' })
+  })
+
+  describe('connect automatically', () => {
+    it('connects the automatic saved connection with its stored credentials when the page opens', async () => {
+      vi.mocked(kongAdminApi.getConfig).mockResolvedValue({ _format_version: '3.0', services: [] })
+      useSavedConnectionsStore().upsert({
+        baseUrl: 'http://auto:8001',
+        username: 'u',
+        password: 'p',
+        autoConnect: true,
+      })
+
+      const wrapper = mount(LoadView, { global: { plugins: [testRouter()] } })
+      await flushPromises()
+
+      expect(kongAdminApi.getConfig).toHaveBeenCalledWith('http://auto:8001', { username: 'u', password: 'p' })
+      expect(wrapper.text()).toContain('Loaded: Kong Admin @ http://auto:8001')
+    })
+
+    it('does nothing when no connection is marked automatic', async () => {
+      useSavedConnectionsStore().upsert({ baseUrl: 'http://manual:8001' })
+
+      mount(LoadView, { global: { plugins: [testRouter()] } })
+      await flushPromises()
+
+      expect(kongAdminApi.getConfig).not.toHaveBeenCalled()
+    })
+
+    it('does nothing when a config is already loaded', async () => {
+      useSavedConnectionsStore().upsert({ baseUrl: 'http://auto:8001', autoConnect: true })
+      useConfigStore().loadPrimary('sample.yaml', SAMPLE)
+
+      mount(LoadView, { global: { plugins: [testRouter()] } })
+      await flushPromises()
+
+      expect(kongAdminApi.getConfig).not.toHaveBeenCalled()
+    })
+
+    it('runs only once per session, not on every visit to the page', async () => {
+      vi.mocked(kongAdminApi.getConfig).mockResolvedValue({ _format_version: '3.0', services: [] })
+      useSavedConnectionsStore().upsert({ baseUrl: 'http://auto:8001', autoConnect: true })
+
+      mount(LoadView, { global: { plugins: [testRouter()] } }).unmount()
+      await flushPromises()
+      useConfigStore().primary = null
+      mount(LoadView, { global: { plugins: [testRouter()] } })
+      await flushPromises()
+
+      expect(kongAdminApi.getConfig).toHaveBeenCalledTimes(1)
+    })
+
+    it('shows the usual error banner when the automatic connection fails', async () => {
+      vi.mocked(kongAdminApi.getConfig).mockRejectedValue(new Error('connection refused'))
+      useSavedConnectionsStore().upsert({ baseUrl: 'http://auto:8001', autoConnect: true })
+
+      const wrapper = mount(LoadView, { global: { plugins: [testRouter()] } })
+      await flushPromises()
+
+      expect(wrapper.text()).toContain('connection refused')
+    })
   })
 
   it('reconnects instantly using stored credentials when a saved connection is clicked', async () => {
@@ -209,7 +312,7 @@ describe('LoadView', () => {
   it('defaults to the Connect tab, and switches to the Upload file tab and back', async () => {
     const wrapper = mount(LoadView, { global: { plugins: [testRouter()] } })
 
-    expect(wrapper.find('input[placeholder="http://localhost:8001"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="host"]').exists()).toBe(true)
     expect(wrapper.findComponent(FileDropZone).exists()).toBe(false)
 
     await wrapper
@@ -218,14 +321,14 @@ describe('LoadView', () => {
       .trigger('click')
 
     expect(wrapper.findComponent(FileDropZone).exists()).toBe(true)
-    expect(wrapper.find('input[placeholder="http://localhost:8001"]').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="host"]').exists()).toBe(false)
 
     await wrapper
       .findAll('button')
       .find((b) => b.text() === 'Connect to Kong')!
       .trigger('click')
 
-    expect(wrapper.find('input[placeholder="http://localhost:8001"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="host"]').exists()).toBe(true)
     expect(wrapper.findComponent(FileDropZone).exists()).toBe(false)
   })
 
@@ -254,7 +357,7 @@ describe('LoadView', () => {
     vi.mocked(kongAdminApi.getConfig).mockRejectedValue(new Error('connection refused'))
     const wrapper = mount(LoadView, { global: { plugins: [testRouter()] } })
 
-    await wrapper.find('input[placeholder="http://localhost:8001"]').setValue('http://localhost:8001')
+    await wrapper.find('[data-testid="host"]').setValue('http://localhost:8001')
     await wrapper
       .findAll('button')
       .find((b) => b.text() === 'Connect')!

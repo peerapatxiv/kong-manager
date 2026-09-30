@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import FileDropZone from '../components/FileDropZone.vue'
 import KongConnectForm from '../components/KongConnectForm.vue'
@@ -30,12 +30,27 @@ function onFileSelected({ fileName, text }: { fileName: string; text: string }) 
   }
 }
 
-async function onConnect({ baseUrl, auth }: { baseUrl: string; auth: KongAdminAuth }) {
+type ConnectRequest = {
+  baseUrl: string
+  auth: KongAdminAuth
+  name?: string
+  colorCode?: string
+  autoConnect?: boolean
+}
+
+async function onConnect({ baseUrl, auth, name, colorCode, autoConnect }: ConnectRequest) {
   connecting.value = true
   connectErrorMessage.value = null
   try {
     await configStore.loadFromKongAdmin(baseUrl, auth)
-    savedConnectionsStore.upsert({ baseUrl, username: auth.username, password: auth.password })
+    savedConnectionsStore.upsert({
+      baseUrl,
+      username: auth.username,
+      password: auth.password,
+      name,
+      colorCode,
+      autoConnect,
+    })
     // Probe the node in the background so live editing can be enabled; a failed
     // probe must not affect the config that was just loaded.
     // A failed probe also drops any earlier connection, so live edits can never
@@ -48,6 +63,15 @@ async function onConnect({ baseUrl, auth }: { baseUrl: string; auth: KongAdminAu
     connecting.value = false
   }
 }
+
+// Runs once per browser session, and only when nothing is loaded yet, so visiting
+// this page later to change the source does not silently reconnect.
+onMounted(() => {
+  const auto = savedConnectionsStore.autoConnection
+  if (!auto || configStore.isLoaded || savedConnectionsStore.autoConnectTried) return
+  savedConnectionsStore.markAutoConnectTried()
+  void onConnect({ baseUrl: auto.baseUrl, auth: { username: auto.username, password: auto.password } })
+})
 
 function onSelectSaved({ baseUrl, username, password }: { baseUrl: string; username?: string; password?: string }) {
   onConnect({ baseUrl, auth: { username, password } })
@@ -135,38 +159,6 @@ function onSelectSaved({ baseUrl, username, password }: { baseUrl: string; usern
 
       <div v-if="!configStore.isLoaded" class="space-y-3 lg:mt-14">
         <SavedConnectionsList v-if="mode === 'connect'" @connect="onSelectSaved" />
-
-        <div class="card space-y-1.5 p-3">
-          <div class="flex h-7 w-7 items-center justify-center rounded-lg bg-accent/15 text-accent-secondary">
-            <svg viewBox="0 0 20 20" fill="none" class="h-3.5 w-3.5">
-              <rect x="3" y="4" width="14" height="3.2" rx="1" stroke="currentColor" stroke-width="1.5" />
-              <rect x="3" y="9" width="14" height="3.2" rx="1" stroke="currentColor" stroke-width="1.5" />
-              <rect x="3" y="14" width="8" height="3.2" rx="1" stroke="currentColor" stroke-width="1.5" />
-            </svg>
-          </div>
-          <h3 class="text-sm font-medium text-ink">Browse</h3>
-          <p class="text-xs text-ink-muted">Inspect services, routes, consumers, and global plugins.</p>
-        </div>
-        <div class="card space-y-1.5 p-3">
-          <div class="flex h-7 w-7 items-center justify-center rounded-lg bg-accent/15 text-accent-secondary">
-            <svg viewBox="0 0 20 20" fill="none" class="h-3.5 w-3.5">
-              <path d="M4 6h9M4 10h6M4 14h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
-              <path d="M13 13l3 3 3-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
-            </svg>
-          </div>
-          <h3 class="text-sm font-medium text-ink">Edit</h3>
-          <p class="text-xs text-ink-muted">Use guided forms, or drop into raw YAML with syntax highlighting.</p>
-        </div>
-        <div class="card space-y-1.5 p-3">
-          <div class="flex h-7 w-7 items-center justify-center rounded-lg bg-accent/15 text-accent-secondary">
-            <svg viewBox="0 0 20 20" fill="none" class="h-3.5 w-3.5">
-              <path d="M7 3v14M7 3L4 6M7 3l3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
-              <path d="M13 17V3M13 17l3-3M13 17l-3-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
-            </svg>
-          </div>
-          <h3 class="text-sm font-medium text-ink">Compare</h3>
-          <p class="text-xs text-ink-muted">Diff two configs and see exactly what changed.</p>
-        </div>
       </div>
     </div>
 
