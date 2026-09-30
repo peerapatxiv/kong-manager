@@ -7,10 +7,12 @@ import SavedConnectionsList from '../components/SavedConnectionsList.vue'
 import StatTile from '../components/shared/StatTile.vue'
 import { useConfigStore } from '../stores/config'
 import { useSavedConnectionsStore } from '../stores/savedConnections'
+import { useConnectionStore } from '../stores/connection'
 import type { KongAdminAuth } from '../lib/kongAdminApi'
 
 const configStore = useConfigStore()
 const savedConnectionsStore = useSavedConnectionsStore()
+const connectionStore = useConnectionStore()
 const router = useRouter()
 const errorMessage = ref<string | null>(null)
 const connectErrorMessage = ref<string | null>(null)
@@ -34,6 +36,9 @@ async function onConnect({ baseUrl, auth }: { baseUrl: string; auth: KongAdminAu
   try {
     await configStore.loadFromKongAdmin(baseUrl, auth)
     savedConnectionsStore.upsert({ baseUrl, username: auth.username, password: auth.password })
+    // Probe the node in the background so live editing can be enabled; a failed
+    // probe must not affect the config that was just loaded.
+    void connectionStore.connect({ baseUrl, auth }).catch(() => undefined)
     formExpanded.value = false
   } catch (err) {
     connectErrorMessage.value = err instanceof Error ? err.message : String(err)

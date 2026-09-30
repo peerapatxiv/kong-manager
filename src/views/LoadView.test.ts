@@ -11,6 +11,14 @@ import * as kongAdminApi from '../lib/kongAdminApi'
 
 vi.mock('../lib/kongAdminApi')
 
+import { useConnectionStore } from '../stores/connection'
+import { adminJson } from '../lib/kongAdmin/http'
+
+vi.mock('../lib/kongAdmin/http', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../lib/kongAdmin/http')>()),
+  adminJson: vi.fn(),
+}))
+
 function testRouter() {
   return createRouter({
     history: createMemoryHistory(),
@@ -40,6 +48,7 @@ describe('LoadView', () => {
     localStorage.clear()
     setActivePinia(createPinia())
     vi.clearAllMocks()
+    vi.mocked(adminJson).mockResolvedValue({ version: '3.4.0', configuration: { database: 'off' } })
   })
 
   it('shows the summary card and no error banner after a successful load', async () => {
@@ -121,6 +130,43 @@ describe('LoadView', () => {
     expect(savedConnectionsStore.connections).toEqual([
       expect.objectContaining({ baseUrl: 'http://localhost:8001', username: 'admin', password: 'hunter2' }),
     ])
+  })
+
+  it('probes the Kong node after connecting so live editing can be gated on database mode', async () => {
+    vi.mocked(kongAdminApi.getConfig).mockResolvedValue({ _format_version: '3.0', services: [] })
+    const wrapper = mount(LoadView, { global: { plugins: [testRouter()] } })
+
+    await wrapper.find('input[placeholder="http://localhost:8001"]').setValue('http://localhost:8001')
+    await wrapper
+      .findAll('button')
+      .find((b) => b.text() === 'Connect')!
+      .trigger('click')
+    await flushPromises()
+
+    const connectionStore = useConnectionStore()
+    expect(connectionStore.isConnected).toBe(true)
+    expect(connectionStore.canWrite).toBe(false)
+    expect(connectionStore.active?.baseUrl).toBe('http://localhost:8001')
+  })
+
+  it('still shows the loaded config, with no error banner, when the node probe fails', async () => {
+    vi.mocked(kongAdminApi.getConfig).mockResolvedValue({
+      _format_version: '3.0',
+      services: [{ host: 'live.internal', name: 'svc-live' }],
+    })
+    vi.mocked(adminJson).mockRejectedValue(new Error('probe failed'))
+    const wrapper = mount(LoadView, { global: { plugins: [testRouter()] } })
+
+    await wrapper.find('input[placeholder="http://localhost:8001"]').setValue('http://localhost:8001')
+    await wrapper
+      .findAll('button')
+      .find((b) => b.text() === 'Connect')!
+      .trigger('click')
+    await flushPromises()
+
+    expect(wrapper.text()).toContain('Loaded: Kong Admin @ http://localhost:8001')
+    expect(wrapper.text()).not.toContain('Failed to connect')
+    expect(useConnectionStore().isConnected).toBe(false)
   })
 
   it('reconnects instantly using stored credentials when a saved connection is clicked', async () => {
