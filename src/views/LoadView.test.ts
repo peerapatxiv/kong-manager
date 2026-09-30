@@ -316,6 +316,40 @@ describe('LoadView', () => {
       expect(wrapper.text()).not.toContain('Load a different source')
     })
 
+    it('removes the loaded config with one click when there are no unsaved edits, and shows the source form', async () => {
+      const wrapper = loaded()
+      await wrapper.vm.$nextTick()
+
+      await button(wrapper, 'Remove config')!.trigger('click')
+
+      expect(useConfigStore().isLoaded).toBe(false)
+      expect(wrapper.text()).not.toContain('Loaded:')
+      expect(wrapper.text()).toContain('New Connection')
+    })
+
+    it('asks before removing a config with unsaved edits, and keeps it when cancelled', async () => {
+      const confirm = vi.spyOn(window, 'confirm').mockReturnValue(false)
+      const wrapper = loaded()
+      useConfigStore().markModified('service:svc-a')
+      await wrapper.vm.$nextTick()
+
+      await button(wrapper, 'Remove config')!.trigger('click')
+      expect(confirm).toHaveBeenCalled()
+      expect(useConfigStore().isLoaded).toBe(true)
+
+      confirm.mockReturnValue(true)
+      await button(wrapper, 'Remove config')!.trigger('click')
+      expect(useConfigStore().isLoaded).toBe(false)
+      expect(useConfigStore().modifiedKeys.size).toBe(0)
+    })
+
+    it('does not offer Disconnect from a file-only config', async () => {
+      const wrapper = loaded()
+      await wrapper.vm.$nextTick()
+
+      expect(button(wrapper, 'Disconnect')).toBeUndefined()
+    })
+
     it('lays the four counts out two across on small screens and four across on large ones', async () => {
       const wrapper = loaded()
       await wrapper.vm.$nextTick()
@@ -398,6 +432,38 @@ describe('LoadView', () => {
 
       expect(wrapper.text()).toContain('Could not reach http://localhost:8001')
       expect(wrapper.text()).toContain('CORS')
+    })
+
+    it('lets you disconnect a database-backed connection, which removes the Connected card', async () => {
+      vi.mocked(adminJson).mockResolvedValue({ version: '3.4.0', configuration: { database: 'postgres' } })
+      const wrapper = mount(LoadView, { global: { plugins: [testRouter()] } })
+      await connectTo(wrapper)
+      expect(wrapper.find('[data-testid="live-connected"]').exists()).toBe(true)
+
+      await wrapper
+        .findAll('button')
+        .find((b) => b.text() === 'Disconnect')!
+        .trigger('click')
+
+      expect(useConnectionStore().isConnected).toBe(false)
+      expect(wrapper.find('[data-testid="live-connected"]').exists()).toBe(false)
+      expect(wrapper.text()).toContain('New Connection')
+    })
+
+    it('lets you disconnect from a loaded DB-less config without removing the config', async () => {
+      vi.mocked(adminJson).mockResolvedValue({ version: '3.4.0', configuration: { database: 'off' } })
+      vi.mocked(kongAdminApi.getConfig).mockResolvedValue({ _format_version: '3.0', services: [] })
+      const wrapper = mount(LoadView, { global: { plugins: [testRouter()] } })
+      await connectTo(wrapper)
+
+      await wrapper
+        .findAll('button')
+        .find((b) => b.text() === 'Disconnect')!
+        .trigger('click')
+
+      expect(useConnectionStore().isConnected).toBe(false)
+      expect(useConfigStore().isLoaded).toBe(true)
+      expect(wrapper.text()).not.toContain('Open live services')
     })
 
     it('offers the Live views from a loaded config only when a live connection exists', async () => {

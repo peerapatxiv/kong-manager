@@ -156,4 +156,18 @@ describe('useConfigStore', () => {
       expect(store.primary!.baseUrl).toBeUndefined()
     })
   })
+
+  it('clear() unloads the primary config, the compare target and all modified markers', () => {
+    const store = useConfigStore()
+    store.loadPrimary('a.yaml', SAMPLE)
+    store.loadCompareTarget('b.yaml', SAMPLE)
+    store.markModified('service:svc-a')
+
+    store.clear()
+
+    expect(store.primary).toBeNull()
+    expect(store.compareTarget).toBeNull()
+    expect(store.isLoaded).toBe(false)
+    expect(store.modifiedKeys.size).toBe(0)
+  })
 })

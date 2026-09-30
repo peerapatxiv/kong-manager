@@ -64,6 +64,19 @@ async function onConnect({ baseUrl, auth, name }: ConnectRequest) {
   }
 }
 
+function removeConfig() {
+  if (configStore.modifiedKeys.size > 0 && !window.confirm('You have unsaved edits — remove this config anyway?')) {
+    return
+  }
+  configStore.clear()
+  formExpanded.value = true
+}
+
+function disconnect() {
+  connectionStore.disconnect()
+  if (!configStore.isLoaded) formExpanded.value = true
+}
+
 function onSelectSaved({ baseUrl, username, password }: { baseUrl: string; username?: string; password?: string }) {
   onConnect({ baseUrl, auth: { username, password } })
 }
@@ -100,14 +113,23 @@ function onSelectSaved({ baseUrl, username, password }: { baseUrl: string; usern
             Connected: <span class="font-mono">{{ connectionStore.active?.baseUrl }}</span>
           </h3>
         </div>
-        <button
-          v-if="!formExpanded"
-          type="button"
-          class="shrink-0 text-xs font-medium text-link underline hover:text-accent-hover"
-          @click="formExpanded = true"
-        >
-          Change source
-        </button>
+        <div class="flex shrink-0 items-center gap-3">
+          <button
+            v-if="!formExpanded"
+            type="button"
+            class="text-xs font-medium text-link underline hover:text-accent-hover"
+            @click="formExpanded = true"
+          >
+            Change source
+          </button>
+          <button
+            type="button"
+            class="text-xs font-medium text-red-600 underline hover:text-red-700 dark:text-red-400"
+            @click="disconnect"
+          >
+            Disconnect
+          </button>
+        </div>
       </div>
       <p class="text-sm text-ink-muted">
         Kong {{ connectionStore.info?.version }} · {{ connectionStore.info?.database }} database. Manage its services
@@ -131,14 +153,31 @@ function onSelectSaved({ baseUrl, username, password }: { baseUrl: string; usern
             Loaded: <span class="font-mono">{{ configStore.primary?.fileName }}</span>
           </h3>
         </div>
-        <button
-          v-if="!formExpanded"
-          type="button"
-          class="shrink-0 text-xs font-medium text-link underline hover:text-accent-hover"
-          @click="formExpanded = true"
-        >
-          Change source
-        </button>
+        <div class="flex shrink-0 items-center gap-3">
+          <button
+            v-if="!formExpanded"
+            type="button"
+            class="text-xs font-medium text-link underline hover:text-accent-hover"
+            @click="formExpanded = true"
+          >
+            Change source
+          </button>
+          <button
+            v-if="connectionStore.isConnected"
+            type="button"
+            class="text-xs font-medium text-red-600 underline hover:text-red-700 dark:text-red-400"
+            @click="disconnect"
+          >
+            Disconnect
+          </button>
+          <button
+            type="button"
+            class="text-xs font-medium text-red-600 underline hover:text-red-700 dark:text-red-400"
+            @click="removeConfig"
+          >
+            Remove config
+          </button>
+        </div>
       </div>
 
       <div data-testid="load-stats" class="grid grid-cols-2 gap-3 lg:grid-cols-4">

@@ -51,6 +51,11 @@ export const useConfigStore = defineStore('config', {
       if (!this.primary) throw new Error('No config loaded')
       await setConfig(baseUrl, this.primary.config, auth)
     },
+    clear() {
+      this.primary = null
+      this.compareTarget = null
+      this.modifiedKeys = new Set()
+    },
     markModified(entityKey: string) {
       this.modifiedKeys.add(entityKey)
     },
