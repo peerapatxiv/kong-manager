@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import type { KongRoute } from '../../types/kong'
-import TagInput from '../shared/TagInput.vue'
+import ValueListEditor from '../shared/ValueListEditor.vue'
 import ToggleSwitch from '../shared/ToggleSwitch.vue'
 import ProtocolPicker from '../shared/ProtocolPicker.vue'
+import MethodPicker from '../shared/MethodPicker.vue'
 import PluginEditor from '../shared/PluginEditor.vue'
 
 const props = defineProps<{ modelValue: KongRoute; serviceName: string }>()
@@ -63,26 +64,46 @@ function onPluginUpdate(index: number, updated: NonNullable<KongRoute['plugins']
       <div class="overflow-hidden">
         <div class="space-y-5 border-t border-border bg-elevated/60 p-4" :inert="!expanded">
           <section class="space-y-3">
+            <label class="block">
+              <span class="field-label">Name</span>
+              <input
+                type="text"
+                :value="modelValue.name ?? ''"
+                placeholder="(unnamed route)"
+                class="input-field"
+                @input="update('name', ($event.target as HTMLInputElement).value || undefined)"
+              />
+            </label>
             <h4 class="section-heading">Hosts &amp; paths</h4>
-            <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
-              <label>
+            <div class="space-y-4">
+              <div>
                 <span class="field-label">Hosts</span>
-                <TagInput :model-value="modelValue.hosts" @update:model-value="(v) => update('hosts', v)" />
-              </label>
-              <label>
+                <ValueListEditor
+                  add-label="Add host"
+                  placeholder="api.example.com"
+                  :model-value="modelValue.hosts"
+                  @update:model-value="(v) => update('hosts', v)"
+                />
+              </div>
+              <div>
                 <span class="field-label">Paths</span>
-                <TagInput :model-value="modelValue.paths" @update:model-value="(v) => update('paths', v)" />
-              </label>
+                <ValueListEditor
+                  add-label="Add path"
+                  placeholder="/v1/resource"
+                  :model-value="modelValue.paths"
+                  @update:model-value="(v) => update('paths', v)"
+                />
+              </div>
             </div>
           </section>
 
           <section class="space-y-3 border-t border-border pt-4">
             <h4 class="section-heading">Matching</h4>
             <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
-              <label>
+              <div>
                 <span class="field-label">Methods</span>
-                <TagInput :model-value="modelValue.methods" @update:model-value="(v) => update('methods', v)" />
-              </label>
+                <MethodPicker :model-value="modelValue.methods" @update:model-value="(v) => update('methods', v)" />
+              </div>
               <div>
                 <span class="field-label">Protocols</span>
                 <ProtocolPicker :model-value="modelValue.protocols" @update:model-value="(v) => update('protocols', v)" />
