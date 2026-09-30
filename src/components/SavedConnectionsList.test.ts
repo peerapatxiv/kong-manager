@@ -23,6 +23,14 @@ describe('SavedConnectionsList', () => {
     expect(wrapper.findAll('li')).toHaveLength(0)
   })
 
+  it('explains how to fill the empty panel, with an icon', () => {
+    const wrapper = mount(SavedConnectionsList)
+
+    expect(wrapper.find('[data-testid="saved-empty"]').text()).toContain('No connections are saved!')
+    expect(wrapper.find('[data-testid="saved-empty"]').text()).toContain('Connect once and it will be saved here.')
+    expect(wrapper.find('[data-testid="saved-empty"] svg').exists()).toBe(true)
+  })
+
   it('lists each saved connection by base URL and username', () => {
     const store = useSavedConnectionsStore()
     store.upsert({ baseUrl: 'http://localhost:8001', username: 'admin', password: 'hunter2' })

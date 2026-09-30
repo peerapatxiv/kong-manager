@@ -67,9 +67,21 @@ function createdOn(conn: SavedConnection): string {
         </button>
       </li>
     </ul>
-    <p v-else class="rounded-lg border border-dashed border-border px-3 py-4 text-center text-sm text-ink-muted">
-      No connections are saved!
-    </p>
+    <div
+      v-else
+      data-testid="saved-empty"
+      class="flex flex-col items-center gap-1.5 rounded-lg border border-dashed border-border px-3 py-6 text-center"
+    >
+      <span class="flex h-9 w-9 items-center justify-center rounded-full bg-elevated text-ink-muted">
+        <svg viewBox="0 0 20 20" fill="none" class="h-4 w-4">
+          <rect x="3" y="4" width="14" height="4.5" rx="1.2" stroke="currentColor" stroke-width="1.5" />
+          <rect x="3" y="11.5" width="14" height="4.5" rx="1.2" stroke="currentColor" stroke-width="1.5" />
+          <path d="M6 6.25h.01M6 13.75h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+        </svg>
+      </span>
+      <p class="text-sm font-medium text-ink">No connections are saved!</p>
+      <p class="text-xs text-ink-muted">Connect once and it will be saved here.</p>
+    </div>
 
     <p class="field-help">Stored in your browser, including passwords — click a connection to reconnect instantly.</p>
   </div>

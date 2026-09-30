@@ -253,6 +253,14 @@ describe('LoadView', () => {
       expect(columns(wrapper).side.exists()).toBe(true)
     })
 
+    it('puts the source tabs above both columns and aligns the saved column with the form instead of offsetting it', () => {
+      const wrapper = mount(LoadView, { global: { plugins: [testRouter()] } })
+
+      expect(columns(wrapper).main.text()).not.toContain('Upload file')
+      expect(wrapper.text()).toContain('Upload file')
+      expect(columns(wrapper).side.classes()).not.toContain('lg:mt-14')
+    })
+
     it('in Upload mode, uses the full width and leaves no empty right column', async () => {
       const wrapper = mount(LoadView, { global: { plugins: [testRouter()] } })
 

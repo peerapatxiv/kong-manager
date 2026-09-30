@@ -90,6 +90,20 @@ describe('KongConnectForm', () => {
     expect(isDisabled(connectButton(wrapper))).toBe(true)
   })
 
+  it('puts the local-storage footnote and the Connect button on one footer row', () => {
+    const wrapper = mountForm()
+
+    const footer = byId(wrapper, 'connect-footer')
+    expect(footer.text()).toContain('All the above information is stored locally.')
+    expect(footer.findAll('button').map((b) => b.text())).toEqual(['Connect'])
+  })
+
+  it('styles the protocol dropdown as a distinct prefix of the address field', () => {
+    const wrapper = mountForm()
+
+    expect(byId(wrapper, 'protocol').classes()).toContain('bg-elevated/60')
+  })
+
   it('has no Connect automatically checkbox, and never sends an automatic flag', async () => {
     const wrapper = mountForm()
 

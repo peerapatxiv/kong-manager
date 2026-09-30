@@ -53,7 +53,7 @@ function submit() {
             v-model="protocol"
             data-testid="protocol"
             aria-label="Protocol"
-            class="input-field !w-auto rounded-r-none border-r-0 font-mono"
+            class="input-field !w-auto rounded-r-none border-r-0 bg-elevated/60 font-mono font-medium"
           >
             <option value="http">HTTP</option>
             <option value="https">HTTPS</option>
@@ -101,11 +101,11 @@ function submit() {
         </label>
       </div>
 
-      <div class="flex justify-end">
-        <div class="flex gap-2">
+      <div data-testid="connect-footer" class="flex flex-wrap items-center justify-between gap-3 border-t border-border pt-4">
+        <p class="field-help !mt-0">* All the above information is stored locally.</p>
           <button
             type="button"
-            class="btn-primary"
+            class="btn-primary px-5"
             title="Connect and load the config"
             :disabled="connecting || !baseUrl"
             @click="submit"
@@ -138,10 +138,7 @@ function submit() {
             </svg>
             {{ connecting ? 'Connecting…' : 'Connect' }}
           </button>
-        </div>
       </div>
-
-      <p class="field-help">* All the above information is stored locally.</p>
     </div>
   </div>
 </template>
