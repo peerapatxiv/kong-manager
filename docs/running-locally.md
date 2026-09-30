@@ -11,12 +11,15 @@ you, and CORS does not apply to server-to-server calls.
 
 ```bash
 npm install
-npm run dev:proxy
+npm start
 ```
 
-Open the address Vite prints (for example `http://localhost:5173/kong-manager/`), then use
-**Connect to Kong** as usual. The New Connection panel shows *"Requests go through the local
-proxy, so CORS does not apply."* when the proxy is active.
+Then open **http://localhost:4173/kong-manager/** in your normal browser and use **Connect to
+Kong**. `npm start` builds the app and serves it on your machine together with the proxy, so
+it stays a web app: no desktop shell, no Kong changes. The New Connection panel shows
+*"Requests go through the local proxy, so CORS does not apply."* when the proxy is active.
+
+While developing, `npm run dev:proxy` does the same with hot reload (Vite prints its address).
 
 Type the Admin API address exactly as your machine reaches it, for example `HTTP` and
 `localhost:8001`, or `HTTPS` and `kong.internal:8444`. A path prefix such as
@@ -25,8 +28,9 @@ restriction applies to browsers, not to this proxy.
 
 ## How it works
 
-- Only `npm run dev:proxy` turns it on (Vite mode `proxy`, which sets `VITE_KONG_PROXY=true`
-  from `.env.proxy`). `npm run dev`, tests and the production build never include it.
+- Only `npm start` and `npm run dev:proxy` turn it on (Vite mode `proxy`, which sets
+  `VITE_KONG_PROXY=true` from `.env.proxy`). `npm run dev`, tests and the hosted build never
+  include it.
 - The app calls `/__kong/<admin api path>` on the dev server with an `X-Kong-Target` header
   naming your Kong. The dev server forwards the method, headers (including `Authorization`
   and `Kong-Admin-Token`) and body, and returns Kong's response unchanged.
@@ -37,7 +41,7 @@ restriction applies to browsers, not to this proxy.
 ## Safety
 
 The proxy forwards to whatever `http` or `https` address it is given. That is fine on your
-own machine, where Vite listens on localhost by default. Do **not** run `dev:proxy` with
+own machine, where Vite listens on localhost by default. Do **not** run `npm start` or `dev:proxy` with
 `--host` or otherwise expose the dev server to other machines, or anyone who can reach it
 can use it to call addresses from your network.
 

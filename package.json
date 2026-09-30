@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "dev:proxy": "vite --mode proxy",
+    "start": "vue-tsc -b && vite build --mode proxy --outDir dist-local && vite preview --mode proxy --outDir dist-local --port 4173",
     "build": "vue-tsc -b && vite build",
     "preview": "vite preview",
     "test": "vitest run"
