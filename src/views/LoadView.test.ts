@@ -239,6 +239,35 @@ describe('LoadView', () => {
     expect(kongAdminApi.getConfig).not.toHaveBeenCalled()
   })
 
+  describe('layout', () => {
+    const columns = (wrapper: ReturnType<typeof mount>) => ({
+      main: wrapper.find('[data-testid="load-main"]'),
+      side: wrapper.find('[data-testid="saved-column"]'),
+    })
+
+    it('in Connect mode, shows the form in two thirds with the saved connections column beside it', () => {
+      const wrapper = mount(LoadView, { global: { plugins: [testRouter()] } })
+
+      expect(columns(wrapper).main.classes()).toContain('lg:col-span-2')
+      expect((columns(wrapper).main.element.parentElement as HTMLElement).className).toContain('lg:grid-cols-3')
+      expect(columns(wrapper).side.exists()).toBe(true)
+    })
+
+    it('in Upload mode, uses the full width and leaves no empty right column', async () => {
+      const wrapper = mount(LoadView, { global: { plugins: [testRouter()] } })
+
+      await wrapper
+        .findAll('button')
+        .find((b) => b.text().includes('Upload file'))!
+        .trigger('click')
+
+      const grid = columns(wrapper).main.element.parentElement as HTMLElement
+      expect(grid.className).not.toContain('grid-cols-3')
+      expect(columns(wrapper).main.classes()).not.toContain('lg:col-span-2')
+      expect(columns(wrapper).side.exists()).toBe(false)
+    })
+  })
+
   it('reconnects instantly using stored credentials when a saved connection is clicked', async () => {
     const savedConnectionsStore = useSavedConnectionsStore()
     savedConnectionsStore.upsert({ baseUrl: 'http://localhost:8001', username: 'admin', password: 'hunter2' })

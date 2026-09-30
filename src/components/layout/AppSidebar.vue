@@ -110,10 +110,11 @@ const linkDisabled =
         </svg>
       </span>
 
-      <p class="section-heading px-2.5 pb-1 pt-4">Live</p>
-      <template v-for="link in liveLinks" :key="link.to">
+      <template v-if="connectionStore.isConnected">
+        <p class="section-heading px-2.5 pb-1 pt-4">Live</p>
         <RouterLink
-          v-if="connectionStore.isConnected"
+          v-for="link in liveLinks"
+          :key="link.to"
           :to="link.to"
           :class="linkBase"
           :active-class="linkActive"
@@ -125,17 +126,6 @@ const linkDisabled =
           </svg>
           {{ link.label }}
         </RouterLink>
-        <span v-else :class="linkDisabled" title="Connect to a live Kong first">
-          <svg viewBox="0 0 20 20" fill="none" class="h-4 w-4 shrink-0">
-            <circle cx="10" cy="10" r="3" stroke="currentColor" stroke-width="1.5" />
-            <path d="M10 3v2M10 15v2M3 10h2M15 10h2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
-          </svg>
-          {{ link.label }}
-          <svg viewBox="0 0 20 20" fill="none" class="ml-auto h-3.5 w-3.5 shrink-0">
-            <rect x="5" y="9" width="10" height="7" rx="1.5" stroke="currentColor" stroke-width="1.5" />
-            <path d="M7.5 9V6.5a2.5 2.5 0 015 0V9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
-          </svg>
-        </span>
       </template>
     </nav>
 
@@ -143,21 +133,13 @@ const linkDisabled =
       <div class="border-t border-border p-3">
         <button
           type="button"
-          :aria-label="theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'"
+          role="switch"
+          :aria-checked="theme === 'dark'"
           class="flex w-full items-center gap-2.5 rounded-lg px-2 py-2 text-sm text-ink-muted transition-colors duration-150 hover:bg-elevated hover:text-ink"
           @click="toggleTheme"
         >
           <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-elevated text-ink-muted">
-            <svg v-if="theme === 'dark'" viewBox="0 0 20 20" fill="none" class="h-4 w-4">
-              <circle cx="10" cy="10" r="4" stroke="currentColor" stroke-width="1.5" />
-              <path
-                d="M10 2.5v1.5M10 16v1.5M4.4 4.4l1.1 1.1M14.5 14.5l1.1 1.1M2.5 10H4M16 10h1.5M4.4 15.6l1.1-1.1M14.5 5.5l1.1-1.1"
-                stroke="currentColor"
-                stroke-width="1.5"
-                stroke-linecap="round"
-              />
-            </svg>
-            <svg v-else viewBox="0 0 20 20" fill="none" class="h-4 w-4">
+            <svg viewBox="0 0 20 20" fill="none" class="h-4 w-4">
               <path
                 d="M17 11.2A7 7 0 018.8 3 7 7 0 1017 11.2z"
                 stroke="currentColor"
@@ -166,7 +148,7 @@ const linkDisabled =
               />
             </svg>
           </span>
-          <span class="flex-1 text-left font-medium">{{ theme === 'dark' ? 'Dark mode' : 'Light mode' }}</span>
+          <span class="flex-1 text-left font-medium">Dark mode</span>
           <span
             aria-hidden="true"
             class="relative inline-flex h-4 w-7 shrink-0 items-center rounded-full transition-colors duration-150"

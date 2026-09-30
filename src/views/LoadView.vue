@@ -80,8 +80,15 @@ function onSelectSaved({ baseUrl, username, password }: { baseUrl: string; usern
       </p>
     </div>
 
-    <div v-if="formExpanded" :class="configStore.isLoaded ? '' : 'grid grid-cols-1 gap-4 lg:grid-cols-3 lg:gap-6'">
-      <div class="space-y-4" :class="{ 'lg:col-span-2': !configStore.isLoaded }">
+    <div
+      v-if="formExpanded"
+      :class="configStore.isLoaded || mode !== 'connect' ? '' : 'grid grid-cols-1 gap-4 lg:grid-cols-3 lg:gap-6'"
+    >
+      <div
+        data-testid="load-main"
+        class="space-y-4"
+        :class="{ 'lg:col-span-2': !configStore.isLoaded && mode === 'connect' }"
+      >
         <div class="inline-flex gap-1 rounded-xl border border-border bg-surface p-1">
           <button
             type="button"
@@ -144,8 +151,8 @@ function onSelectSaved({ baseUrl, username, password }: { baseUrl: string; usern
         </template>
       </div>
 
-      <div v-if="!configStore.isLoaded" class="space-y-3 lg:mt-14">
-        <SavedConnectionsList v-if="mode === 'connect'" @connect="onSelectSaved" />
+      <div v-if="!configStore.isLoaded && mode === 'connect'" data-testid="saved-column" class="space-y-3 lg:mt-14">
+        <SavedConnectionsList @connect="onSelectSaved" />
       </div>
     </div>
 

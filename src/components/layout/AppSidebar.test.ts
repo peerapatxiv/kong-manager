@@ -6,6 +6,7 @@ import { mount } from '@vue/test-utils'
 import AppSidebar from './AppSidebar.vue'
 import { useConfigStore } from '../../stores/config'
 import { useConnectionStore } from '../../stores/connection'
+import { useTheme } from '../../lib/theme'
 
 // jsdom's FileReader fires `load` via a real macrotask, not a microtask —
 // `flushPromises()` doesn't wait long enough for it, so wait on a real timer.
@@ -31,18 +32,19 @@ function selectFile(input: HTMLInputElement, file: File) {
 describe('AppSidebar', () => {
   beforeEach(() => setActivePinia(createPinia()))
 
-  it('shows Live links as disabled placeholders, not anchors, until a connection exists', () => {
+  it('hides the whole Live group until a connection exists, instead of showing locked links', () => {
     const wrapper = mount(AppSidebar, { global: { plugins: [testRouter()] } })
 
-    expect(wrapper.text()).toContain('Live')
+    expect(wrapper.text()).not.toContain('Live')
+    expect(wrapper.find('span[title="Connect to a live Kong first"]').exists()).toBe(false)
     expect(wrapper.findAll('a').map((a) => a.text())).toEqual(['Load'])
-    expect(wrapper.findAll('span[title="Connect to a live Kong first"]')).toHaveLength(2)
   })
 
   it('links to the live services and routes once connected', () => {
     useConnectionStore().$patch({ active: { baseUrl: 'http://kong:8001' }, info: { version: '3.4.0', database: 'postgres' } })
     const wrapper = mount(AppSidebar, { global: { plugins: [testRouter()] } })
 
+    expect(wrapper.text()).toContain('Live')
     const live = wrapper.findAll('a').filter((a) => a.attributes('href')?.startsWith('/live'))
     expect(live.map((a) => [a.text(), a.attributes('href')])).toEqual([
       ['Services', '/live/services'],
@@ -88,5 +90,34 @@ describe('AppSidebar', () => {
 
     expect(wrapper.text()).toContain('Failed to parse YAML')
     expect(store.primary?.fileName).toBe('a.yaml')
+  })
+
+  describe('theme switch', () => {
+    const themeSwitch = (wrapper: ReturnType<typeof mount>) => wrapper.find('button[role="switch"]')
+
+    beforeEach(() => useTheme().setTheme('light'))
+
+    it('is labelled Dark mode with the switch off in light mode, and on in dark mode', async () => {
+      const wrapper = mount(AppSidebar, { global: { plugins: [testRouter()] } })
+
+      expect(themeSwitch(wrapper).text()).toContain('Dark mode')
+      expect(themeSwitch(wrapper).text()).not.toContain('Light mode')
+      expect(themeSwitch(wrapper).attributes('aria-checked')).toBe('false')
+
+      await themeSwitch(wrapper).trigger('click')
+
+      expect(themeSwitch(wrapper).text()).toContain('Dark mode')
+      expect(themeSwitch(wrapper).attributes('aria-checked')).toBe('true')
+      expect(document.documentElement.classList.contains('dark')).toBe(true)
+    })
+
+    it('keeps the same icon in both modes so the icon, label and switch never disagree', async () => {
+      const wrapper = mount(AppSidebar, { global: { plugins: [testRouter()] } })
+      const before = themeSwitch(wrapper).find('svg').html()
+
+      await themeSwitch(wrapper).trigger('click')
+
+      expect(themeSwitch(wrapper).find('svg').html()).toBe(before)
+    })
   })
 })
