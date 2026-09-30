@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { RouterLink, useRouter } from 'vue-router'
 import FileDropZone from '../components/FileDropZone.vue'
 import KongConnectForm from '../components/KongConnectForm.vue'
 import SavedConnectionsList from '../components/SavedConnectionsList.vue'
@@ -9,6 +9,8 @@ import { useConfigStore } from '../stores/config'
 import { useSavedConnectionsStore } from '../stores/savedConnections'
 import { useConnectionStore } from '../stores/connection'
 import type { KongAdminAuth } from '../lib/kongAdminApi'
+import { describeConnectError } from '../lib/connectError'
+import type { KongNodeInfo } from '../stores/connection'
 
 const configStore = useConfigStore()
 const savedConnectionsStore = useSavedConnectionsStore()
@@ -40,21 +42,23 @@ async function onConnect({ baseUrl, auth, name }: ConnectRequest) {
   connecting.value = true
   connectErrorMessage.value = null
   try {
-    await configStore.loadFromKongAdmin(baseUrl, auth)
-    savedConnectionsStore.upsert({
-      baseUrl,
-      username: auth.username,
-      password: auth.password,
-      name,
-    })
-    // Probe the node in the background so live editing can be enabled; a failed
-    // probe must not affect the config that was just loaded.
-    // A failed probe also drops any earlier connection, so live edits can never
-    // target a different Kong than the config now on screen.
-    void connectionStore.connect({ baseUrl, auth }).catch(() => connectionStore.disconnect())
+    // Ask the node what it is first. A database-backed Kong has no /config endpoint
+    // (that is DB-less only), so it goes straight to live editing instead of failing.
+    let info: KongNodeInfo | null = null
+    try {
+      await connectionStore.connect({ baseUrl, auth })
+      info = connectionStore.info
+    } catch {
+      // A failed probe also drops any earlier connection, so live edits can never
+      // target a different Kong than the one on screen. /config may still work.
+      connectionStore.disconnect()
+    }
+    const databaseBacked = info !== null && info.database !== 'off' && info.database !== 'unknown'
+    if (!databaseBacked) await configStore.loadFromKongAdmin(baseUrl, auth)
+    savedConnectionsStore.upsert({ baseUrl, username: auth.username, password: auth.password, name })
     formExpanded.value = false
   } catch (err) {
-    connectErrorMessage.value = err instanceof Error ? err.message : String(err)
+    connectErrorMessage.value = describeConnectError(err, baseUrl)
   } finally {
     connecting.value = false
   }
@@ -78,6 +82,41 @@ function onSelectSaved({ baseUrl, username, password }: { baseUrl: string; usern
               : 'Drop in a YAML file to browse, edit, and compare its entities.'
         }}
       </p>
+    </div>
+
+    <div
+      v-if="connectionStore.isConnected && !configStore.isLoaded"
+      data-testid="live-connected"
+      class="card space-y-4 p-5"
+    >
+      <div class="flex items-center justify-between gap-2.5">
+        <div class="flex min-w-0 items-center gap-2.5">
+          <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-accent/15 text-accent-secondary">
+            <svg viewBox="0 0 16 16" fill="none" class="h-3.5 w-3.5">
+              <path d="M3.5 8.5l3 3 6-7" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+          </span>
+          <h3 class="truncate font-bold text-ink">
+            Connected: <span class="font-mono">{{ connectionStore.active?.baseUrl }}</span>
+          </h3>
+        </div>
+        <button
+          v-if="!formExpanded"
+          type="button"
+          class="shrink-0 text-xs font-medium text-link underline hover:text-accent-hover"
+          @click="formExpanded = true"
+        >
+          Change source
+        </button>
+      </div>
+      <p class="text-sm text-ink-muted">
+        Kong {{ connectionStore.info?.version }} · {{ connectionStore.info?.database }} database. Manage its services
+        and routes live.
+      </p>
+      <div class="flex flex-wrap gap-2">
+        <RouterLink to="/live/services" class="btn-primary">Open live services</RouterLink>
+        <RouterLink to="/live/routes" class="btn-secondary">Open live routes</RouterLink>
+      </div>
     </div>
 
     <div v-if="configStore.isLoaded" class="card space-y-5 p-5">
@@ -144,7 +183,12 @@ function onSelectSaved({ baseUrl, username, password }: { baseUrl: string; usern
         </StatTile>
       </div>
 
-      <button type="button" class="btn-primary" @click="router.push('/browse')">Browse this config</button>
+      <div class="flex flex-wrap gap-2">
+        <button type="button" class="btn-primary" @click="router.push('/browse')">Browse this config</button>
+        <RouterLink v-if="connectionStore.isConnected" to="/live/services" class="btn-secondary">
+          Open live services
+        </RouterLink>
+      </div>
     </div>
 
     <div v-if="formExpanded" class="space-y-4">

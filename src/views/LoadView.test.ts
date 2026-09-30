@@ -12,7 +12,7 @@ import * as kongAdminApi from '../lib/kongAdminApi'
 vi.mock('../lib/kongAdminApi')
 
 import { useConnectionStore } from '../stores/connection'
-import { adminJson } from '../lib/kongAdmin/http'
+import { adminJson, KongAdminApiError } from '../lib/kongAdmin/http'
 
 vi.mock('../lib/kongAdmin/http', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../lib/kongAdmin/http')>()),
@@ -25,6 +25,8 @@ function testRouter() {
     routes: [
       { path: '/', component: LoadView },
       { path: '/browse', component: { template: '<div />' } },
+      { path: '/live/services', component: { template: '<div />' } },
+      { path: '/live/routes', component: { template: '<div />' } },
     ],
   })
 }
@@ -321,6 +323,96 @@ describe('LoadView', () => {
       const stats = wrapper.find('[data-testid="load-stats"]')
       expect(stats.classes()).toContain('grid-cols-2')
       expect(stats.classes()).toContain('lg:grid-cols-4')
+    })
+  })
+
+  describe('connecting to different kinds of Kong', () => {
+    const connectTo = async (wrapper: ReturnType<typeof mount>, host = 'localhost:8001') => {
+      await wrapper.find('[data-testid="host"]').setValue(host)
+      await wrapper
+        .findAll('button')
+        .find((b) => b.text() === 'Connect')!
+        .trigger('click')
+      await flushPromises()
+    }
+
+    it('goes straight to live editing for a database-backed Kong, without asking for /config', async () => {
+      vi.mocked(adminJson).mockResolvedValue({ version: '3.4.0', configuration: { database: 'postgres' } })
+      const wrapper = mount(LoadView, { global: { plugins: [testRouter()] } })
+
+      await connectTo(wrapper)
+
+      expect(kongAdminApi.getConfig).not.toHaveBeenCalled()
+      expect(useConfigStore().isLoaded).toBe(false)
+      expect(useConnectionStore().canWrite).toBe(true)
+      const card = wrapper.find('[data-testid="live-connected"]')
+      expect(card.text()).toContain('http://localhost:8001')
+      expect(card.text()).toContain('Kong 3.4.0')
+      expect(card.text()).toContain('postgres')
+      expect(card.findAll('a').map((a) => [a.text(), a.attributes('href')])).toEqual([
+        ['Open live services', '/live/services'],
+        ['Open live routes', '/live/routes'],
+      ])
+      expect(wrapper.text()).not.toContain('Failed to connect')
+    })
+
+    it('saves the connection after a database-backed connect too', async () => {
+      vi.mocked(adminJson).mockResolvedValue({ version: '3.4.0', configuration: { database: 'postgres' } })
+      const wrapper = mount(LoadView, { global: { plugins: [testRouter()] } })
+
+      await connectTo(wrapper)
+
+      expect(useSavedConnectionsStore().connections[0]).toMatchObject({ baseUrl: 'http://localhost:8001' })
+    })
+
+    it('still loads /config for a DB-less Kong', async () => {
+      vi.mocked(adminJson).mockResolvedValue({ version: '3.4.0', configuration: { database: 'off' } })
+      vi.mocked(kongAdminApi.getConfig).mockResolvedValue({ _format_version: '3.0', services: [] })
+      const wrapper = mount(LoadView, { global: { plugins: [testRouter()] } })
+
+      await connectTo(wrapper)
+
+      expect(kongAdminApi.getConfig).toHaveBeenCalled()
+      expect(wrapper.find('[data-testid="live-connected"]').exists()).toBe(false)
+      expect(wrapper.text()).toContain('Loaded: Kong Admin @ http://localhost:8001')
+    })
+
+    it('tries /config when the database mode is not reported', async () => {
+      vi.mocked(adminJson).mockResolvedValue({ version: '2.8.1' })
+      vi.mocked(kongAdminApi.getConfig).mockResolvedValue({ _format_version: '3.0', services: [] })
+      const wrapper = mount(LoadView, { global: { plugins: [testRouter()] } })
+
+      await connectTo(wrapper)
+
+      expect(kongAdminApi.getConfig).toHaveBeenCalled()
+    })
+
+    it('explains an unreachable Kong in plain words instead of showing the raw error', async () => {
+      vi.mocked(adminJson).mockRejectedValue(new KongAdminApiError('Failed to fetch', { status: 0, kind: 'network' }))
+      vi.mocked(kongAdminApi.getConfig).mockRejectedValue(
+        new KongAdminApiError('Failed to fetch', { status: 0, kind: 'network' }),
+      )
+      const wrapper = mount(LoadView, { global: { plugins: [testRouter()] } })
+
+      await connectTo(wrapper)
+
+      expect(wrapper.text()).toContain('Could not reach http://localhost:8001')
+      expect(wrapper.text()).toContain('CORS')
+    })
+
+    it('offers the Live views from a loaded config only when a live connection exists', async () => {
+      vi.mocked(adminJson).mockResolvedValue({ version: '3.4.0', configuration: { database: 'off' } })
+      vi.mocked(kongAdminApi.getConfig).mockResolvedValue({ _format_version: '3.0', services: [] })
+      const fileOnly = mount(LoadView, { global: { plugins: [testRouter()] } })
+      useConfigStore().loadPrimary('sample.yaml', SAMPLE)
+      await fileOnly.vm.$nextTick()
+      expect(fileOnly.text()).not.toContain('Open live services')
+
+      setActivePinia(createPinia())
+      const connected = mount(LoadView, { global: { plugins: [testRouter()] } })
+      await connectTo(connected)
+
+      expect(connected.text()).toContain('Open live services')
     })
   })
 
