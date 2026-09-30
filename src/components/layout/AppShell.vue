@@ -15,6 +15,8 @@ const mobileNavOpen = ref(false)
 const pageTitle = computed(() => {
   if (route.path === '/browse') return 'Browse'
   if (route.path === '/compare') return 'Compare'
+  if (route.path === '/live/services') return 'Live services'
+  if (route.path === '/live/routes') return 'Live routes'
   return 'Load config'
 })
 </script>

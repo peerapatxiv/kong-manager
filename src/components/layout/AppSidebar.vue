@@ -2,10 +2,12 @@
 import { ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import { useConfigStore } from '../../stores/config'
+import { useConnectionStore } from '../../stores/connection'
 import { readTextFile } from '../../lib/readTextFile'
 import { useTheme } from '../../lib/theme'
 
 const configStore = useConfigStore()
+const connectionStore = useConnectionStore()
 const emit = defineEmits<{ navigate: [] }>()
 const { theme, toggleTheme } = useTheme()
 
@@ -32,6 +34,11 @@ async function onChangeFileSelected(event: Event) {
   }
 }
 
+const liveLinks = [
+  { to: '/live/services', label: 'Services' },
+  { to: '/live/routes', label: 'Routes' },
+]
+
 const linkBase =
   'flex items-center gap-2.5 rounded-lg border-l-2 border-transparent py-2 pl-2.5 pr-3 text-sm text-ink-muted transition-colors duration-150 hover:bg-elevated hover:text-ink'
 const linkActive = '!border-accent !bg-accent/10 !text-link font-medium'
@@ -47,7 +54,7 @@ const linkDisabled =
       >
         K
       </span>
-      <span class="font-bold text-ink">Kongsole</span>
+      <span class="font-bold text-ink">Manager</span>
     </div>
 
     <nav class="flex flex-col gap-0.5 px-3">
@@ -102,6 +109,34 @@ const linkDisabled =
           <path d="M7.5 9V6.5a2.5 2.5 0 015 0V9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
         </svg>
       </span>
+
+      <p class="section-heading px-2.5 pb-1 pt-4">Live</p>
+      <template v-for="link in liveLinks" :key="link.to">
+        <RouterLink
+          v-if="connectionStore.isConnected"
+          :to="link.to"
+          :class="linkBase"
+          :active-class="linkActive"
+          @click="emit('navigate')"
+        >
+          <svg viewBox="0 0 20 20" fill="none" class="h-4 w-4 shrink-0">
+            <circle cx="10" cy="10" r="3" stroke="currentColor" stroke-width="1.5" />
+            <path d="M10 3v2M10 15v2M3 10h2M15 10h2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+          </svg>
+          {{ link.label }}
+        </RouterLink>
+        <span v-else :class="linkDisabled" title="Connect to a live Kong first">
+          <svg viewBox="0 0 20 20" fill="none" class="h-4 w-4 shrink-0">
+            <circle cx="10" cy="10" r="3" stroke="currentColor" stroke-width="1.5" />
+            <path d="M10 3v2M10 15v2M3 10h2M15 10h2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+          </svg>
+          {{ link.label }}
+          <svg viewBox="0 0 20 20" fill="none" class="ml-auto h-3.5 w-3.5 shrink-0">
+            <rect x="5" y="9" width="10" height="7" rx="1.5" stroke="currentColor" stroke-width="1.5" />
+            <path d="M7.5 9V6.5a2.5 2.5 0 015 0V9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+          </svg>
+        </span>
+      </template>
     </nav>
 
     <div class="mt-auto">

@@ -5,6 +5,7 @@ import { createRouter, createMemoryHistory } from 'vue-router'
 import { mount } from '@vue/test-utils'
 import AppSidebar from './AppSidebar.vue'
 import { useConfigStore } from '../../stores/config'
+import { useConnectionStore } from '../../stores/connection'
 
 // jsdom's FileReader fires `load` via a real macrotask, not a microtask —
 // `flushPromises()` doesn't wait long enough for it, so wait on a real timer.
@@ -29,6 +30,25 @@ function selectFile(input: HTMLInputElement, file: File) {
 
 describe('AppSidebar', () => {
   beforeEach(() => setActivePinia(createPinia()))
+
+  it('shows Live links as disabled placeholders, not anchors, until a connection exists', () => {
+    const wrapper = mount(AppSidebar, { global: { plugins: [testRouter()] } })
+
+    expect(wrapper.text()).toContain('Live')
+    expect(wrapper.findAll('a').map((a) => a.text())).toEqual(['Load'])
+    expect(wrapper.findAll('span[title="Connect to a live Kong first"]')).toHaveLength(2)
+  })
+
+  it('links to the live services and routes once connected', () => {
+    useConnectionStore().$patch({ active: { baseUrl: 'http://kong:8001' }, info: { version: '3.4.0', database: 'postgres' } })
+    const wrapper = mount(AppSidebar, { global: { plugins: [testRouter()] } })
+
+    const live = wrapper.findAll('a').filter((a) => a.attributes('href')?.startsWith('/live'))
+    expect(live.map((a) => [a.text(), a.attributes('href')])).toEqual([
+      ['Services', '/live/services'],
+      ['Routes', '/live/routes'],
+    ])
+  })
 
   it('shows disabled Browse/Compare links and no Change control until a config is loaded', () => {
     const wrapper = mount(AppSidebar, { global: { plugins: [testRouter()] } })
