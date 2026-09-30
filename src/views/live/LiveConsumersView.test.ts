@@ -9,6 +9,11 @@ import { useConnectionStore } from '../../stores/connection'
 type Call = { method: string; url: string; body?: Record<string, unknown> }
 type Reply = { ok: boolean; status: number; json?: () => Promise<unknown>; text: () => Promise<string> }
 
+const CREDENTIALS: Record<string, Record<string, unknown>[]> = {
+  'key-auth': [{ id: 'k-1', key: 'secret-key-123', ttl: null }],
+  jwt: [{ id: 'j-1', key: 'iss-1', algorithm: 'HS256', secret: 's3cr3t' }],
+}
+
 const CONSUMERS = [
   { id: 'c-1', username: 'alice', custom_id: null, tags: ['vip'] },
   { id: 'c-2', username: null, custom_id: 'ext-2', tags: [] },
@@ -28,7 +33,10 @@ function fakeKong(failCreateWith?: { status: number; body: unknown }) {
       const method = init.method ?? 'GET'
       const body = init.body ? (JSON.parse(init.body as string) as Record<string, unknown>) : undefined
       calls.push({ method, url, body })
-      if (method === 'GET' && url.includes('/consumers/')) return reply({ data: [] })
+      const credential = /\/consumers\/([^/]+)\/([^/]+)(?:\/([^/]+))?$/.exec(url)
+      if (credential && method === 'GET') return reply({ data: credential[1] === 'c-1' ? (CREDENTIALS[credential[2]] ?? []) : [] })
+      if (credential && method === 'POST') return reply({ id: 'cred-new', ...body }, 201)
+      if (credential && method === 'DELETE') return { ok: true, status: 204, text: async () => '' }
       if (method === 'GET' && url.includes('/consumers')) return reply({ data: CONSUMERS })
       if (method === 'POST') {
         if (failCreateWith) return reply(failCreateWith.body, failCreateWith.status)
@@ -258,4 +266,159 @@ describe('LiveConsumersView', () => {
     await router.push('/')
     expect(router.currentRoute.value.path).toBe('/')
   })
+
+describe('credentials panel', () => {
+  const tab = (wrapper: Wrapper, id: string) => byId(wrapper, `cred-tab-${id}`)
+  const credRows = (wrapper: Wrapper) => wrapper.findAll('[data-testid="cred-row"]')
+
+  it('is absent while creating a consumer, and present for a saved one', async () => {
+    connect()
+    fakeKong()
+    const wrapper = await mountView()
+
+    await byId(wrapper, 'new-consumer').trigger('click')
+    expect(tab(wrapper, 'key-auth').exists()).toBe(false)
+
+    await rows(wrapper)[0].trigger('click')
+    expect(tab(wrapper, 'key-auth').exists()).toBe(true)
+    expect(wrapper.findAll('[data-testid^="cred-tab-"]')).toHaveLength(6)
+  })
+
+  it('loads the key-auth credentials of the selected consumer and masks the key until revealed', async () => {
+    connect()
+    const calls = fakeKong()
+    const wrapper = await mountView()
+
+    await rows(wrapper)[0].trigger('click')
+    await flushPromises()
+
+    expect(calls.some((c) => c.method === 'GET' && c.url === 'http://kong:8001/consumers/c-1/key-auth')).toBe(true)
+    expect(credRows(wrapper)).toHaveLength(1)
+    expect(credRows(wrapper)[0].text()).not.toContain('secret-key-123')
+
+    await byId(wrapper, 'cred-reveal').trigger('click')
+    expect(credRows(wrapper)[0].text()).toContain('secret-key-123')
+    await byId(wrapper, 'cred-reveal').trigger('click')
+    expect(credRows(wrapper)[0].text()).not.toContain('secret-key-123')
+  })
+
+  it('shows the credential count on a tab once it has loaded, and loads another type when opened', async () => {
+    connect()
+    const calls = fakeKong()
+    const wrapper = await mountView()
+
+    await rows(wrapper)[0].trigger('click')
+    await flushPromises()
+    expect(tab(wrapper, 'key-auth').text()).toContain('1')
+
+    await tab(wrapper, 'jwt').trigger('click')
+    await flushPromises()
+
+    expect(calls.some((c) => c.method === 'GET' && c.url === 'http://kong:8001/consumers/c-1/jwt')).toBe(true)
+    expect(credRows(wrapper)[0].text()).toContain('iss-1')
+    expect(credRows(wrapper)[0].text()).toContain('HS256')
+    expect(credRows(wrapper)[0].text()).not.toContain('s3cr3t')
+  })
+
+  it('adds a key-auth credential with only the filled fields, leaving the key for Kong to generate', async () => {
+    connect()
+    const calls = fakeKong()
+    const wrapper = await mountView()
+    await rows(wrapper)[0].trigger('click')
+    await flushPromises()
+
+    await wrapper.find('[data-testid="cred-ttl"] input').setValue('3600')
+    await byId(wrapper, 'cred-add').trigger('click')
+    await flushPromises()
+
+    const post = calls.find((c) => c.method === 'POST' && c.url === 'http://kong:8001/consumers/c-1/key-auth')!
+    expect(post.body).toEqual({ ttl: 3600 })
+    expect(credRows(wrapper)).toHaveLength(2)
+    expect((wrapper.find('[data-testid="cred-ttl"] input').element as HTMLInputElement).value).toBe('')
+  })
+
+  it('blocks adding a basic-auth credential without a username and password, one message per field', async () => {
+    connect()
+    const calls = fakeKong()
+    const wrapper = await mountView()
+    await rows(wrapper)[0].trigger('click')
+    await flushPromises()
+
+    await tab(wrapper, 'basic-auth').trigger('click')
+    await flushPromises()
+    await byId(wrapper, 'cred-add').trigger('click')
+    await flushPromises()
+
+    const alert = wrapper.findAll('[role="alert"]').map((a) => a.text()).join(' ')
+    expect(alert).toContain('Username is required.')
+    expect(alert).toContain('Password is required.')
+    expect(calls.some((c) => c.method === 'POST' && c.url.includes('/basic-auth'))).toBe(false)
+  })
+
+  it('sends a password exactly as typed, including surrounding spaces', async () => {
+    connect()
+    const calls = fakeKong()
+    const wrapper = await mountView()
+    await rows(wrapper)[0].trigger('click')
+    await flushPromises()
+
+    await tab(wrapper, 'basic-auth').trigger('click')
+    await flushPromises()
+    await wrapper.find('[data-testid="cred-username"] input').setValue(' alice ')
+    await wrapper.find('[data-testid="cred-password"] input').setValue(' pass word ')
+    await byId(wrapper, 'cred-add').trigger('click')
+    await flushPromises()
+
+    expect(calls.find((c) => c.method === 'POST' && c.url.endsWith('/basic-auth'))?.body).toEqual({
+      username: 'alice',
+      password: ' pass word ',
+    })
+  })
+
+  it('deletes a credential after confirmation with an encoded path, and not when cancelled', async () => {
+    connect()
+    const calls = fakeKong()
+    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(false)
+    const wrapper = await mountView()
+    await rows(wrapper)[0].trigger('click')
+    await flushPromises()
+
+    await byId(wrapper, 'cred-delete').trigger('click')
+    expect(confirm).toHaveBeenCalledWith('Delete this credential?')
+    expect(calls.some((c) => c.method === 'DELETE')).toBe(false)
+
+    confirm.mockReturnValue(true)
+    await byId(wrapper, 'cred-delete').trigger('click')
+    await flushPromises()
+    expect(calls.find((c) => c.method === 'DELETE')?.url).toBe('http://kong:8001/consumers/c-1/key-auth/k-1')
+    expect(credRows(wrapper)).toHaveLength(0)
+  })
+
+  it('on DB-less Kong disables adding and deleting credentials', async () => {
+    connect('off')
+    fakeKong()
+    const wrapper = await mountView()
+    await rows(wrapper)[0].trigger('click')
+    await flushPromises()
+
+    expect(byId(wrapper, 'cred-add').attributes('disabled')).toBeDefined()
+    expect(byId(wrapper, 'cred-delete').attributes('disabled')).toBeDefined()
+  })
+
+  it('switching consumer clears the rows and loads the new consumer\'s credentials', async () => {
+    connect()
+    const calls = fakeKong()
+    const wrapper = await mountView()
+
+    await rows(wrapper)[0].trigger('click')
+    await flushPromises()
+    expect(credRows(wrapper)).toHaveLength(1)
+
+    await rows(wrapper)[1].trigger('click')
+    await flushPromises()
+
+    expect(calls.some((c) => c.method === 'GET' && c.url === 'http://kong:8001/consumers/c-2/key-auth')).toBe(true)
+    expect(credRows(wrapper)).toHaveLength(0)
+  })
+})
 })

@@ -9,6 +9,7 @@ import type { ConsumerForm as ConsumerFormModel } from '../../lib/live/consumerF
 import LiveGate from '../../components/live/LiveGate.vue'
 import LiveErrorBanner from '../../components/live/LiveErrorBanner.vue'
 import ConsumerForm from '../../components/live/ConsumerForm.vue'
+import CredentialsPanel from '../../components/live/CredentialsPanel.vue'
 import SearchInput from '../../components/shared/SearchInput.vue'
 
 const connection = useConnectionStore()
@@ -242,6 +243,12 @@ watch(
               </button>
             </div>
           </div>
+          <CredentialsPanel
+            v-if="!creating && selectedId"
+            :key="selectedId"
+            :consumer-id="selectedId"
+            :disabled="!connection.canWrite"
+          />
         </div>
         <div v-else class="flex h-full min-h-[16rem] items-center justify-center text-center">
           <p class="text-sm text-ink-muted">Select a consumer from the list, or create a new one.</p>
