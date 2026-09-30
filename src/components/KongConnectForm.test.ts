@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, afterEach, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import KongConnectForm from './KongConnectForm.vue'
 
@@ -8,6 +8,8 @@ type Wrapper = ReturnType<typeof mount>
 const byId = (wrapper: Wrapper, id: string) => wrapper.find(`[data-testid="${id}"]`)
 const connectButton = (wrapper: Wrapper) => wrapper.findAll('button').find((b) => b.text().startsWith('Connect'))!
 const isDisabled = (el: { element: Element }) => (el.element as HTMLButtonElement).disabled
+
+afterEach(() => vi.unstubAllEnvs())
 
 function mountForm(connecting = false) {
   return mount(KongConnectForm, { props: { connecting } })
@@ -102,6 +104,16 @@ describe('KongConnectForm', () => {
     const wrapper = mountForm()
 
     expect(byId(wrapper, 'protocol').classes()).toContain('bg-elevated/60')
+  })
+
+  it('tells you requests go through the local proxy only in proxy mode', () => {
+    expect(byId(mountForm(), 'proxy-hint').exists()).toBe(false)
+
+    vi.stubEnv('VITE_KONG_PROXY', 'true')
+    const hint = byId(mountForm(), 'proxy-hint')
+
+    expect(hint.text()).toContain('local proxy')
+    expect(hint.text()).toContain('CORS')
   })
 
   it('has no Connect automatically checkbox, and never sends an automatic flag', async () => {

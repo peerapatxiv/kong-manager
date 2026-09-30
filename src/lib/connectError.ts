@@ -1,9 +1,12 @@
-import { KongAdminApiError } from './kongAdmin/http'
+import { isProxyMode, KongAdminApiError } from './kongAdmin/http'
 
 /** A connect failure in plain words, with the most likely cause and what to check. */
 export function describeConnectError(err: unknown, baseUrl: string): string {
   if (err instanceof KongAdminApiError) {
     if (err.kind === 'network') {
+      if (isProxyMode()) {
+        return `Could not reach ${baseUrl} through the local proxy. Check the address and that Kong's Admin API is running. (${err.message})`
+      }
       return (
         `Could not reach ${baseUrl}. Check the address, that Kong's Admin API is running, and that it allows ` +
         `requests from this site (CORS). A page served over https cannot call a plain http address, except localhost. ` +

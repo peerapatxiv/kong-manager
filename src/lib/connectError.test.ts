@@ -1,8 +1,10 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, afterEach, vi } from 'vitest'
 import { describeConnectError } from './connectError'
 import { KongAdminApiError } from './kongAdmin/http'
 
 const base = 'https://kong.internal:8444'
+
+afterEach(() => vi.unstubAllEnvs())
 
 describe('describeConnectError', () => {
   it('explains a network failure: address, Kong running, CORS, and the https-to-http rule', () => {
@@ -34,5 +36,19 @@ describe('describeConnectError', () => {
     )
     expect(describeConnectError(new Error('connection refused'), base)).toBe('connection refused')
     expect(describeConnectError('oops', base)).toBe('oops')
+  })
+
+
+  it('in local proxy mode, blames the address or Kong being down, not CORS or https', () => {
+    vi.stubEnv('VITE_KONG_PROXY', 'true')
+
+    const message = describeConnectError(
+      new KongAdminApiError('Could not reach Kong at https://kong.internal:8444: connect ECONNREFUSED', { status: 0, kind: 'network' }),
+      base,
+    )
+
+    expect(message).toContain('local proxy')
+    expect(message).toContain('ECONNREFUSED')
+    expect(message).not.toContain('CORS')
   })
 })

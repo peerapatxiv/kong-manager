@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
-import { adminFetch, adminJson, KongAdminApiError } from './http'
+import { adminFetch, adminJson, isProxyMode, KongAdminApiError } from './http'
 
 const conn = { baseUrl: 'http://localhost:8001' }
 
@@ -9,6 +9,7 @@ function okResponse(body: unknown = {}) {
 
 afterEach(() => {
   vi.unstubAllGlobals()
+  vi.unstubAllEnvs()
   vi.useRealTimers()
 })
 
@@ -175,6 +176,99 @@ describe('adminFetch', () => {
     })
     await vi.advanceTimersByTimeAsync(20000)
     await assertion
+  })
+})
+
+describe('adminFetch in local proxy mode', () => {
+  it('is on only when VITE_KONG_PROXY is "true"', () => {
+    expect(isProxyMode()).toBe(false)
+    vi.stubEnv('VITE_KONG_PROXY', 'false')
+    expect(isProxyMode()).toBe(false)
+    vi.stubEnv('VITE_KONG_PROXY', 'true')
+    expect(isProxyMode()).toBe(true)
+  })
+
+  it('calls the same-origin proxy path and names the real Kong in X-Kong-Target', async () => {
+    vi.stubEnv('VITE_KONG_PROXY', 'true')
+    const fetchMock = vi.fn().mockResolvedValue(okResponse())
+    vi.stubGlobal('fetch', fetchMock)
+
+    await adminFetch({ baseUrl: 'http://localhost:8001/' }, 'GET', '/services', { query: { size: 5 } })
+
+    expect(fetchMock.mock.calls[0][0]).toBe('/__kong/services?size=5')
+    const headers = (fetchMock.mock.calls[0][1] as RequestInit).headers as Record<string, string>
+    expect(headers['X-Kong-Target']).toBe('http://localhost:8001')
+  })
+
+  it('keeps a path prefix on the target and still sends credentials and the body', async () => {
+    vi.stubEnv('VITE_KONG_PROXY', 'true')
+    const fetchMock = vi.fn().mockResolvedValue(okResponse())
+    vi.stubGlobal('fetch', fetchMock)
+
+    await adminFetch(
+      { baseUrl: 'https://gw.internal/kong-admin', auth: { username: 'admin', password: 'pw', token: 't' } },
+      'POST',
+      '/consumers',
+      { body: { username: 'alice' } },
+    )
+
+    const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit]
+    const headers = init.headers as Record<string, string>
+    expect(url).toBe('/__kong/consumers')
+    expect(headers['X-Kong-Target']).toBe('https://gw.internal/kong-admin')
+    expect(headers['Authorization']).toBe(`Basic ${btoa('admin:pw')}`)
+    expect(headers['Kong-Admin-Token']).toBe('t')
+    expect(headers['Content-Type']).toBe('application/json')
+    expect(JSON.parse(init.body as string)).toEqual({ username: 'alice' })
+  })
+
+  it('talks to Kong directly, with no target header, when proxy mode is off', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(okResponse())
+    vi.stubGlobal('fetch', fetchMock)
+
+    await adminFetch(conn, 'GET', '/services')
+
+    expect(fetchMock.mock.calls[0][0]).toBe('http://localhost:8001/services')
+    const headers = (fetchMock.mock.calls[0][1] as RequestInit).headers as Record<string, string>
+    expect(headers['X-Kong-Target']).toBeUndefined()
+  })
+
+  it('reports an error from the proxy itself as a network error with the proxy\'s message', async () => {
+    vi.stubEnv('VITE_KONG_PROXY', 'true')
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: false,
+        status: 502,
+        headers: { get: (name: string) => (name.toLowerCase() === 'x-kong-proxy-error' ? '1' : null) },
+        text: async () => JSON.stringify({ message: 'Could not reach Kong at http://localhost:8001: connect ECONNREFUSED' }),
+      }),
+    )
+
+    const err = await adminFetch(conn, 'GET', '/').catch((e) => e)
+
+    expect(err).toBeInstanceOf(KongAdminApiError)
+    expect(err.kind).toBe('network')
+    expect(err.status).toBe(0)
+    expect(err.message).toBe('Could not reach Kong at http://localhost:8001: connect ECONNREFUSED')
+  })
+
+  it('does not mistake Kong\'s own 502 for a proxy error', async () => {
+    vi.stubEnv('VITE_KONG_PROXY', 'true')
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: false,
+        status: 502,
+        headers: { get: () => null },
+        text: async () => 'Bad Gateway',
+      }),
+    )
+
+    const err = await adminFetch(conn, 'GET', '/').catch((e) => e)
+
+    expect(err.kind).toBe('server')
+    expect(err.status).toBe(502)
   })
 })
 

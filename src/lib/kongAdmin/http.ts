@@ -41,6 +41,12 @@ export type AdminFetchOptions = {
 }
 
 const TIMEOUT_MS = 20000
+const PROXY_PATH = '/__kong'
+
+/** True under `npm run dev:proxy`, where the dev server forwards Kong calls so CORS never applies. */
+export function isProxyMode(): boolean {
+  return import.meta.env.VITE_KONG_PROXY === 'true'
+}
 
 function normalizeBaseUrl(baseUrl: string): string {
   return baseUrl.replace(/\/+$/, '')
@@ -55,13 +61,21 @@ function buildHeaders(auth: KongAdminAuth | undefined, hasBody: boolean): Record
   return headers
 }
 
-function buildUrl(baseUrl: string, path: string, query?: AdminFetchOptions['query']): string {
+function buildRequestTarget(
+  baseUrl: string,
+  path: string,
+  query?: AdminFetchOptions['query'],
+): { url: string; proxyHeaders: Record<string, string> } {
   const params = new URLSearchParams()
   for (const [key, value] of Object.entries(query ?? {})) {
     if (value !== null && value !== undefined) params.append(key, String(value))
   }
   const queryString = params.toString()
-  return `${normalizeBaseUrl(baseUrl)}${path}${queryString ? `?${queryString}` : ''}`
+  const tail = `${path}${queryString ? `?${queryString}` : ''}`
+  const base = normalizeBaseUrl(baseUrl)
+  // In proxy mode the browser calls its own dev server (same origin), which calls Kong.
+  if (isProxyMode()) return { url: `${PROXY_PATH}${tail}`, proxyHeaders: { 'X-Kong-Target': base } }
+  return { url: `${base}${tail}`, proxyHeaders: {} }
 }
 
 function kindForStatus(status: number): KongAdminApiErrorKind {
@@ -74,6 +88,18 @@ function kindForStatus(status: number): KongAdminApiErrorKind {
 
 async function toApiError(response: Response): Promise<KongAdminApiError> {
   const text = await response.text()
+  // The local proxy marks its own failures (Kong unreachable, bad target) so they are not
+  // mistaken for an HTTP error from Kong itself.
+  if (response.headers?.get('x-kong-proxy-error')) {
+    let message = text
+    try {
+      const parsed = JSON.parse(text) as { message?: unknown }
+      if (typeof parsed.message === 'string') message = parsed.message
+    } catch {
+      // Keep the raw text.
+    }
+    return new KongAdminApiError(message, { status: 0, kind: 'network' })
+  }
   let kongMessage: string | undefined
   let fields: Record<string, unknown> | undefined
   try {
@@ -99,11 +125,12 @@ export async function adminFetch(
 ): Promise<Response> {
   const controller = new AbortController()
   const timer = setTimeout(() => controller.abort(), TIMEOUT_MS)
+  const { url, proxyHeaders } = buildRequestTarget(conn.baseUrl, path, options.query)
   let response: Response
   try {
-    response = await fetch(buildUrl(conn.baseUrl, path, options.query), {
+    response = await fetch(url, {
       method,
-      headers: buildHeaders(conn.auth, options.body !== undefined),
+      headers: { ...buildHeaders(conn.auth, options.body !== undefined), ...proxyHeaders },
       body: options.body === undefined ? undefined : JSON.stringify(options.body),
       signal: controller.signal,
     })

@@ -4,6 +4,7 @@ import SecretField from './shared/SecretField.vue'
 import { composeBaseUrl, normalizeHostInput } from '../lib/connectionUrl'
 import type { ConnectionProtocol } from '../lib/connectionUrl'
 import type { KongAdminAuth } from '../lib/kongAdminApi'
+import { isProxyMode } from '../lib/kongAdmin/http'
 
 const props = defineProps<{ connecting: boolean }>()
 const emit = defineEmits<{
@@ -16,6 +17,7 @@ const name = ref('')
 const username = ref('')
 const password = ref<string | undefined>(undefined)
 
+const proxyMode = isProxyMode()
 const baseUrl = computed(() => composeBaseUrl(protocol.value, host.value))
 
 function currentAuth(): KongAdminAuth {
@@ -100,6 +102,10 @@ function submit() {
           <SecretField v-model="password" placeholder="Optional" />
         </label>
       </div>
+
+      <p v-if="proxyMode" data-testid="proxy-hint" class="field-help">
+        Requests go through the local proxy, so CORS does not apply.
+      </p>
 
       <div data-testid="connect-footer" class="flex flex-wrap items-center justify-between gap-3 border-t border-border pt-4">
         <p class="field-help !mt-0">* All the above information is stored locally.</p>
