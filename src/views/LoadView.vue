@@ -80,7 +80,85 @@ function onSelectSaved({ baseUrl, username, password }: { baseUrl: string; usern
       </p>
     </div>
 
+    <div v-if="configStore.isLoaded" class="card space-y-5 p-5">
+      <div class="flex items-center justify-between gap-2.5">
+        <div class="flex items-center gap-2.5">
+          <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-accent/15 text-accent-secondary">
+            <svg viewBox="0 0 16 16" fill="none" class="h-3.5 w-3.5">
+              <path d="M3.5 8.5l3 3 6-7" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+          </span>
+          <h3 class="font-bold text-ink">
+            Loaded: <span class="font-mono">{{ configStore.primary?.fileName }}</span>
+          </h3>
+        </div>
+        <button
+          v-if="!formExpanded"
+          type="button"
+          class="shrink-0 text-xs font-medium text-link underline hover:text-accent-hover"
+          @click="formExpanded = true"
+        >
+          Change source
+        </button>
+      </div>
+
+      <div data-testid="load-stats" class="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <StatTile label="Services" :value="configStore.summary.services">
+          <template #icon>
+            <svg viewBox="0 0 20 20" fill="none" class="h-4 w-4">
+              <rect x="3" y="4" width="14" height="3.2" rx="1" stroke="currentColor" stroke-width="1.5" />
+              <rect x="3" y="9" width="14" height="3.2" rx="1" stroke="currentColor" stroke-width="1.5" />
+              <rect x="3" y="14" width="8" height="3.2" rx="1" stroke="currentColor" stroke-width="1.5" />
+            </svg>
+          </template>
+        </StatTile>
+        <StatTile label="Routes" :value="configStore.summary.routes">
+          <template #icon>
+            <svg viewBox="0 0 20 20" fill="none" class="h-4 w-4">
+              <circle cx="4.5" cy="15" r="1.6" stroke="currentColor" stroke-width="1.4" />
+              <circle cx="15.5" cy="5" r="1.6" stroke="currentColor" stroke-width="1.4" />
+              <path d="M5.7 13.8L14.3 6.2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-dasharray="0.2 2.8" />
+            </svg>
+          </template>
+        </StatTile>
+        <StatTile label="Consumers" :value="configStore.summary.consumers">
+          <template #icon>
+            <svg viewBox="0 0 20 20" fill="none" class="h-4 w-4">
+              <circle cx="10" cy="7" r="3" stroke="currentColor" stroke-width="1.5" />
+              <path d="M3.5 17c0-3.3 3-6 6.5-6s6.5 2.7 6.5 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+            </svg>
+          </template>
+        </StatTile>
+        <StatTile label="Global plugins" :value="configStore.summary.globalPlugins">
+          <template #icon>
+            <svg viewBox="0 0 20 20" fill="none" class="h-4 w-4">
+              <path
+                d="M7 3v3M13 3v3M5 7h10v3a5 5 0 01-5 5 5 5 0 01-5-5V7zM10 15v3"
+                stroke="currentColor"
+                stroke-width="1.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </template>
+        </StatTile>
+      </div>
+
+      <button type="button" class="btn-primary" @click="router.push('/browse')">Browse this config</button>
+    </div>
+
     <div v-if="formExpanded" class="space-y-4">
+      <div v-if="configStore.isLoaded" class="flex items-center justify-between gap-2">
+        <h3 class="section-heading">Load a different source</h3>
+        <button
+          type="button"
+          class="text-xs font-medium text-link underline hover:text-accent-hover"
+          @click="formExpanded = false"
+        >
+          Cancel
+        </button>
+      </div>
+
         <div class="inline-flex gap-1 rounded-xl border border-border bg-surface p-1">
           <button
             type="button"
@@ -153,73 +231,6 @@ function onSelectSaved({ baseUrl, username, password }: { baseUrl: string; usern
         <SavedConnectionsList @connect="onSelectSaved" />
       </div>
       </div>
-    </div>
-
-    <div v-if="configStore.isLoaded" class="card space-y-5 p-5">
-      <div class="flex items-center justify-between gap-2.5">
-        <div class="flex items-center gap-2.5">
-          <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-accent/15 text-accent-secondary">
-            <svg viewBox="0 0 16 16" fill="none" class="h-3.5 w-3.5">
-              <path d="M3.5 8.5l3 3 6-7" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" />
-            </svg>
-          </span>
-          <h3 class="font-bold text-ink">
-            Loaded: <span class="font-mono">{{ configStore.primary?.fileName }}</span>
-          </h3>
-        </div>
-        <button
-          v-if="!formExpanded"
-          type="button"
-          class="shrink-0 text-xs font-medium text-link underline hover:text-accent-hover"
-          @click="formExpanded = true"
-        >
-          Change source
-        </button>
-      </div>
-
-      <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <StatTile label="Services" :value="configStore.summary.services">
-          <template #icon>
-            <svg viewBox="0 0 20 20" fill="none" class="h-4 w-4">
-              <rect x="3" y="4" width="14" height="3.2" rx="1" stroke="currentColor" stroke-width="1.5" />
-              <rect x="3" y="9" width="14" height="3.2" rx="1" stroke="currentColor" stroke-width="1.5" />
-              <rect x="3" y="14" width="8" height="3.2" rx="1" stroke="currentColor" stroke-width="1.5" />
-            </svg>
-          </template>
-        </StatTile>
-        <StatTile label="Routes" :value="configStore.summary.routes">
-          <template #icon>
-            <svg viewBox="0 0 20 20" fill="none" class="h-4 w-4">
-              <circle cx="4.5" cy="15" r="1.6" stroke="currentColor" stroke-width="1.4" />
-              <circle cx="15.5" cy="5" r="1.6" stroke="currentColor" stroke-width="1.4" />
-              <path d="M5.7 13.8L14.3 6.2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-dasharray="0.2 2.8" />
-            </svg>
-          </template>
-        </StatTile>
-        <StatTile label="Consumers" :value="configStore.summary.consumers">
-          <template #icon>
-            <svg viewBox="0 0 20 20" fill="none" class="h-4 w-4">
-              <circle cx="10" cy="7" r="3" stroke="currentColor" stroke-width="1.5" />
-              <path d="M3.5 17c0-3.3 3-6 6.5-6s6.5 2.7 6.5 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
-            </svg>
-          </template>
-        </StatTile>
-        <StatTile label="Global plugins" :value="configStore.summary.globalPlugins">
-          <template #icon>
-            <svg viewBox="0 0 20 20" fill="none" class="h-4 w-4">
-              <path
-                d="M7 3v3M13 3v3M5 7h10v3a5 5 0 01-5 5 5 5 0 01-5-5V7zM10 15v3"
-                stroke="currentColor"
-                stroke-width="1.5"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              />
-            </svg>
-          </template>
-        </StatTile>
-      </div>
-
-      <button type="button" class="btn-primary" @click="router.push('/browse')">Browse this config</button>
     </div>
   </div>
 </template>

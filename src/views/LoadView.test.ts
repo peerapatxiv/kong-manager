@@ -276,6 +276,54 @@ describe('LoadView', () => {
     })
   })
 
+  describe('with a config already loaded', () => {
+    const loaded = () => {
+      const wrapper = mount(LoadView, { global: { plugins: [testRouter()] } })
+      useConfigStore().loadPrimary('sample-a.yaml', SAMPLE)
+      return wrapper
+    }
+    const button = (wrapper: ReturnType<typeof mount>, label: string) =>
+      wrapper.findAll('button').find((b) => b.text() === label)
+
+    it('shows the loaded summary above the source form, not below it', async () => {
+      const wrapper = loaded()
+      await wrapper.vm.$nextTick()
+
+      const html = wrapper.html()
+      expect(html).toContain('Loaded:')
+      expect(html).toContain('New Connection')
+      expect(html.indexOf('Loaded:')).toBeLessThan(html.indexOf('New Connection'))
+    })
+
+    it('labels the form as a different source and lets you cancel it, which brings back Change source', async () => {
+      const wrapper = loaded()
+      await wrapper.vm.$nextTick()
+
+      expect(wrapper.text()).toContain('Load a different source')
+      await button(wrapper, 'Cancel')!.trigger('click')
+
+      expect(wrapper.text()).not.toContain('New Connection')
+      expect(wrapper.text()).not.toContain('Load a different source')
+      expect(button(wrapper, 'Change source')).toBeTruthy()
+    })
+
+    it('shows no Cancel button or different-source heading when nothing is loaded', () => {
+      const wrapper = mount(LoadView, { global: { plugins: [testRouter()] } })
+
+      expect(button(wrapper, 'Cancel')).toBeUndefined()
+      expect(wrapper.text()).not.toContain('Load a different source')
+    })
+
+    it('lays the four counts out two across on small screens and four across on large ones', async () => {
+      const wrapper = loaded()
+      await wrapper.vm.$nextTick()
+
+      const stats = wrapper.find('[data-testid="load-stats"]')
+      expect(stats.classes()).toContain('grid-cols-2')
+      expect(stats.classes()).toContain('lg:grid-cols-4')
+    })
+  })
+
   it('reconnects instantly using stored credentials when a saved connection is clicked', async () => {
     const savedConnectionsStore = useSavedConnectionsStore()
     savedConnectionsStore.upsert({ baseUrl: 'http://localhost:8001', username: 'admin', password: 'hunter2' })
