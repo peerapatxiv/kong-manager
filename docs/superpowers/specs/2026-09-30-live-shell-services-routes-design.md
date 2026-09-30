@@ -19,7 +19,7 @@ Primate (`~/primate/src/workbench/controllers/service-*.js`, `route-*.js`) suppl
 - `ENTITY_RESOURCES` in `src/lib/kongAdmin/entities.ts` has defaults for `services` and `routes`, and one nested resource (`targets`).
 - Browse is built on a nested declarative config keyed by entity name, with edits going to an in-memory copy. It is not reused for live data.
 - The sidebar (`AppSidebar.vue`) links to Load, Browse and Compare. The router has three routes.
-- Shared components exist: `ValueListEditor`, `ProtocolPicker`, `MethodPicker`, `ToggleSwitch`, `DynamicKeyValueEditor`, `SearchInput`, `Badge`, `TagInput`.
+- Shared components exist: `ValueListEditor`, `ProtocolPicker` (given a new optional `options` prop so routes can offer `tls_passthrough`), `MethodPicker`, `ToggleSwitch`, `DynamicKeyValueEditor`, `SearchInput`, `Badge`, `TagInput`.
 - Kong's list endpoints filter by `tags` on the server but have no text search.
 
 ## Goals
@@ -41,7 +41,7 @@ Primate (`~/primate/src/workbench/controllers/service-*.js`, `route-*.js`) suppl
 ### 1. Navigation and gating
 
 - Router: `/live/services` and `/live/routes`, each rendering a view. `/live` redirects to `/live/services`.
-- Sidebar: a "Live" group with Services and Routes links. Links are always visible; the views handle the unconnected state.
+- Sidebar: a "Live" group with Services and Routes. Like Browse and Compare, the links are disabled placeholders until a connection exists; the views still handle direct navigation while unconnected.
 - Every Live view has three states, decided from `useConnectionStore()`:
   - **Not connected:** an empty state explaining that a live Kong Admin API connection is needed, with a link to the Load page.
   - **Connected, `canWrite` false (DB-less):** the list and detail render normally, a notice explains that Kong is running without a database so entities are read-only, and every write control (New, Save, Delete, enabled toggle) is disabled.
@@ -58,7 +58,7 @@ Actions:
 - `loadMore()`: fetches the next page using `next` and appends. No-op when `next` is null or a request is already in flight.
 - `create(body)`, `save(idOrName, patch)`, `remove(idOrName)`, `toggleEnabled(idOrName, enabled)`: call the matching client method, then update `items` locally (insert, replace or remove) so the list reflects the change without refetching.
 
-`LiveError` is `{ message: string; fields?: Record<string, unknown> }`, built from `KongAdminApiError` (`kongMessage` when present, otherwise `message`, plus `fields`). Any other thrown value becomes `{ message: String(err) }`. Write actions rethrow after setting `error`, so callers can keep the form open. A `ReadOnlyError` is surfaced the same way.
+`LiveError` is `{ message: string; fields?: Record<string, unknown> }`, built from `KongAdminApiError` (`kongMessage` when present, otherwise `message`, plus `fields`). Any other thrown value becomes `{ message: String(err) }`. Write actions rethrow after setting `error`, so callers can keep the form open. A `ReadOnlyError` is surfaced the same way. `options.listVia` lets the list call go through another resource (used to list a service's routes via `service_routes`) while create, save, remove and toggle always use the plain resource.
 
 Text search is not part of the composable: views filter the already-loaded `items` client-side.
 
@@ -82,19 +82,19 @@ Pure TypeScript, no Vue, under `src/lib/live/`.
   - fields that do not apply to the protocol are sent as `null` so a PATCH clears them: `ca_certificates`, `client_certificate`, `tls_verify` and `tls_verify_depth` apply only to `https`; `path` applies only to `http`, `https` and `tls_passthrough`.
 
 **`routeForm.ts`**
-- `type RouteForm`: `name`, `protocols`, `methods`, `hosts`, `paths`, `headers` (`{ name: string; values: string[] }[]`), `snis`, `sources` and `destinations` (`string[]` of `ip` or `ip:port`), `https_redirect_status_code`, `regex_priority`, `strip_path`, `path_handling`, `preserve_host`, `request_buffering`, `response_buffering`, `tags`, `service` (service id or empty).
+- `type RouteForm`: `name`, `protocols`, `methods`, `hosts`, `paths`, `headers` (`string[]`, one `Name: value1, value2` line per header), `snis`, `sources` and `destinations` (`string[]` of `ip` or `ip:port`), `https_redirect_status_code`, `regex_priority`, `strip_path`, `path_handling`, `preserve_host`, `request_buffering`, `response_buffering`, `tags`, `service` (service id or empty).
 - `fromEntity`, `newRouteForm` (from `ENTITY_RESOURCES.routes.defaults`), `validateRoute`, `toPayload`.
 - `validateRoute` rules, ported from Primate:
   - at least one protocol is required (`Please check at least one protocol from the list.`);
   - for each selected protocol, at least one of its required field groups must be non-empty: `http` needs one of methods, hosts, headers, paths; `https` adds snis; `tcp` needs sources or destinations; `tls` needs sources, destinations or snis; `tls_passthrough` needs snis; `grpc` needs one of hosts, headers, paths; `grpcs` adds snis. The message is `At least one of <fields> is required, if <PROTOCOL> is selected.`;
-  - selected protocols must come from one family: `http`/`https`, `grpc`/`grpcs`, or the stream family `tcp`/`tls`/`tls_passthrough`. Mixing families is an error (`Choose protocols from one family: HTTP/HTTPS, GRPC/GRPCS, or TCP/TLS/TLS passthrough.`). This is stricter than Primate, which would silently send contradictory clearing rules; Kong rejects such routes anyway;
+  - selected protocols must come from one family: `http`/`https`, `grpc`/`grpcs`, or the stream family `tcp`/`tls`/`tls_passthrough`/`udp`. Mixing families is an error (`Choose protocols from one family: HTTP/HTTPS, GRPC/GRPCS, or TCP/TLS/TLS passthrough.`). This is stricter than Primate, which would silently send contradictory clearing rules; Kong rejects such routes anyway;
   - a malformed `sources` or `destinations` entry (not `ip` or `ip:port`, port outside 1 to 65535) is an error.
 - `toPayload` rules:
   - `sources` and `destinations` are parsed into `{ ip, port? }` objects, dropping entries with an empty ip;
   - `headers` becomes a `{ name: values[] }` map, or `null` when empty;
   - `https_redirect_status_code` and `regex_priority` are numbers;
   - `service` becomes `{ id }` or `null`;
-  - fields that are mutually exclusive with the selected protocols are sent as `null`: `hosts`, `paths`, `methods` and `headers` are cleared when only stream protocols (`tcp`, `tls`, `tls_passthrough`) are selected, and `sources` and `destinations` are cleared when only http-family protocols (`http`, `https`, `grpc`, `grpcs`) are selected (`snis` is never cleared);
+  - fields that every selected protocol excludes are sent as `null`, from the set `methods`, `hosts`, `paths`, `headers`, `sources`, `destinations` (for example `methods` is cleared for `grpc`, and `sources`/`destinations` for `tls_passthrough`); `snis` is never cleared;
   - `strip_path` is omitted when every selected protocol is `grpc` or `grpcs`.
 
 Create uses POST with the payload (null fields dropped for create). Save uses PATCH with the payload including nulls, so cleared fields are cleared on the server.
@@ -103,7 +103,7 @@ Create uses POST with the payload (null fields dropped for create). Save uses PA
 
 - `src/views/live/LiveServicesView.vue` and `LiveRoutesView.vue`, each a list panel plus a detail panel, like Browse.
 - **List panel:** a tag filter input (server-side, re-runs `load()`), a search box (client-side over loaded items, matching name, host, paths and tags), a "Load more" button shown when `next` is set, and a "New" button. Service rows show an enabled toggle; route rows show their service name.
-- **Detail panel:** a form built from the shared components (`ValueListEditor` for hosts, paths and snis, `ProtocolPicker`, `MethodPicker`, `ToggleSwitch`, `DynamicKeyValueEditor` for headers, `TagInput` for tags). It has Save, Discard and Delete buttons and a dirty indicator. Discard and navigation-away prompt only when the form is dirty. Delete asks for confirmation.
+- **Detail panel:** a form built from the shared components (`ValueListEditor` for hosts, paths and snis, `ProtocolPicker`, `MethodPicker`, `ToggleSwitch`, a `ValueListEditor` of `Name: value1, value2` lines for headers, `TagInput` for tags). It has Save, Discard and Delete buttons and a dirty indicator. Discard and navigation-away prompt only when the form is dirty. Delete asks for confirmation.
 - **Validation display:** `validateService` and `validateRoute` messages show in a banner above the form and block Save. A `LiveError` from Kong shows in the same banner; entries in `fields` that match a form field are also shown under that field.
 - **Route service picker:** a searchable select over all services, loaded once with `listAll` on the routes view and refreshed after any service change made in the same session. It allows clearing the service (a route without a service).
 - A route opened from a service can use `service_routes`; the routes view also accepts `?service=<id>` to filter to one service's routes.
