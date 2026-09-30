@@ -7,13 +7,12 @@ import type { KongAdminAuth } from '../lib/kongAdminApi'
 
 const props = defineProps<{ connecting: boolean }>()
 const emit = defineEmits<{
-  connect: [payload: { baseUrl: string; auth: KongAdminAuth; name?: string; autoConnect: boolean }]
+  connect: [payload: { baseUrl: string; auth: KongAdminAuth; name?: string }]
 }>()
 
 const protocol = ref<ConnectionProtocol>('http')
 const host = ref('')
 const name = ref('')
-const autoConnect = ref(false)
 const username = ref('')
 const password = ref<string | undefined>(undefined)
 
@@ -36,7 +35,6 @@ function submit() {
     baseUrl: baseUrl.value,
     auth: currentAuth(),
     name: name.value.trim() || undefined,
-    autoConnect: autoConnect.value,
   })
 }
 </script>
@@ -103,16 +101,7 @@ function submit() {
         </label>
       </div>
 
-      <div class="flex flex-wrap items-center justify-between gap-3">
-        <label class="inline-flex cursor-pointer items-center gap-2 text-sm text-ink">
-          <input
-            v-model="autoConnect"
-            data-testid="auto-connect"
-            type="checkbox"
-            class="h-4 w-4 rounded border-border accent-accent"
-          />
-          Connect automatically
-        </label>
+      <div class="flex justify-end">
         <div class="flex gap-2">
           <button
             type="button"

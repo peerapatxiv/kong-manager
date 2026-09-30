@@ -86,14 +86,13 @@ describe('SavedConnectionsList', () => {
     expect(row.text()).toContain('Created on: -')
   })
 
-  it('marks the connection that connects automatically', () => {
-    const store = useSavedConnectionsStore()
-    store.upsert({ baseUrl: 'http://a:8001' })
-    store.upsert({ baseUrl: 'http://b:8001', autoConnect: true })
+  it('shows no Auto badge, even for an older entry that still carries the flag', () => {
+    localStorage.setItem(
+      'kong-manager:saved-connections',
+      JSON.stringify([{ id: '1', baseUrl: 'http://a:8001', autoConnect: true }]),
+    )
+    setActivePinia(createPinia())
 
-    const rows = mount(SavedConnectionsList).findAll('li')
-
-    expect(rows[0].text()).not.toContain('Auto')
-    expect(rows[1].text()).toContain('Auto')
+    expect(mount(SavedConnectionsList).find('li').text()).not.toContain('Auto')
   })
 })

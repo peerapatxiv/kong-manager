@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import FileDropZone from '../components/FileDropZone.vue'
 import KongConnectForm from '../components/KongConnectForm.vue'
@@ -34,10 +34,9 @@ type ConnectRequest = {
   baseUrl: string
   auth: KongAdminAuth
   name?: string
-  autoConnect?: boolean
 }
 
-async function onConnect({ baseUrl, auth, name, autoConnect }: ConnectRequest) {
+async function onConnect({ baseUrl, auth, name }: ConnectRequest) {
   connecting.value = true
   connectErrorMessage.value = null
   try {
@@ -47,7 +46,6 @@ async function onConnect({ baseUrl, auth, name, autoConnect }: ConnectRequest) {
       username: auth.username,
       password: auth.password,
       name,
-      autoConnect,
     })
     // Probe the node in the background so live editing can be enabled; a failed
     // probe must not affect the config that was just loaded.
@@ -61,15 +59,6 @@ async function onConnect({ baseUrl, auth, name, autoConnect }: ConnectRequest) {
     connecting.value = false
   }
 }
-
-// Runs once per browser session, and only when nothing is loaded yet, so visiting
-// this page later to change the source does not silently reconnect.
-onMounted(() => {
-  const auto = savedConnectionsStore.autoConnection
-  if (!auto || configStore.isLoaded || savedConnectionsStore.autoConnectTried) return
-  savedConnectionsStore.markAutoConnectTried()
-  void onConnect({ baseUrl: auto.baseUrl, auth: { username: auto.username, password: auto.password } })
-})
 
 function onSelectSaved({ baseUrl, username, password }: { baseUrl: string; username?: string; password?: string }) {
   onConnect({ baseUrl, auth: { username, password } })

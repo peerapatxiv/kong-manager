@@ -7,8 +7,6 @@ export type SavedConnection = {
   name?: string
   /** Epoch milliseconds. Older entries have none. */
   createdAt?: number
-  /** Connect to this one when the app opens. At most one connection has it set. */
-  autoConnect?: boolean
 }
 
 const STORAGE_KEY = 'kong-manager:saved-connections'

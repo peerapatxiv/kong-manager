@@ -14,14 +14,13 @@ function mountForm(connecting = false) {
 }
 
 describe('KongConnectForm', () => {
-  it('emits connect with the composed URL, credentials, name and the automatic flag', async () => {
+  it('emits connect with the composed URL, credentials and name', async () => {
     const wrapper = mountForm()
 
     await byId(wrapper, 'host').setValue('localhost:8001')
     await byId(wrapper, 'username').setValue('admin')
     await wrapper.find('input[type="password"]').setValue('hunter2')
     await byId(wrapper, 'connection-name').setValue('  Staging  ')
-    await byId(wrapper, 'auto-connect').setValue(true)
     await connectButton(wrapper).trigger('click')
 
     expect(wrapper.emitted('connect')).toEqual([
@@ -30,7 +29,6 @@ describe('KongConnectForm', () => {
           baseUrl: 'http://localhost:8001',
           auth: { username: 'admin', password: 'hunter2' },
           name: 'Staging',
-          autoConnect: true,
         },
       ],
     ])
@@ -49,7 +47,6 @@ describe('KongConnectForm', () => {
           baseUrl: 'https://kong.internal',
           auth: { username: undefined, password: undefined },
           name: undefined,
-          autoConnect: false,
         },
       ],
     ])
@@ -91,6 +88,18 @@ describe('KongConnectForm', () => {
     await byId(wrapper, 'host').setValue('localhost:8001')
 
     expect(isDisabled(connectButton(wrapper))).toBe(true)
+  })
+
+  it('has no Connect automatically checkbox, and never sends an automatic flag', async () => {
+    const wrapper = mountForm()
+
+    expect(byId(wrapper, 'auto-connect').exists()).toBe(false)
+    expect(wrapper.text()).not.toContain('Connect automatically')
+    expect(wrapper.find('input[type="checkbox"]').exists()).toBe(false)
+
+    await byId(wrapper, 'host').setValue('localhost:8001')
+    await connectButton(wrapper).trigger('click')
+    expect(wrapper.emitted('connect')?.[0][0]).not.toHaveProperty('autoConnect')
   })
 
   it('has no Test button, test result or colour picker', () => {

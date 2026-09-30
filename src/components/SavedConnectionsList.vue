@@ -43,13 +43,6 @@ function createdOn(conn: SavedConnection): string {
         <div class="min-w-0 flex-1">
           <p class="flex items-center gap-1.5">
             <strong class="truncate text-sm font-semibold text-ink">{{ displayName(conn) }}</strong>
-            <span
-              v-if="conn.autoConnect"
-              class="shrink-0 rounded-full bg-accent/15 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-accent-secondary"
-              title="Connects automatically when the app opens"
-            >
-              Auto
-            </span>
           </p>
           <p class="truncate font-mono text-xs text-ink-muted">{{ conn.baseUrl }}</p>
           <p class="text-[11px] text-ink-muted">Created on: {{ createdOn(conn) }}</p>

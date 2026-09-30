@@ -197,13 +197,12 @@ describe('LoadView', () => {
     expect(wrapper.text()).toContain('Saved Connections')
   })
 
-  it('saves the connection name and automatic flag after a successful connect', async () => {
+  it('saves the connection name after a successful connect', async () => {
     vi.mocked(kongAdminApi.getConfig).mockResolvedValue({ _format_version: '3.0', services: [] })
     const wrapper = mount(LoadView, { global: { plugins: [testRouter()] } })
 
     await wrapper.find('[data-testid="host"]').setValue('localhost:8001')
     await wrapper.find('[data-testid="connection-name"]').setValue('Staging')
-    await wrapper.find('[data-testid="auto-connect"]').setValue(true)
     await wrapper
       .findAll('button')
       .find((b) => b.text() === 'Connect')!
@@ -213,7 +212,6 @@ describe('LoadView', () => {
     expect(useSavedConnectionsStore().connections[0]).toMatchObject({
       baseUrl: 'http://localhost:8001',
       name: 'Staging',
-      autoConnect: true,
     })
   })
 
@@ -228,64 +226,17 @@ describe('LoadView', () => {
     expect(useSavedConnectionsStore().connections[0]).toMatchObject({ name: 'Staging' })
   })
 
-  describe('connect automatically', () => {
-    it('connects the automatic saved connection with its stored credentials when the page opens', async () => {
-      vi.mocked(kongAdminApi.getConfig).mockResolvedValue({ _format_version: '3.0', services: [] })
-      useSavedConnectionsStore().upsert({
-        baseUrl: 'http://auto:8001',
-        username: 'u',
-        password: 'p',
-        autoConnect: true,
-      })
+  it('never connects on its own when the page opens, even for an older entry that carries an automatic flag', async () => {
+    localStorage.setItem(
+      'kong-manager:saved-connections',
+      JSON.stringify([{ id: '1', baseUrl: 'http://auto:8001', username: 'u', password: 'p', autoConnect: true }]),
+    )
+    setActivePinia(createPinia())
 
-      const wrapper = mount(LoadView, { global: { plugins: [testRouter()] } })
-      await flushPromises()
+    mount(LoadView, { global: { plugins: [testRouter()] } })
+    await flushPromises()
 
-      expect(kongAdminApi.getConfig).toHaveBeenCalledWith('http://auto:8001', { username: 'u', password: 'p' })
-      expect(wrapper.text()).toContain('Loaded: Kong Admin @ http://auto:8001')
-    })
-
-    it('does nothing when no connection is marked automatic', async () => {
-      useSavedConnectionsStore().upsert({ baseUrl: 'http://manual:8001' })
-
-      mount(LoadView, { global: { plugins: [testRouter()] } })
-      await flushPromises()
-
-      expect(kongAdminApi.getConfig).not.toHaveBeenCalled()
-    })
-
-    it('does nothing when a config is already loaded', async () => {
-      useSavedConnectionsStore().upsert({ baseUrl: 'http://auto:8001', autoConnect: true })
-      useConfigStore().loadPrimary('sample.yaml', SAMPLE)
-
-      mount(LoadView, { global: { plugins: [testRouter()] } })
-      await flushPromises()
-
-      expect(kongAdminApi.getConfig).not.toHaveBeenCalled()
-    })
-
-    it('runs only once per session, not on every visit to the page', async () => {
-      vi.mocked(kongAdminApi.getConfig).mockResolvedValue({ _format_version: '3.0', services: [] })
-      useSavedConnectionsStore().upsert({ baseUrl: 'http://auto:8001', autoConnect: true })
-
-      mount(LoadView, { global: { plugins: [testRouter()] } }).unmount()
-      await flushPromises()
-      useConfigStore().primary = null
-      mount(LoadView, { global: { plugins: [testRouter()] } })
-      await flushPromises()
-
-      expect(kongAdminApi.getConfig).toHaveBeenCalledTimes(1)
-    })
-
-    it('shows the usual error banner when the automatic connection fails', async () => {
-      vi.mocked(kongAdminApi.getConfig).mockRejectedValue(new Error('connection refused'))
-      useSavedConnectionsStore().upsert({ baseUrl: 'http://auto:8001', autoConnect: true })
-
-      const wrapper = mount(LoadView, { global: { plugins: [testRouter()] } })
-      await flushPromises()
-
-      expect(wrapper.text()).toContain('connection refused')
-    })
+    expect(kongAdminApi.getConfig).not.toHaveBeenCalled()
   })
 
   it('reconnects instantly using stored credentials when a saved connection is clicked', async () => {

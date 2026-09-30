@@ -73,7 +73,7 @@ describe('useSavedConnectionsStore', () => {
   it('keeps name and createdAt when a reconnect passes only the URL and credentials', () => {
     vi.spyOn(Date, 'now').mockReturnValue(1_700_000_000_000)
     const store = useSavedConnectionsStore()
-    store.upsert({ baseUrl: 'http://kong:8001', name: 'Staging', autoConnect: true })
+    store.upsert({ baseUrl: 'http://kong:8001', name: 'Staging' })
 
     vi.spyOn(Date, 'now').mockReturnValue(1_800_000_000_000)
     store.upsert({ baseUrl: 'http://kong:8001', username: 'admin' })
@@ -81,7 +81,6 @@ describe('useSavedConnectionsStore', () => {
     expect(store.connections[0]).toMatchObject({
       name: 'Staging',
       createdAt: 1_700_000_000_000,
-      autoConnect: true,
       username: 'admin',
     })
   })
@@ -104,33 +103,12 @@ describe('useSavedConnectionsStore', () => {
     expect(store.connections[0]).not.toHaveProperty('colorCode')
   })
 
-  it('allows only one automatic connection: marking one clears the others', () => {
+  it('does not keep an automatic flag, even if one is passed', () => {
     const store = useSavedConnectionsStore()
-    store.upsert({ baseUrl: 'http://a:8001', autoConnect: true })
-    store.upsert({ baseUrl: 'http://b:8001', autoConnect: true })
 
-    expect(store.connections.find((c) => c.baseUrl === 'http://a:8001')?.autoConnect).toBeFalsy()
-    expect(store.autoConnection?.baseUrl).toBe('http://b:8001')
-    expect(loadSavedConnections().filter((c) => c.autoConnect)).toHaveLength(1)
-  })
+    store.upsert({ baseUrl: 'http://kong:8001', autoConnect: true } as never)
 
-  it('un-marking the automatic connection leaves none, and autoConnection is null without one', () => {
-    const store = useSavedConnectionsStore()
-    expect(store.autoConnection).toBeNull()
-    store.upsert({ baseUrl: 'http://a:8001', autoConnect: true })
-
-    store.upsert({ baseUrl: 'http://a:8001', autoConnect: false })
-
-    expect(store.autoConnection).toBeNull()
-  })
-
-  it('tracks whether auto-connect was attempted this session, without persisting it', () => {
-    const store = useSavedConnectionsStore()
-    expect(store.autoConnectTried).toBe(false)
-
-    store.markAutoConnectTried()
-
-    expect(store.autoConnectTried).toBe(true)
-    expect(localStorage.getItem('kong-manager:saved-connections')).toBeNull()
+    expect(store.connections[0]).not.toHaveProperty('autoConnect')
+    expect(store).not.toHaveProperty('autoConnection')
   })
 })
