@@ -169,6 +169,24 @@ describe('LoadView', () => {
     expect(useConnectionStore().isConnected).toBe(false)
   })
 
+  it('drops a previous live connection when the node probe for a newly loaded Kong fails', async () => {
+    vi.mocked(kongAdminApi.getConfig).mockResolvedValue({ _format_version: '3.0', services: [] })
+    const connectionStore = useConnectionStore()
+    await connectionStore.connect({ baseUrl: 'http://kong-a:8001' })
+    expect(connectionStore.active?.baseUrl).toBe('http://kong-a:8001')
+    const wrapper = mount(LoadView, { global: { plugins: [testRouter()] } })
+    vi.mocked(adminJson).mockRejectedValue(new Error('probe failed'))
+
+    await wrapper.find('input[placeholder="http://localhost:8001"]').setValue('http://kong-b:8001')
+    await wrapper
+      .findAll('button')
+      .find((b) => b.text() === 'Connect')!
+      .trigger('click')
+    await flushPromises()
+
+    expect(connectionStore.isConnected).toBe(false)
+  })
+
   it('reconnects instantly using stored credentials when a saved connection is clicked', async () => {
     const savedConnectionsStore = useSavedConnectionsStore()
     savedConnectionsStore.upsert({ baseUrl: 'http://localhost:8001', username: 'admin', password: 'hunter2' })

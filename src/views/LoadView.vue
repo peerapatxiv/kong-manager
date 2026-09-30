@@ -38,7 +38,9 @@ async function onConnect({ baseUrl, auth }: { baseUrl: string; auth: KongAdminAu
     savedConnectionsStore.upsert({ baseUrl, username: auth.username, password: auth.password })
     // Probe the node in the background so live editing can be enabled; a failed
     // probe must not affect the config that was just loaded.
-    void connectionStore.connect({ baseUrl, auth }).catch(() => undefined)
+    // A failed probe also drops any earlier connection, so live edits can never
+    // target a different Kong than the config now on screen.
+    void connectionStore.connect({ baseUrl, auth }).catch(() => connectionStore.disconnect())
     formExpanded.value = false
   } catch (err) {
     connectErrorMessage.value = err instanceof Error ? err.message : String(err)
