@@ -12,6 +12,9 @@ export type SavedConnection = {
   autoConnect?: boolean
 }
 
+/** Primate's default connection colour; used until a connection has its own. */
+export const DEFAULT_CONNECTION_COLOR = '#196b13'
+
 const STORAGE_KEY = 'kong-manager:saved-connections'
 
 export function loadSavedConnections(): SavedConnection[] {

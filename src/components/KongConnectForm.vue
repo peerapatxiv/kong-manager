@@ -5,8 +5,7 @@ import { adminJson } from '../lib/kongAdmin/http'
 import { composeBaseUrl, normalizeHostInput } from '../lib/connectionUrl'
 import type { ConnectionProtocol } from '../lib/connectionUrl'
 import type { KongAdminAuth } from '../lib/kongAdminApi'
-
-const DEFAULT_COLOR = '#196b13'
+import { DEFAULT_CONNECTION_COLOR } from '../lib/savedConnections'
 
 const props = defineProps<{ connecting: boolean }>()
 const emit = defineEmits<{
@@ -16,7 +15,7 @@ const emit = defineEmits<{
 const protocol = ref<ConnectionProtocol>('http')
 const host = ref('')
 const name = ref('')
-const colorCode = ref(DEFAULT_COLOR)
+const colorCode = ref(DEFAULT_CONNECTION_COLOR)
 const autoConnect = ref(false)
 const username = ref('')
 const password = ref<string | undefined>(undefined)

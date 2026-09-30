@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
 import { mount } from '@vue/test-utils'
 import SavedConnectionsList from './SavedConnectionsList.vue'
@@ -10,10 +10,17 @@ beforeEach(() => {
   setActivePinia(createPinia())
 })
 
+afterEach(() => {
+  vi.restoreAllMocks()
+})
+
 describe('SavedConnectionsList', () => {
-  it('renders nothing when there are no saved connections', () => {
+  it('shows a Saved Connections panel with a placeholder when there are none', () => {
     const wrapper = mount(SavedConnectionsList)
-    expect(wrapper.text()).toBe('')
+
+    expect(wrapper.text()).toContain('Saved Connections')
+    expect(wrapper.text()).toContain('No connections are saved!')
+    expect(wrapper.findAll('li')).toHaveLength(0)
   })
 
   it('lists each saved connection by base URL and username', () => {
@@ -49,5 +56,45 @@ describe('SavedConnectionsList', () => {
 
     expect(store.connections).toEqual([])
     expect(wrapper.emitted('connect')).toBeUndefined()
+  })
+
+  it('shows each connection with its name, URL, created date and a colour icon', () => {
+    vi.spyOn(Date, 'now').mockReturnValue(1_700_000_000_000)
+    const store = useSavedConnectionsStore()
+    store.upsert({ baseUrl: 'https://kong.internal:8444', name: 'Staging server', colorCode: '#ff0000' })
+
+    const wrapper = mount(SavedConnectionsList)
+
+    const row = wrapper.find('li')
+    expect(row.find('strong').text()).toBe('Staging server')
+    expect(row.text()).toContain('https://kong.internal:8444')
+    expect(row.text()).toContain(`Created on: ${new Date(1_700_000_000_000).toLocaleDateString()}`)
+    expect((row.find('[data-testid="connection-icon"]').element as HTMLElement).style.color).toBe('rgb(255, 0, 0)')
+  })
+
+  it('falls back to the host, a dash and the accent colour for older entries without those fields', () => {
+    localStorage.setItem(
+      'kong-manager:saved-connections',
+      JSON.stringify([{ id: '1', baseUrl: 'http://localhost:8002' }]),
+    )
+    setActivePinia(createPinia())
+
+    const wrapper = mount(SavedConnectionsList)
+
+    const row = wrapper.find('li')
+    expect(row.find('strong').text()).toBe('localhost:8002')
+    expect(row.text()).toContain('Created on: -')
+    expect((row.find('[data-testid="connection-icon"]').element as HTMLElement).style.color).not.toBe('')
+  })
+
+  it('marks the connection that connects automatically', () => {
+    const store = useSavedConnectionsStore()
+    store.upsert({ baseUrl: 'http://a:8001' })
+    store.upsert({ baseUrl: 'http://b:8001', autoConnect: true })
+
+    const rows = mount(SavedConnectionsList).findAll('li')
+
+    expect(rows[0].text()).not.toContain('Auto')
+    expect(rows[1].text()).toContain('Auto')
   })
 })
