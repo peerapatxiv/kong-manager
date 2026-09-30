@@ -4,7 +4,7 @@ import BrowseView from '../views/BrowseView.vue'
 import CompareView from '../views/CompareView.vue'
 
 export const router = createRouter({
-  history: createWebHistory(),
+  history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     { path: '/', name: 'load', component: LoadView },
     { path: '/browse', name: 'browse', component: BrowseView },
