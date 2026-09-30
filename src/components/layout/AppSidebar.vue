@@ -37,6 +37,7 @@ async function onChangeFileSelected(event: Event) {
 const liveLinks = [
   { to: '/live/services', label: 'Services' },
   { to: '/live/routes', label: 'Routes' },
+  { to: '/live/consumers', label: 'Consumers' },
 ]
 
 const linkBase =
