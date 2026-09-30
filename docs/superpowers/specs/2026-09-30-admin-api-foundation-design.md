@@ -38,9 +38,9 @@ Only the logic and behaviour of Primate are ported, not its code. Electron-speci
 
 ### 1. Low-level client: `src/lib/kongAdmin/http.ts`
 
-- `adminFetch(conn, method, path, { query?, body? })` performs the request.
+- `adminFetch(conn, method, path, { query?, body? })` performs the request and returns the `Response` (after throwing on non-2xx). `adminJson<T>(...)` is a thin wrapper that also parses the body as JSON; DELETE and the `/config` POST use `adminFetch` because they have no JSON body to parse.
   - `conn` is `{ baseUrl, auth? }`, with the same auth shape as `KongAdminAuth`.
-  - Headers come from the existing `buildHeaders` logic (moved here, shared with `kongAdminApi.ts`).
+  - Headers come from the existing `buildHeaders` logic (moved here). `KongAdminAuth` and `KongAdminApiError` also move here and are re-exported from `kongAdminApi.ts`, so existing imports keep working.
   - 20 second timeout via `AbortController`.
   - Query values that are `null` or `undefined` are omitted, matching Primate's `rest-provider`.
 - Failures throw `KongAdminApiError` with:
@@ -74,14 +74,14 @@ Only the logic and behaviour of Primate are ported, not its code. Electron-speci
   1. Calls `GET /` through `adminFetch`.
   2. Reads `version` and `configuration.database` from the response.
   3. Stores `active` and `info`.
-  4. Upserts into `savedConnections` (the existing store's `upsert`), so nothing is duplicated.
+  - `connect` does not touch saved connections: `LoadView` already upserts them after a successful load, and doing it twice would duplicate that logic.
   - On failure, leaves any previous connection untouched and rethrows the `KongAdminApiError`.
 - `disconnect()` clears `active` and `info`.
 - Getters:
   - `isConnected`
   - `canWrite`: true only when connected and `info.database !== 'off'`
-  - `client(resource, parentId?)`: the entity client bound to the active connection; throws if not connected.
-- `KongConnectForm.vue` calls `connect` for the Kong path in addition to its current `/config` load. That flow's behaviour is unchanged.
+  - `client(resource, parentId?)` (an action rather than a getter, to keep typing simple): the entity client bound to the active connection; throws if not connected.
+- `LoadView.vue`'s `onConnect` calls `connect` after the existing `/config` load succeeds. A failed probe is swallowed there: the loaded config is still shown, and live editing simply stays unavailable (`isConnected` false). The `/config` flow's behaviour is unchanged.
 
 ### 4. Write safety
 
@@ -94,7 +94,7 @@ Vitest, following the repo's existing style. No new dependencies.
 
 - `http.test.ts` (mocked `fetch`): auth headers for token and Basic, query omission for null values, timeout, and each error `kind`, including the parsed Kong message and fields.
 - `entities.test.ts`: paths, methods, query strings including `tags`, `listAll` pagination across multiple pages, and nested resource paths including the missing `parentId` error.
-- `connection.test.ts`: `connect` against DB-backed Kong, DB-less Kong (`canWrite` false), and network failure (previous state kept); `upsert` into saved connections not duplicating; the `ReadOnlyError` guard on each write method.
+- `connection.test.ts`: `connect` against DB-backed Kong, DB-less Kong (`canWrite` false), and network failure (previous state kept); the `ReadOnlyError` guard on each write method. `LoadView.test.ts` mocks the new HTTP module so the probe never hits the network.
 - Existing `kongAdminApi.test.ts` passes unchanged after the refactor.
 
 ## Error handling summary
