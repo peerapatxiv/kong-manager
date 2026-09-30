@@ -1,26 +1,21 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, ref } from 'vue'
 import SecretField from './shared/SecretField.vue'
-import { adminJson } from '../lib/kongAdmin/http'
 import { composeBaseUrl, normalizeHostInput } from '../lib/connectionUrl'
 import type { ConnectionProtocol } from '../lib/connectionUrl'
 import type { KongAdminAuth } from '../lib/kongAdminApi'
-import { DEFAULT_CONNECTION_COLOR } from '../lib/savedConnections'
 
 const props = defineProps<{ connecting: boolean }>()
 const emit = defineEmits<{
-  connect: [payload: { baseUrl: string; auth: KongAdminAuth; name?: string; colorCode: string; autoConnect: boolean }]
+  connect: [payload: { baseUrl: string; auth: KongAdminAuth; name?: string; autoConnect: boolean }]
 }>()
 
 const protocol = ref<ConnectionProtocol>('http')
 const host = ref('')
 const name = ref('')
-const colorCode = ref(DEFAULT_CONNECTION_COLOR)
 const autoConnect = ref(false)
 const username = ref('')
 const password = ref<string | undefined>(undefined)
-const testing = ref(false)
-const testResult = ref<{ ok: boolean; message: string } | null>(null)
 
 const baseUrl = computed(() => composeBaseUrl(protocol.value, host.value))
 
@@ -35,42 +30,14 @@ function onHostInput(event: Event) {
   host.value = next.host
 }
 
-// A test result describes the address it was run against, so drop it once that changes.
-watch([protocol, host, username, password], () => {
-  testResult.value = null
-})
-
 function submit() {
   if (!baseUrl.value || props.connecting) return
   emit('connect', {
     baseUrl: baseUrl.value,
     auth: currentAuth(),
     name: name.value.trim() || undefined,
-    colorCode: colorCode.value,
     autoConnect: autoConnect.value,
   })
-}
-
-async function test() {
-  const url = baseUrl.value
-  if (!url || testing.value) return
-  testing.value = true
-  testResult.value = null
-  try {
-    const root = await adminJson<{ version?: string; configuration?: { database?: string } }>(
-      { baseUrl: url, auth: currentAuth() },
-      'GET',
-      '/',
-    )
-    testResult.value = {
-      ok: true,
-      message: `Connected: Kong ${root.version ?? 'unknown version'}, database ${root.configuration?.database ?? 'unknown'}`,
-    }
-  } catch (err) {
-    testResult.value = { ok: false, message: err instanceof Error ? err.message : String(err) }
-  } finally {
-    testing.value = false
-  }
 }
 </script>
 
@@ -106,32 +73,17 @@ async function test() {
         </div>
       </div>
 
-      <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
-        <label class="block sm:col-span-2">
-          <span class="field-label">Connection Name</span>
-          <input
-            v-model="name"
-            data-testid="connection-name"
-            type="text"
-            placeholder="Example: Staging server"
-            class="input-field"
-            @keyup.enter="submit"
-          />
-        </label>
-        <div>
-          <span class="field-label">Colour</span>
-          <div class="flex items-center gap-2">
-            <input
-              v-model="colorCode"
-              data-testid="connection-color"
-              type="color"
-              aria-label="Colour"
-              class="h-[34px] w-11 shrink-0 cursor-pointer rounded-lg border border-border bg-surface p-0.5"
-            />
-            <input :value="colorCode" type="text" readonly tabindex="-1" class="input-field font-mono" />
-          </div>
-        </div>
-      </div>
+      <label class="block">
+        <span class="field-label">Connection Name</span>
+        <input
+          v-model="name"
+          data-testid="connection-name"
+          type="text"
+          placeholder="Example: Staging server"
+          class="input-field"
+          @keyup.enter="submit"
+        />
+      </label>
 
       <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <label class="block">
@@ -162,16 +114,6 @@ async function test() {
           Connect automatically
         </label>
         <div class="flex gap-2">
-          <button
-            type="button"
-            class="btn-secondary"
-            data-testid="test-connection"
-            title="Test the connection"
-            :disabled="!baseUrl || testing || connecting"
-            @click="test"
-          >
-            {{ testing ? 'Testing…' : 'Test' }}
-          </button>
           <button
             type="button"
             class="btn-primary"
@@ -209,16 +151,6 @@ async function test() {
           </button>
         </div>
       </div>
-
-      <p
-        v-if="testResult"
-        data-testid="test-result"
-        role="status"
-        class="text-sm"
-        :class="testResult.ok ? 'text-emerald-700 dark:text-emerald-400' : 'text-red-700 dark:text-red-400'"
-      >
-        {{ testResult.message }}
-      </p>
 
       <p class="field-help">* All the above information is stored locally.</p>
     </div>

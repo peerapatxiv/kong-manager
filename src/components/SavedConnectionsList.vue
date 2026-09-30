@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { useSavedConnectionsStore } from '../stores/savedConnections'
-import { DEFAULT_CONNECTION_COLOR } from '../lib/savedConnections'
 import type { SavedConnection } from '../lib/savedConnections'
 
 const savedConnectionsStore = useSavedConnectionsStore()
@@ -33,8 +32,7 @@ function createdOn(conn: SavedConnection): string {
       >
         <span
           data-testid="connection-icon"
-          class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-elevated"
-          :style="{ color: conn.colorCode || DEFAULT_CONNECTION_COLOR }"
+          class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-accent/15 text-accent-secondary"
         >
           <svg viewBox="0 0 20 20" fill="none" class="h-4 w-4">
             <rect x="3" y="4" width="14" height="4.5" rx="1.2" stroke="currentColor" stroke-width="1.5" />

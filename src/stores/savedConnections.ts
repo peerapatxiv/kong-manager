@@ -7,7 +7,6 @@ export type ConnectionInput = {
   username?: string
   password?: string
   name?: string
-  colorCode?: string
   autoConnect?: boolean
 }
 
@@ -21,7 +20,7 @@ export const useSavedConnectionsStore = defineStore('savedConnections', {
     autoConnection: (state): SavedConnection | null => state.connections.find((c) => c.autoConnect) ?? null,
   },
   actions: {
-    // Name, colour and the automatic flag only change when a value is given, so a
+    // Name and the automatic flag only change when a value is given, so a
     // reconnect from the saved list (URL and credentials only) never blanks them.
     upsert(conn: ConnectionInput) {
       let target = this.connections.find((c) => c.baseUrl === conn.baseUrl)
@@ -40,7 +39,6 @@ export const useSavedConnectionsStore = defineStore('savedConnections', {
         target = this.connections[this.connections.length - 1]
       }
       if (conn.name !== undefined) target.name = conn.name
-      if (conn.colorCode !== undefined) target.colorCode = conn.colorCode
       if (conn.autoConnect !== undefined) {
         if (conn.autoConnect) {
           for (const other of this.connections) {

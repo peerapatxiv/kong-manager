@@ -34,11 +34,10 @@ type ConnectRequest = {
   baseUrl: string
   auth: KongAdminAuth
   name?: string
-  colorCode?: string
   autoConnect?: boolean
 }
 
-async function onConnect({ baseUrl, auth, name, colorCode, autoConnect }: ConnectRequest) {
+async function onConnect({ baseUrl, auth, name, autoConnect }: ConnectRequest) {
   connecting.value = true
   connectErrorMessage.value = null
   try {
@@ -48,7 +47,6 @@ async function onConnect({ baseUrl, auth, name, colorCode, autoConnect }: Connec
       username: auth.username,
       password: auth.password,
       name,
-      colorCode,
       autoConnect,
     })
     // Probe the node in the background so live editing can be enabled; a failed

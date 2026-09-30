@@ -61,40 +61,47 @@ describe('useSavedConnectionsStore', () => {
     expect(loadSavedConnections()).toEqual([])
   })
 
-  it('stamps createdAt on a new connection and stores its name and colour', () => {
+  it('stamps createdAt on a new connection and stores its name', () => {
     vi.spyOn(Date, 'now').mockReturnValue(1_700_000_000_000)
     const store = useSavedConnectionsStore()
 
-    store.upsert({ baseUrl: 'http://kong:8001', name: 'Staging', colorCode: '#ff0000' })
+    store.upsert({ baseUrl: 'http://kong:8001', name: 'Staging' })
 
-    expect(store.connections[0]).toMatchObject({ name: 'Staging', colorCode: '#ff0000', createdAt: 1_700_000_000_000 })
+    expect(store.connections[0]).toMatchObject({ name: 'Staging', createdAt: 1_700_000_000_000 })
   })
 
-  it('keeps name, colour and createdAt when a reconnect passes only the URL and credentials', () => {
+  it('keeps name and createdAt when a reconnect passes only the URL and credentials', () => {
     vi.spyOn(Date, 'now').mockReturnValue(1_700_000_000_000)
     const store = useSavedConnectionsStore()
-    store.upsert({ baseUrl: 'http://kong:8001', name: 'Staging', colorCode: '#ff0000', autoConnect: true })
+    store.upsert({ baseUrl: 'http://kong:8001', name: 'Staging', autoConnect: true })
 
     vi.spyOn(Date, 'now').mockReturnValue(1_800_000_000_000)
     store.upsert({ baseUrl: 'http://kong:8001', username: 'admin' })
 
     expect(store.connections[0]).toMatchObject({
       name: 'Staging',
-      colorCode: '#ff0000',
       createdAt: 1_700_000_000_000,
       autoConnect: true,
       username: 'admin',
     })
   })
 
-  it('overwrites name and colour when new values are given for an existing URL', () => {
+  it('overwrites the name when a new value are given for an existing URL', () => {
     const store = useSavedConnectionsStore()
-    store.upsert({ baseUrl: 'http://kong:8001', name: 'Old', colorCode: '#111111' })
+    store.upsert({ baseUrl: 'http://kong:8001', name: 'Old' })
 
-    store.upsert({ baseUrl: 'http://kong:8001', name: 'New', colorCode: '#222222' })
+    store.upsert({ baseUrl: 'http://kong:8001', name: 'New' })
 
     expect(store.connections).toHaveLength(1)
-    expect(store.connections[0]).toMatchObject({ name: 'New', colorCode: '#222222' })
+    expect(store.connections[0]).toMatchObject({ name: 'New' })
+  })
+
+  it('does not keep a colour, even if one is passed', () => {
+    const store = useSavedConnectionsStore()
+
+    store.upsert({ baseUrl: 'http://kong:8001', colorCode: '#ff0000' } as never)
+
+    expect(store.connections[0]).not.toHaveProperty('colorCode')
   })
 
   it('allows only one automatic connection: marking one clears the others', () => {

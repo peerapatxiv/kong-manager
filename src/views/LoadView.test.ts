@@ -197,13 +197,12 @@ describe('LoadView', () => {
     expect(wrapper.text()).toContain('Saved Connections')
   })
 
-  it('saves the connection name, colour and automatic flag after a successful connect', async () => {
+  it('saves the connection name and automatic flag after a successful connect', async () => {
     vi.mocked(kongAdminApi.getConfig).mockResolvedValue({ _format_version: '3.0', services: [] })
     const wrapper = mount(LoadView, { global: { plugins: [testRouter()] } })
 
     await wrapper.find('[data-testid="host"]').setValue('localhost:8001')
     await wrapper.find('[data-testid="connection-name"]').setValue('Staging')
-    await wrapper.find('[data-testid="connection-color"]').setValue('#ff0000')
     await wrapper.find('[data-testid="auto-connect"]').setValue(true)
     await wrapper
       .findAll('button')
@@ -214,20 +213,19 @@ describe('LoadView', () => {
     expect(useSavedConnectionsStore().connections[0]).toMatchObject({
       baseUrl: 'http://localhost:8001',
       name: 'Staging',
-      colorCode: '#ff0000',
       autoConnect: true,
     })
   })
 
-  it('keeps a saved connection name and colour when reconnecting from the saved list', async () => {
+  it('keeps a saved connection name when reconnecting from the saved list', async () => {
     vi.mocked(kongAdminApi.getConfig).mockResolvedValue({ _format_version: '3.0', services: [] })
-    useSavedConnectionsStore().upsert({ baseUrl: 'http://localhost:8001', name: 'Staging', colorCode: '#ff0000' })
+    useSavedConnectionsStore().upsert({ baseUrl: 'http://localhost:8001', name: 'Staging' })
     const wrapper = mount(LoadView, { global: { plugins: [testRouter()] } })
 
     await wrapper.find('li').trigger('click')
     await flushPromises()
 
-    expect(useSavedConnectionsStore().connections[0]).toMatchObject({ name: 'Staging', colorCode: '#ff0000' })
+    expect(useSavedConnectionsStore().connections[0]).toMatchObject({ name: 'Staging' })
   })
 
   describe('connect automatically', () => {
