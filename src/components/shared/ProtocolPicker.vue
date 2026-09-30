@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { KONG_PROTOCOLS } from '../../types/kong'
 
-const props = defineProps<{ modelValue: string[] | undefined }>()
+const props = defineProps<{ modelValue: string[] | undefined; options?: readonly string[] }>()
 const emit = defineEmits<{ 'update:modelValue': [value: string[]] }>()
 
 function toggle(protocol: string) {
@@ -14,7 +14,7 @@ function toggle(protocol: string) {
 <template>
   <div class="flex flex-wrap gap-1.5">
     <button
-      v-for="protocol in KONG_PROTOCOLS"
+      v-for="protocol in options ?? KONG_PROTOCOLS"
       :key="protocol"
       type="button"
       :aria-pressed="(modelValue ?? []).includes(protocol)"
