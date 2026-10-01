@@ -22,7 +22,7 @@ const { panelStyle, isResizing, startResize, resetPanelWidth } = useResizablePan
     >
       <div class="shrink-0"><slot name="toolbar" /></div>
       <div class="min-h-0 flex-1 overflow-y-auto"><slot name="list" /></div>
-      <div class="shrink-0"><slot name="footer" /></div>
+      <div class="flex shrink-0 flex-col"><slot name="footer" /></div>
 
       <div
         role="separator"

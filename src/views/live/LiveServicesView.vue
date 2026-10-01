@@ -9,7 +9,9 @@ import type { ServiceForm as ServiceFormModel } from '../../lib/live/serviceForm
 import LiveGate from '../../components/live/LiveGate.vue'
 import LiveErrorBanner from '../../components/live/LiveErrorBanner.vue'
 import ServiceForm from '../../components/live/ServiceForm.vue'
-import SearchInput from '../../components/shared/SearchInput.vue'
+import LiveWorkspace from '../../components/live/LiveWorkspace.vue'
+import LiveListToolbar from '../../components/live/LiveListToolbar.vue'
+import LiveActionBar from '../../components/live/LiveActionBar.vue'
 import ListRow from '../../components/shared/ListRow.vue'
 import EmptyState from '../../components/shared/EmptyState.vue'
 import DetailHeader from '../../components/shared/DetailHeader.vue'
@@ -167,37 +169,24 @@ watch(
 
 <template>
   <LiveGate>
-    <div class="flex flex-1 flex-col lg:h-[calc(100vh-4rem)] lg:flex-none lg:flex-row lg:overflow-hidden">
-      <div
-        class="flex w-full shrink-0 flex-col border-b border-border bg-surface lg:w-80 lg:border-b-0 lg:border-r"
-        data-testid="live-list-panel"
-      >
-        <div class="space-y-2 p-3">
-          <div class="flex items-center gap-2">
-            <div class="min-w-0 flex-1">
-              <SearchInput v-model="search" placeholder="Search loaded services…" />
-            </div>
-            <button
-              type="button"
-              class="btn-primary"
-              data-testid="new-service"
-              :disabled="!connection.canWrite"
-              @click="startCreate"
-            >
-              New
-            </button>
-          </div>
-          <input
-            v-model="tagText"
-            type="text"
-            class="input-field text-xs"
-            data-testid="tag-filter"
-            placeholder="Filter by tags (comma separated), Enter to apply"
-            @keydown.enter.prevent="applyTagFilter"
-          />
-        </div>
+    <LiveWorkspace storage-key="kong-config:live-services-panel-width">
+      <template #toolbar>
+        <LiveListToolbar
+          v-model:search="search"
+          v-model:tags="tagText"
+          placeholder="Search loaded services…"
+          new-testid="new-service"
+          noun="service"
+          :count="filtered.length"
+          :loading="loading"
+          :can-create="connection.canWrite"
+          @create="startCreate"
+          @apply-tags="applyTagFilter"
+        />
+      </template>
 
-        <ul class="min-h-0 flex-1 space-y-0.5 overflow-y-auto px-2 pb-3">
+      <template #list>
+        <ul class="space-y-0.5 px-2 pb-3">
           <ListRow
             v-for="service in filtered"
             :key="service.id"
@@ -217,6 +206,9 @@ watch(
             </template>
           </ListRow>
         </ul>
+      </template>
+
+      <template #footer>
         <p v-if="loading" class="px-3 pb-2 text-xs text-ink-muted">Loading…</p>
         <p v-else-if="filtered.length === 0" class="px-3 pb-2 text-xs text-ink-muted">No services.</p>
         <button
@@ -229,46 +221,37 @@ watch(
         >
           Load more
         </button>
-      </div>
+      </template>
 
-      <div class="flex-1 space-y-4 overflow-y-auto p-6">
-        <LiveErrorBanner :messages="validationErrors" :error="error" />
-        <div v-if="form" class="max-w-3xl space-y-4">
-          <div class="card space-y-5 p-5">
-            <DetailHeader
-              :initial="(form.name || '?').charAt(0)"
-              :title="creating ? 'New service' : form.name || 'Service'"
-              :subtitle="!creating && selectedId ? selectedId : undefined"
-            />
-            <ServiceForm v-model="form" :disabled="!connection.canWrite" :field-errors="fieldErrors" />
-          </div>
-          <div class="flex flex-wrap items-center gap-2">
-            <button
-              v-if="!creating"
-              type="button"
-              class="btn-danger-ghost"
-              data-testid="delete"
-              :disabled="!connection.canWrite || busy"
-              @click="remove"
-            >
-              Delete
-            </button>
-            <span v-if="dirty" class="inline-flex items-center gap-1 text-[11px] font-medium text-ink-muted">
-              <span class="h-1.5 w-1.5 rounded-full bg-accent" />
-              Unsaved changes
-            </span>
-            <div class="ml-auto flex gap-2">
-              <button type="button" class="btn-secondary" data-testid="discard" :disabled="!dirty" @click="discard">
-                Discard
-              </button>
-              <button type="button" class="btn-primary" data-testid="save" :disabled="!canSave" @click="save">
-                {{ creating ? 'Create' : 'Save' }}
-              </button>
+      <template #detail>
+        <div class="h-full space-y-4">
+          <LiveErrorBanner :messages="validationErrors" :error="error" />
+          <div v-if="form" class="max-w-3xl space-y-4">
+            <div class="card space-y-5 p-5">
+              <DetailHeader
+                :initial="(form.name || '?').charAt(0)"
+                :title="creating ? 'New service' : form.name || 'Service'"
+                :subtitle="!creating && selectedId ? selectedId : undefined"
+              />
+              <ServiceForm v-model="form" :disabled="!connection.canWrite" :field-errors="fieldErrors" />
             </div>
           </div>
+          <EmptyState v-else icon="server" title="Select a service from the list, or create a new one." />
         </div>
-        <EmptyState v-else icon="server" title="Select a service from the list, or create a new one." />
-      </div>
-    </div>
+      </template>
+
+      <template v-if="form" #detail-footer>
+        <LiveActionBar
+          :creating="creating"
+          :dirty="dirty"
+          :can-save="canSave"
+          :can-write="connection.canWrite"
+          :busy="busy"
+          @delete="remove"
+          @discard="discard"
+          @save="save"
+        />
+      </template>
+    </LiveWorkspace>
   </LiveGate>
 </template>
