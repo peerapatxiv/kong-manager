@@ -8,6 +8,7 @@ import LiveWorkspace from '../../components/live/LiveWorkspace.vue'
 import LiveListToolbar from '../../components/live/LiveListToolbar.vue'
 import Badge from '../../components/shared/Badge.vue'
 import DetailHeader from '../../components/shared/DetailHeader.vue'
+import DraftBar from '../../components/shared/DraftBar.vue'
 import DraftPane from '../../components/shared/DraftPane.vue'
 import ListRow from '../../components/shared/ListRow.vue'
 import EmptyState from '../../components/shared/EmptyState.vue'
@@ -17,7 +18,7 @@ import type { KongPlugin } from '../../types/kong'
 const configStore = useConfigStore()
 const search = ref('')
 const selectedId = ref<string | undefined>(undefined)
-const pane = ref<{ dirty: boolean } | null>(null)
+const pane = ref<{ dirty: boolean; justSaved: boolean; save: () => void; discard: () => void } | null>(null)
 
 const entries = computed(() => (configStore.primary ? listPlugins(configStore.primary.config) : []))
 const selected = computed(() => entries.value.find((entry) => entry.id === selectedId.value))
@@ -90,6 +91,15 @@ function save(entry: PluginEntry, next: KongPlugin) {
           </DraftPane>
         </div>
         <EmptyState v-else icon="plug" title="Select a plugin from the list to view and edit it." />
+      </template>
+
+      <template v-if="selected" #detail-footer>
+        <DraftBar
+          :dirty="pane?.dirty ?? false"
+          :just-saved="pane?.justSaved ?? false"
+          @save="pane?.save()"
+          @discard="pane?.discard()"
+        />
       </template>
     </LiveWorkspace>
   </FileGate>

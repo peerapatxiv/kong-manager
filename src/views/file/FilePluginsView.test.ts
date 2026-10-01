@@ -81,6 +81,17 @@ describe('FilePluginsView', () => {
       expect(config.plugins![1].enabled).toBe(true)
     })
 
+    it('keeps Save and Discard in the pinned bar at the bottom, shown only once something is selected', async () => {
+      const wrapper = make()
+      expect(wrapper.find('[data-testid="live-detail-footer"]').exists()).toBe(false)
+
+      await rows(wrapper)[0].trigger('click')
+
+      const footer = wrapper.find('[data-testid="live-detail-footer"]')
+      expect(footer.exists()).toBe(true)
+      expect(footer.findAll('button').map((b) => b.text())).toEqual(['Discard', 'Save'])
+    })
+
     it('asks before dropping unsaved edits when another plugin is picked, and keeps them on cancel', async () => {
       const confirm = vi.spyOn(window, 'confirm').mockReturnValue(false)
       const wrapper = make()

@@ -1,7 +1,6 @@
 <script setup lang="ts" generic="T extends object">
 import { computed, ref, watch } from 'vue'
 import type { Ref } from 'vue'
-import AppIcon from './AppIcon.vue'
 
 const props = defineProps<{ modelValue: T; resetKey: string }>()
 const emit = defineEmits<{ save: [value: T] }>()
@@ -45,29 +44,10 @@ function discard() {
   draft.value = clone(baseline.value)
 }
 
-defineExpose({ dirty })
+// The owner draws the Save / Discard bar wherever it wants (a pinned footer) from this.
+defineExpose({ dirty, justSaved, save, discard })
 </script>
 
 <template>
-  <div class="space-y-3">
-    <div class="sticky top-0 z-10 -mx-1 flex flex-wrap items-center justify-between gap-3 bg-bg/95 px-1 py-2 backdrop-blur">
-      <span
-        v-if="justSaved"
-        class="inline-flex items-center gap-1 rounded-full bg-accent/15 px-2 py-0.5 text-[11px] font-medium text-accent-secondary dark:bg-accent/20 dark:text-accent"
-      >
-        <AppIcon name="check" class="h-3 w-3" />
-        Saved
-      </span>
-      <span v-else-if="dirty" class="inline-flex items-center gap-1 text-[11px] font-medium text-ink-muted">
-        <span class="h-1.5 w-1.5 rounded-full bg-accent" />
-        Unsaved changes
-      </span>
-      <span v-else />
-      <div class="ml-auto flex items-center gap-2">
-        <button type="button" class="btn-secondary" :disabled="!dirty" @click="discard">Discard</button>
-        <button type="button" class="btn-primary" :disabled="!dirty" @click="save">Save</button>
-      </div>
-    </div>
-    <slot :draft="draft" :update="update" />
-  </div>
+  <slot :draft="draft" :update="update" />
 </template>
