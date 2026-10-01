@@ -3,7 +3,7 @@ import { describe, it, expect } from 'vitest'
 import { mount } from '@vue/test-utils'
 import LiveListToolbar from './LiveListToolbar.vue'
 
-const base = { placeholder: 'Search loaded services…', newTestid: 'new-service', noun: 'service', count: 3, loading: false, canCreate: true }
+const base = { placeholder: 'Search loaded services…', newTestid: 'new-service', canCreate: true }
 
 describe('LiveListToolbar', () => {
   it('shows the search box and a New button with the given test id, but no tag filter', () => {
@@ -13,17 +13,11 @@ describe('LiveListToolbar', () => {
     expect(wrapper.find('[data-testid="tag-filter"]').exists()).toBe(false)
   })
 
-  it('counts what is loaded, in the singular and the plural', async () => {
-    const wrapper = mount(LiveListToolbar, { props: { ...base, search: '' } })
-    expect(wrapper.text()).toContain('3 services')
-    await wrapper.setProps({ count: 1 })
-    expect(wrapper.text()).toContain('1 service')
-    expect(wrapper.text()).not.toContain('1 services')
-  })
-
-  it('says it is loading while a request is in flight', () => {
-    const wrapper = mount(LiveListToolbar, { props: { ...base, search: '', loading: true } })
-    expect(wrapper.find('[data-testid="list-loading"]').exists()).toBe(true)
+  it('shows no count line under the filters', () => {
+    // Even if a caller still passes the old count/loading props, nothing is rendered for them.
+    const wrapper = mount(LiveListToolbar, { props: { ...base, search: '', count: 3, noun: 'service', loading: true } as never })
+    expect(wrapper.text()).not.toMatch(/\d+ services?/)
+    expect(wrapper.find('[data-testid="list-loading"]').exists()).toBe(false)
   })
 
   it('disables New when writes are not allowed, and emits create otherwise', async () => {

@@ -165,9 +165,6 @@ watch(
           v-model:search="search"
           placeholder="Search loaded services…"
           new-testid="new-service"
-          noun="service"
-          :count="filtered.length"
-          :loading="loading"
           :can-create="connection.canWrite"
           @create="startCreate"
         />

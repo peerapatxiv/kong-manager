@@ -156,9 +156,6 @@ watch(
           v-model:search="search"
           placeholder="Search loaded consumers…"
           new-testid="new-consumer"
-          noun="consumer"
-          :count="filtered.length"
-          :loading="loading"
           :can-create="connection.canWrite"
           @create="startCreate"
         />

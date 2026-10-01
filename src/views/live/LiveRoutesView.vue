@@ -206,9 +206,6 @@ watch(serviceFilter, (id) => {
           v-model:search="search"
           placeholder="Search loaded routes…"
           new-testid="new-route"
-          noun="route"
-          :count="filtered.length"
-          :loading="loading"
           :can-create="connection.canWrite"
           @create="startCreate"
         >
