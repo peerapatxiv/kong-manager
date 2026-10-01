@@ -3,6 +3,7 @@ import { computed, onMounted } from 'vue'
 import AppIcon from '../shared/AppIcon.vue'
 import DashboardBars from './DashboardBars.vue'
 import DashboardTile from './DashboardTile.vue'
+import ServiceStatusBar from './ServiceStatusBar.vue'
 import { useLiveDashboard } from '../../composables/useLiveDashboard'
 import { countRouteProtocols, summarizeServices, topPlugins } from '../../lib/live/dashboard'
 import { useConnectionStore } from '../../stores/connection'
@@ -13,9 +14,6 @@ const { services, routes, consumers, plugins, node, updatedAt, loading, refresh 
 const serviceSummary = computed(() => (services.value.data ? summarizeServices(services.value.data) : null))
 const protocolRows = computed(() => countRouteProtocols(routes.value.data ?? []))
 const pluginRows = computed(() => topPlugins(plugins.value.data ?? []).map((row) => ({ label: row.name, count: row.count })))
-const enabledPercent = computed(() =>
-  serviceSummary.value && serviceSummary.value.total > 0 ? (serviceSummary.value.enabled / serviceSummary.value.total) * 100 : 0,
-)
 
 const updatedLabel = computed(() => updatedAt.value?.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }))
 const target = computed(() => connection.active?.name || connection.active?.baseUrl.replace(/^https?:\/\//i, '') || '')
@@ -51,19 +49,7 @@ onMounted(refresh)
       <div class="card space-y-3 p-4" data-testid="card-services">
         <p class="section-heading">Services</p>
         <template v-if="serviceSummary && serviceSummary.total > 0">
-          <div class="flex h-2.5 overflow-hidden rounded-full bg-elevated">
-            <div class="h-full bg-accent transition-all duration-300" :style="{ width: `${enabledPercent}%` }" />
-          </div>
-          <div class="flex flex-wrap gap-x-4 gap-y-1 text-xs text-ink-muted">
-            <span class="inline-flex items-center gap-1.5">
-              <span class="h-2 w-2 rounded-full bg-accent" />
-              {{ serviceSummary.enabled }} enabled
-            </span>
-            <span class="inline-flex items-center gap-1.5">
-              <span class="h-2 w-2 rounded-full bg-ink-muted/40" />
-              {{ serviceSummary.disabled }} disabled
-            </span>
-          </div>
+          <ServiceStatusBar :summary="serviceSummary" />
         </template>
         <p v-else-if="services.error" class="text-sm text-ink-muted">Unavailable</p>
         <p v-else class="text-sm text-ink-muted">{{ services.loading ? 'Loading…' : 'No services yet' }}</p>
