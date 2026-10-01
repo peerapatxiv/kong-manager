@@ -41,8 +41,8 @@ const liveLinks: { to: string; label: string; icon: IconName }[] = [
   { to: '/live/dashboard', label: 'Dashboard', icon: 'dashboard' },
   { to: '/live/services', label: 'Services', icon: 'server' },
   { to: '/live/routes', label: 'Routes', icon: 'route' },
-  { to: '/live/plugins', label: 'Plugins', icon: 'plug' },
   { to: '/live/consumers', label: 'Consumers', icon: 'user' },
+  { to: '/live/plugins', label: 'Plugins', icon: 'plug' },
 ]
 
 // One mode at a time, as on the Load page: a loaded config means file browsing, a live

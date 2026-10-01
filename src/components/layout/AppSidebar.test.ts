@@ -50,8 +50,8 @@ describe('AppSidebar', () => {
       ['Dashboard', '/live/dashboard'],
       ['Services', '/live/services'],
       ['Routes', '/live/routes'],
-      ['Plugins', '/live/plugins'],
       ['Consumers', '/live/consumers'],
+      ['Plugins', '/live/plugins'],
     ])
   })
 
