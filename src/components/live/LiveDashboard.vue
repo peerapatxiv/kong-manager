@@ -44,7 +44,7 @@ onMounted(refresh)
       <DashboardTile data-testid="tile-services" label="Services" icon="server" :section="services" to="/live/services" />
       <DashboardTile data-testid="tile-routes" label="Routes" icon="route" :section="routes" to="/live/routes" />
       <DashboardTile data-testid="tile-consumers" label="Consumers" icon="user" :section="consumers" to="/live/consumers" />
-      <DashboardTile data-testid="tile-plugins" label="Plugins" icon="plug" :section="plugins" />
+      <DashboardTile data-testid="tile-plugins" label="Plugins" icon="plug" :section="plugins" to="/live/plugins" />
     </div>
 
     <div class="grid gap-4 lg:grid-cols-3">

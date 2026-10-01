@@ -49,7 +49,7 @@ function stubKong(override: Handler = () => undefined as never) {
 async function mountDashboard() {
   const router = createRouter({
     history: createMemoryHistory(),
-    routes: ['/', '/live/services', '/live/routes', '/live/consumers'].map((path) => ({ path, component: { template: '<div/>' } })),
+    routes: ['/', '/live/services', '/live/routes', '/live/plugins', '/live/consumers'].map((path) => ({ path, component: { template: '<div/>' } })),
   })
   const wrapper = mount(LiveDashboard, { global: { plugins: [router] } })
   await flushPromises()
@@ -77,14 +77,14 @@ describe('LiveDashboard', () => {
     expect(tile(wrapper, 'plugins').text()).toContain('3')
   })
 
-  it('links the services, routes and consumers tiles to their live screens', async () => {
+  it('links every tile to its live screen', async () => {
     stubKong()
     const wrapper = await mountDashboard()
 
     expect(tile(wrapper, 'services').attributes('href')).toBe('/live/services')
     expect(tile(wrapper, 'routes').attributes('href')).toBe('/live/routes')
     expect(tile(wrapper, 'consumers').attributes('href')).toBe('/live/consumers')
-    expect(tile(wrapper, 'plugins').attributes('href')).toBeUndefined()
+    expect(tile(wrapper, 'plugins').attributes('href')).toBe('/live/plugins')
   })
 
   it('splits services into enabled and disabled', async () => {

@@ -38,8 +38,10 @@ async function onChangeFileSelected(event: Event) {
 }
 
 const liveLinks: { to: string; label: string; icon: IconName }[] = [
+  { to: '/live/dashboard', label: 'Dashboard', icon: 'dashboard' },
   { to: '/live/services', label: 'Services', icon: 'server' },
   { to: '/live/routes', label: 'Routes', icon: 'route' },
+  { to: '/live/plugins', label: 'Plugins', icon: 'plug' },
   { to: '/live/consumers', label: 'Consumers', icon: 'user' },
 ]
 

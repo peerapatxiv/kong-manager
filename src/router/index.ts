@@ -5,6 +5,8 @@ import CompareView from '../views/CompareView.vue'
 import LiveServicesView from '../views/live/LiveServicesView.vue'
 import LiveRoutesView from '../views/live/LiveRoutesView.vue'
 import LiveConsumersView from '../views/live/LiveConsumersView.vue'
+import LivePluginsView from '../views/live/LivePluginsView.vue'
+import LiveDashboardView from '../views/live/LiveDashboardView.vue'
 
 export const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -12,9 +14,11 @@ export const router = createRouter({
     { path: '/', name: 'load', component: LoadView },
     { path: '/browse', name: 'browse', component: BrowseView },
     { path: '/compare', name: 'compare', component: CompareView },
-    { path: '/live', redirect: '/live/services' },
+    { path: '/live', redirect: '/live/dashboard' },
+    { path: '/live/dashboard', name: 'live-dashboard', component: LiveDashboardView },
     { path: '/live/services', name: 'live-services', component: LiveServicesView },
     { path: '/live/routes', name: 'live-routes', component: LiveRoutesView },
+    { path: '/live/plugins', name: 'live-plugins', component: LivePluginsView },
     { path: '/live/consumers', name: 'live-consumers', component: LiveConsumersView },
   ],
 })
