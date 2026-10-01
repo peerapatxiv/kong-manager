@@ -202,7 +202,7 @@ function onSelectSaved({
       </div>
 
       <div class="flex flex-wrap gap-2">
-        <button type="button" class="btn-primary" @click="router.push('/browse')">Browse this config</button>
+        <button type="button" class="btn-primary" @click="router.push('/file/dashboard')">Open dashboard</button>
         <RouterLink v-if="connectionStore.isConnected" to="/live/services" class="btn-secondary">
           Open live services
         </RouterLink>

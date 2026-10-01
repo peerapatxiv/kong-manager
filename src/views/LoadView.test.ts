@@ -24,7 +24,7 @@ function testRouter() {
     history: createMemoryHistory(),
     routes: [
       { path: '/', component: LoadView },
-      { path: '/browse', component: { template: '<div />' } },
+      { path: '/file/dashboard', component: { template: '<div />' } },
       { path: '/live/services', component: { template: '<div />' } },
       { path: '/live/routes', component: { template: '<div />' } },
     ],
@@ -352,6 +352,19 @@ describe('LoadView', () => {
     }
     const button = (wrapper: ReturnType<typeof mount>, label: string) =>
       wrapper.findAll('button').find((b) => b.text() === label)
+
+    it('opens the file dashboard from the loaded summary', async () => {
+      const router = testRouter()
+      const wrapper = mount(LoadView, { global: { plugins: [router] } })
+      useConfigStore().loadPrimary('sample-a.yaml', SAMPLE)
+      await wrapper.vm.$nextTick()
+
+      await button(wrapper, 'Open dashboard')!.trigger('click')
+      await flushPromises()
+
+      expect(router.currentRoute.value.path).toBe('/file/dashboard')
+      expect(button(wrapper, 'Browse this config')).toBeUndefined()
+    })
 
     it('shows the loaded summary above the source form, not below it', async () => {
       const wrapper = loaded()

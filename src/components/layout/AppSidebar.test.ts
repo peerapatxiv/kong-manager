@@ -19,8 +19,11 @@ function testRouter() {
     history: createMemoryHistory(),
     routes: [
       { path: '/', component: { template: '<div />' } },
-      { path: '/browse', component: { template: '<div />' } },
       { path: '/compare', component: { template: '<div />' } },
+      ...['dashboard', 'services', 'routes', 'consumers', 'plugins'].map((page) => ({
+        path: `/file/${page}`,
+        component: { template: '<div />' },
+      })),
     ],
   })
 }
@@ -90,12 +93,28 @@ describe('AppSidebar', () => {
     expect(wrapper.text()).not.toContain('No config loaded')
   })
 
-  it('hides the locked Browse and Compare entries while connected live with no config', () => {
+  it('links the file pages once a config is loaded, under a File heading, with Compare beside Overview', () => {
+    useConfigStore().loadPrimary('a.yaml', '_format_version: "3.0"\nservices:\n- name: svc-a\n  host: a.internal\n')
+    const wrapper = mount(AppSidebar, { global: { plugins: [testRouter()] } })
+
+    expect(wrapper.text()).toContain('File')
+    expect(wrapper.findAll('a').map((a) => [a.text(), a.attributes('href')])).toEqual([
+      ['Overview', '/'],
+      ['Compare', '/compare'],
+      ['Dashboard', '/file/dashboard'],
+      ['Services', '/file/services'],
+      ['Routes', '/file/routes'],
+      ['Consumers', '/file/consumers'],
+      ['Plugins', '/file/plugins'],
+    ])
+  })
+
+  it('hides the file pages and Compare while connected live with no config', () => {
     useConnectionStore().$patch({ active: { baseUrl: 'http://kong:8001' }, info: { version: '3.4.0', database: 'postgres' } })
     const wrapper = mount(AppSidebar, { global: { plugins: [testRouter()] } })
 
-    expect(wrapper.text()).not.toContain('Browse')
     expect(wrapper.text()).not.toContain('Compare')
+    expect(wrapper.text()).not.toContain('File')
     expect(wrapper.find('span[title="Load a config first"]').exists()).toBe(false)
   })
 
@@ -105,14 +124,22 @@ describe('AppSidebar', () => {
     const wrapper = mount(AppSidebar, { global: { plugins: [testRouter()] } })
 
     expect(wrapper.text()).not.toContain('Live')
-    expect(wrapper.findAll('a').map((a) => a.text())).toEqual(['Overview', 'Browse', 'Compare'])
+    expect(wrapper.findAll('a').map((a) => a.text())).toEqual([
+      'Overview',
+      'Compare',
+      'Dashboard',
+      'Services',
+      'Routes',
+      'Consumers',
+      'Plugins',
+    ])
   })
 
-  it('hides Browse and Compare, and the Change control, until a config is loaded', () => {
+  it('hides the file pages, Compare and the Change control until a config is loaded', () => {
     const wrapper = mount(AppSidebar, { global: { plugins: [testRouter()] } })
 
-    expect(wrapper.text()).not.toContain('Browse')
     expect(wrapper.text()).not.toContain('Compare')
+    expect(wrapper.text()).not.toContain('Dashboard')
     expect(wrapper.find('span[title="Load a config first"]').exists()).toBe(false)
     expect(wrapper.text()).toContain('No config loaded')
     expect(wrapper.text()).not.toContain('Change')

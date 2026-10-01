@@ -37,6 +37,14 @@ async function onChangeFileSelected(event: Event) {
   }
 }
 
+const fileLinks: { to: string; label: string; icon: IconName }[] = [
+  { to: '/file/dashboard', label: 'Dashboard', icon: 'dashboard' },
+  { to: '/file/services', label: 'Services', icon: 'server' },
+  { to: '/file/routes', label: 'Routes', icon: 'route' },
+  { to: '/file/consumers', label: 'Consumers', icon: 'user' },
+  { to: '/file/plugins', label: 'Plugins', icon: 'plug' },
+]
+
 const liveLinks: { to: string; label: string; icon: IconName }[] = [
   { to: '/live/services', label: 'Services', icon: 'server' },
   { to: '/live/routes', label: 'Routes', icon: 'route' },
@@ -78,16 +86,15 @@ const liveHost = computed(() => {
       <p class="section-heading px-2.5 pb-1 pt-1">Workspace</p>
       <SidebarLink to="/" label="Overview" icon="home" @navigate="emit('navigate')" />
       <template v-if="showFileLinks">
+        <SidebarLink to="/compare" label="Compare" icon="compare" @navigate="emit('navigate')" />
+
+        <p class="section-heading px-2.5 pb-1 pt-5">File</p>
         <SidebarLink
-          to="/browse"
-          label="Browse"
-          icon="list"
-          @navigate="emit('navigate')"
-        />
-        <SidebarLink
-          to="/compare"
-          label="Compare"
-          icon="compare"
+          v-for="link in fileLinks"
+          :key="link.to"
+          :to="link.to"
+          :label="link.label"
+          :icon="link.icon"
           @navigate="emit('navigate')"
         />
       </template>

@@ -9,7 +9,10 @@ import { useConfigStore } from '../../stores/config'
 function testRouter() {
   return createRouter({
     history: createMemoryHistory(),
-    routes: [{ path: '/', component: { template: '<div />' } }],
+    routes: ['/', '/compare', '/file/dashboard', '/file/services', '/file/routes', '/file/consumers', '/file/plugins', '/live/plugins'].map((path) => ({
+      path,
+      component: { template: '<div />' },
+    })),
   })
 }
 
@@ -45,5 +48,22 @@ describe('AppShell', () => {
 
     expect(wrapper.text()).not.toContain('Push to Kong')
     expect(wrapper.text()).toContain('Generate new config')
+  })
+
+  it.each([
+    ['/file/dashboard', 'File dashboard'],
+    ['/file/services', 'File services'],
+    ['/file/routes', 'File routes'],
+    ['/file/consumers', 'File consumers'],
+    ['/file/plugins', 'File plugins'],
+    ['/compare', 'Compare'],
+    ['/live/plugins', 'Live plugins'],
+    ['/', 'Overview'],
+  ])('titles %s as "%s"', async (path, title) => {
+    const router = testRouter()
+    router.push(path)
+    await router.isReady()
+    const wrapper = mount(AppShell, { global: { plugins: [router] }, slots: { default: '<div />' } })
+    expect(wrapper.find('h1').text()).toBe(title)
   })
 })
