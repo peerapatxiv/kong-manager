@@ -15,7 +15,6 @@ import LiveActionBar from '../../components/live/LiveActionBar.vue'
 import ListRow from '../../components/shared/ListRow.vue'
 import EmptyState from '../../components/shared/EmptyState.vue'
 import DetailHeader from '../../components/shared/DetailHeader.vue'
-import ToggleSwitch from '../../components/shared/ToggleSwitch.vue'
 
 const connection = useConnectionStore()
 const {
@@ -28,7 +27,6 @@ const {
   create: createEntity,
   save: saveEntity,
   remove: removeEntity,
-  toggleEnabled: toggleEntity,
 } = useLiveEntities<LiveEntity>('services')
 
 const search = ref('')
@@ -131,16 +129,6 @@ async function remove() {
   }
 }
 
-async function toggle(service: LiveEntity, enabled: boolean) {
-  try {
-    await toggleEntity(service.id, enabled)
-  } catch {
-    return
-  }
-  const updated = items.value.find((item) => item.id === service.id)
-  if (updated && selectedId.value === service.id && !dirty.value) setForm(fromEntity(updated))
-}
-
 // Leaving the page would silently drop unsaved edits, so ask first (false cancels).
 onBeforeRouteLeave(() => confirmDiscard())
 
@@ -181,14 +169,6 @@ watch(
             @click="select(service)"
           >
             {{ label(service) }}
-            <template #trail>
-              <fieldset :disabled="!connection.canWrite" class="contents" @click.stop>
-                <ToggleSwitch
-                  :model-value="service.enabled !== false"
-                  @update:model-value="(value) => toggle(service, value)"
-                />
-              </fieldset>
-            </template>
           </ListRow>
         </ul>
       </template>

@@ -199,17 +199,21 @@ describe('LivePluginsView', () => {
     expect(byId(wrapper, 'plugin-name').exists()).toBe(true)
   })
 
-  it('enables or disables a plugin straight from the list', async () => {
+  it('has no enable switch on the list rows, and still disables a plugin from its form', async () => {
     connect()
     const calls = fakeKong()
     const wrapper = await open()
 
-    await rows(wrapper)[0].find('input[type="checkbox"]').setValue(false)
+    expect(wrapper.findAll('[data-testid="plugin-row"] input[type="checkbox"]')).toHaveLength(0)
+
+    await rows(wrapper)[0].trigger('click')
+    await wrapper.find('input[type="checkbox"]').setValue(false)
+    await byId(wrapper, 'save').trigger('click')
     await flushPromises()
 
     const patch = calls.find((c) => c.method === 'PATCH')!
     expect(patch.url).toBe('http://kong:8001/plugins/p-1')
-    expect(patch.body).toEqual({ enabled: false })
+    expect(patch.body).toMatchObject({ enabled: false })
   })
 
   it('deletes after confirming, and not when cancelled', async () => {

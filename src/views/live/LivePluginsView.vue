@@ -15,7 +15,6 @@ import LiveActionBar from '../../components/live/LiveActionBar.vue'
 import ListRow from '../../components/shared/ListRow.vue'
 import EmptyState from '../../components/shared/EmptyState.vue'
 import DetailHeader from '../../components/shared/DetailHeader.vue'
-import ToggleSwitch from '../../components/shared/ToggleSwitch.vue'
 
 const connection = useConnectionStore()
 const {
@@ -28,7 +27,6 @@ const {
   create: createEntity,
   save: saveEntity,
   remove: removeEntity,
-  toggleEnabled: toggleEntity,
 } = useLiveEntities<LiveEntity>('plugins')
 
 const search = ref('')
@@ -166,16 +164,6 @@ async function remove() {
   }
 }
 
-async function toggle(plugin: LiveEntity, enabled: boolean) {
-  try {
-    await toggleEntity(plugin.id, enabled)
-  } catch {
-    return
-  }
-  const updated = items.value.find((item) => item.id === plugin.id)
-  if (updated && selectedId.value === plugin.id && !dirty.value) setForm(fromEntity(updated))
-}
-
 async function loadTargets() {
   const listAll = async (resource: 'services' | 'routes' | 'consumers') => {
     try {
@@ -240,14 +228,6 @@ watch(
             @click="select(plugin)"
           >
             {{ label(plugin) }}
-            <template #trail>
-              <fieldset :disabled="!connection.canWrite" class="contents" @click.stop>
-                <ToggleSwitch
-                  :model-value="plugin.enabled !== false"
-                  @update:model-value="(value) => toggle(plugin, value)"
-                />
-              </fieldset>
-            </template>
           </ListRow>
         </ul>
       </template>

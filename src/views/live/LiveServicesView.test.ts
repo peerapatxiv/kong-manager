@@ -240,17 +240,21 @@ describe('LiveServicesView', () => {
     expect((byId(wrapper, 'service-host').element as HTMLInputElement).value).toBe('billing.internal')
   })
 
-  it('toggles a service enabled flag from the list with a PATCH of only that flag', async () => {
+  it('has no enable switch on the list rows, and still disables a service from its form', async () => {
     connect()
     const calls = fakeKong(SERVICES)
     const wrapper = await mountView()
 
-    await wrapper.findAll('[data-testid="service-row"]')[0].find('input[type="checkbox"]').setValue(false)
+    expect(wrapper.findAll('[data-testid="service-row"] input[type="checkbox"]')).toHaveLength(0)
+
+    await wrapper.findAll('[data-testid="service-row"]')[0].trigger('click')
+    await wrapper.find('input[type="checkbox"]').setValue(false)
+    await byId(wrapper, 'save').trigger('click')
     await flushPromises()
 
     const patch = calls.find((c) => c.method === 'PATCH')!
     expect(patch.url).toBe('http://kong:8001/services/svc-1')
-    expect(patch.body).toEqual({ enabled: false })
+    expect(patch.body).toMatchObject({ enabled: false })
   })
 
   it('asks before leaving the page with unsaved edits, and stays when cancelled', async () => {
