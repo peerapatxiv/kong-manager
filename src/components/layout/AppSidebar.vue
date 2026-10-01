@@ -3,7 +3,7 @@ import AppIcon from '../shared/AppIcon.vue'
 import SidebarLink from './SidebarLink.vue'
 import type { IconName } from '../shared/AppIcon.vue'
 import { computed, ref } from 'vue'
-import { RouterLink } from 'vue-router'
+import { NavigationFailureType, RouterLink, isNavigationFailure, useRoute, useRouter } from 'vue-router'
 import { useConfigStore } from '../../stores/config'
 import { useConnectionStore } from '../../stores/connection'
 import { readTextFile } from '../../lib/readTextFile'
@@ -11,8 +11,20 @@ import { useTheme } from '../../lib/theme'
 
 const configStore = useConfigStore()
 const connectionStore = useConnectionStore()
+const router = useRouter()
+const route = useRoute()
 const emit = defineEmits<{ navigate: [] }>()
 const { theme, toggleTheme } = useTheme()
+
+// Leave first, then disconnect, so a page that objects to being left (unsaved edits) keeps
+// the connection it still needs. From a Live page the way out is the Overview page.
+async function disconnect() {
+  if (route.path !== '/') {
+    const failure = await router.push('/')
+    if (isNavigationFailure(failure, NavigationFailureType.aborted | NavigationFailureType.cancelled)) return
+  }
+  connectionStore.disconnect()
+}
 
 const fileInputRef = ref<HTMLInputElement | null>(null)
 const changeError = ref<string | null>(null)
@@ -154,6 +166,10 @@ const liveHost = computed(() => {
         <p v-if="connectionStore.info" class="mt-1.5 truncate font-mono text-[11px] text-ink-muted">
           Kong {{ connectionStore.info.version }} · {{ connectionStore.info.database }}
         </p>
+        <button type="button" class="btn-danger-outline btn-sm mt-3 w-full" data-testid="sidebar-disconnect" @click="disconnect">
+          <AppIcon name="x" class="h-3.5 w-3.5" />
+          Disconnect
+        </button>
       </div>
 
       <div v-else class="border-t border-border px-5 py-3.5" data-testid="sidebar-footer">

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import LiveDashboard from '../components/live/LiveDashboard.vue'
 import AppIcon from '../components/shared/AppIcon.vue'
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 import FileDropZone from '../components/FileDropZone.vue'
 import KongConnectForm from '../components/KongConnectForm.vue'
@@ -70,6 +70,14 @@ async function onConnect({ baseUrl, auth, name }: ConnectRequest) {
 
 // A live connection with no file loaded: the page is about that connection, not a config to load.
 const liveSummary = computed(() => connectionStore.isConnected && !configStore.isLoaded && !formExpanded.value)
+
+// The connection can also end from the sidebar; the page then needs its connect form back.
+watch(
+  () => connectionStore.isConnected,
+  (connected) => {
+    if (!connected && !configStore.isLoaded) formExpanded.value = true
+  },
+)
 
 function removeConfig() {
   if (configStore.modifiedKeys.size > 0 && !window.confirm('You have unsaved edits — remove this config anyway?')) {

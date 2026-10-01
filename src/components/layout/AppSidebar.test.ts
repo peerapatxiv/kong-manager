@@ -2,7 +2,7 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
 import { createRouter, createMemoryHistory } from 'vue-router'
-import { mount } from '@vue/test-utils'
+import { flushPromises, mount } from '@vue/test-utils'
 import AppSidebar from './AppSidebar.vue'
 import { useConfigStore } from '../../stores/config'
 import { useConnectionStore } from '../../stores/connection'
@@ -20,6 +20,7 @@ function testRouter() {
     routes: [
       { path: '/', component: { template: '<div />' } },
       { path: '/compare', component: { template: '<div />' } },
+      { path: '/live/services', component: { template: '<div />' } },
       ...['dashboard', 'services', 'routes', 'consumers', 'plugins'].map((page) => ({
         path: `/file/${page}`,
         component: { template: '<div />' },
@@ -107,6 +108,73 @@ describe('AppSidebar', () => {
       ['Consumers', '/file/consumers'],
       ['Plugins', '/file/plugins'],
     ])
+  })
+
+  describe('Disconnect button in the connection footer', () => {
+    const connectLive = () =>
+      useConnectionStore().$patch({
+        active: { baseUrl: 'http://kong:8001', name: 'Kong CE' },
+        info: { version: '3.5.0', database: 'postgres' },
+      })
+    const disconnectButton = (wrapper: ReturnType<typeof mount>) => wrapper.find('[data-testid="sidebar-disconnect"]')
+
+    it('is offered under the connection details', () => {
+      connectLive()
+      const wrapper = mount(AppSidebar, { global: { plugins: [testRouter()] } })
+      expect(disconnectButton(wrapper).text()).toContain('Disconnect')
+      expect(wrapper.find('[data-testid="sidebar-footer"]').find('[data-testid="sidebar-disconnect"]').exists()).toBe(true)
+    })
+
+    it('is not there without a live connection, or when a file is loaded instead', () => {
+      expect(disconnectButton(mount(AppSidebar, { global: { plugins: [testRouter()] } })).exists()).toBe(false)
+
+      connectLive()
+      useConfigStore().loadPrimary('a.yaml', '_format_version: "3.0"\n')
+      expect(disconnectButton(mount(AppSidebar, { global: { plugins: [testRouter()] } })).exists()).toBe(false)
+    })
+
+    it('ends the connection and goes back to the Overview page from a Live page', async () => {
+      connectLive()
+      const router = testRouter()
+      router.push('/live/services')
+      await router.isReady()
+      const wrapper = mount(AppSidebar, { global: { plugins: [router] } })
+
+      await disconnectButton(wrapper).trigger('click')
+      await flushPromises()
+
+      expect(useConnectionStore().isConnected).toBe(false)
+      expect(router.currentRoute.value.path).toBe('/')
+      expect(wrapper.text()).not.toContain('Live')
+    })
+
+    it('stays connected when leaving the page was cancelled, such as by an unsaved-changes prompt', async () => {
+      connectLive()
+      const router = testRouter()
+      router.push('/live/services')
+      await router.isReady()
+      router.beforeEach((to, from) => (from.path === '/live/services' && to.path === '/' ? false : true))
+      const wrapper = mount(AppSidebar, { global: { plugins: [router] } })
+
+      await disconnectButton(wrapper).trigger('click')
+      await flushPromises()
+
+      expect(useConnectionStore().isConnected).toBe(true)
+      expect(router.currentRoute.value.path).toBe('/live/services')
+    })
+
+    it('disconnects in place when already on the Overview page', async () => {
+      connectLive()
+      const router = testRouter()
+      router.push('/')
+      await router.isReady()
+      const wrapper = mount(AppSidebar, { global: { plugins: [router] } })
+
+      await disconnectButton(wrapper).trigger('click')
+      await flushPromises()
+
+      expect(useConnectionStore().isConnected).toBe(false)
+    })
   })
 
   it('hides the file pages and Compare while connected live with no config', () => {

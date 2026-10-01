@@ -316,6 +316,18 @@ describe('LoadView', () => {
       expect(wrapper.find('[data-testid="live-badges"]').text()).toContain('Read-only')
     })
 
+    it('brings the connect form back when the connection is ended from elsewhere, such as the sidebar', async () => {
+      useConnectionStore().$patch({ active: { baseUrl: 'http://kong:8001' }, info: { version: '3.4.0', database: 'postgres' } })
+      const wrapper = mount(LoadView, { global: { plugins: [testRouter()] } })
+      expect(wrapper.text()).not.toContain('New Connection')
+
+      useConnectionStore().disconnect()
+      await wrapper.vm.$nextTick()
+
+      expect(wrapper.text()).toContain('New Connection')
+      expect(wrapper.text()).not.toContain('Connected:')
+    })
+
     it('starts with the source form collapsed when a live connection already exists', () => {
       useConnectionStore().$patch({
         active: { baseUrl: 'http://kong:8001' },
