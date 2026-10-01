@@ -87,17 +87,12 @@ describe('LiveServicesView', () => {
     expect(wrapper.find('[data-testid="service-row"]').text()).toContain('reports')
   })
 
-  it('applies the tag filter through the API on Enter', async () => {
+  it('has no tag filter box in the list toolbar', async () => {
     connect()
-    const calls = fakeKong(SERVICES)
+    fakeKong(SERVICES)
     const wrapper = await mountView()
 
-    const input = byId(wrapper, 'tag-filter')
-    await input.setValue('prod, eu')
-    await input.trigger('keydown', { key: 'Enter' })
-    await flushPromises()
-
-    expect(calls.at(-1)?.url).toBe('http://kong:8001/services?tags=prod%2Ceu')
+    expect(byId(wrapper, 'tag-filter').exists()).toBe(false)
   })
 
   it('on DB-less Kong shows the notice and disables every write control', async () => {

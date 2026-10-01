@@ -23,7 +23,6 @@ const {
   next,
   loading,
   error,
-  tagFilter,
   load,
   loadMore,
   create: createEntity,
@@ -33,7 +32,6 @@ const {
 } = useLiveEntities<LiveEntity>('services')
 
 const search = ref('')
-const tagText = ref('')
 const selectedId = ref<string | null>(null)
 const creating = ref(false)
 const form = ref<ServiceFormModel | null>(null)
@@ -143,14 +141,6 @@ async function toggle(service: LiveEntity, enabled: boolean) {
   if (updated && selectedId.value === service.id && !dirty.value) setForm(fromEntity(updated))
 }
 
-function applyTagFilter() {
-  tagFilter.value = tagText.value
-    .split(',')
-    .map((tag) => tag.trim())
-    .filter(Boolean)
-  void load()
-}
-
 // Leaving the page would silently drop unsaved edits, so ask first (false cancels).
 onBeforeRouteLeave(() => confirmDiscard())
 
@@ -173,7 +163,6 @@ watch(
       <template #toolbar>
         <LiveListToolbar
           v-model:search="search"
-          v-model:tags="tagText"
           placeholder="Search loaded services…"
           new-testid="new-service"
           noun="service"
@@ -181,7 +170,6 @@ watch(
           :loading="loading"
           :can-create="connection.canWrite"
           @create="startCreate"
-          @apply-tags="applyTagFilter"
         />
       </template>
 

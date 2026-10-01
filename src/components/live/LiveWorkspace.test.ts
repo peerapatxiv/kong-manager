@@ -19,6 +19,11 @@ describe('LiveWorkspace', () => {
     expect(wrapper.find('[role="separator"]').exists()).toBe(true)
   })
 
+  it('has no tooltip over the drag handle', () => {
+    const wrapper = mount(LiveWorkspace, { props: { storageKey: 'test:ws' } })
+    expect(wrapper.find('[role="separator"]').attributes('title')).toBeUndefined()
+  })
+
   it('lets the list and the detail scroll on their own', () => {
     const wrapper = mount(LiveWorkspace, { props: { storageKey: 'test:ws' }, slots: { list: '<i id="l"/>', detail: '<i id="d"/>' } })
     expect(wrapper.find('#l').element.parentElement?.className).toContain('overflow-y-auto')

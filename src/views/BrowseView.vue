@@ -181,7 +181,6 @@ const { panelStyle, isResizing, startResize, resetPanelWidth } = useResizablePan
           role="separator"
           aria-orientation="vertical"
           aria-label="Resize service list panel"
-          title="Drag to resize, double-click to reset"
           class="absolute inset-y-0 -right-1 z-10 hidden w-2 cursor-col-resize touch-none items-center justify-center lg:flex hover:[&>span]:bg-accent/50"
           @pointerdown="startResize"
           @dblclick="resetPanelWidth"

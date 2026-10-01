@@ -23,7 +23,6 @@ const {
   next,
   loading,
   error,
-  tagFilter,
   load,
   loadMore,
   create: createEntity,
@@ -32,7 +31,6 @@ const {
 } = useLiveEntities<LiveEntity>('consumers')
 
 const search = ref('')
-const tagText = ref('')
 const selectedId = ref<string | null>(null)
 const creating = ref(false)
 const form = ref<ConsumerFormModel | null>(null)
@@ -134,14 +132,6 @@ async function remove() {
   }
 }
 
-function applyTagFilter() {
-  tagFilter.value = tagText.value
-    .split(',')
-    .map((tag) => tag.trim())
-    .filter(Boolean)
-  void load()
-}
-
 // Leaving the page would silently drop unsaved edits, so ask first (false cancels).
 onBeforeRouteLeave(() => confirmDiscard())
 
@@ -164,7 +154,6 @@ watch(
       <template #toolbar>
         <LiveListToolbar
           v-model:search="search"
-          v-model:tags="tagText"
           placeholder="Search loaded consumers…"
           new-testid="new-consumer"
           noun="consumer"
@@ -172,7 +161,6 @@ watch(
           :loading="loading"
           :can-create="connection.canWrite"
           @create="startCreate"
-          @apply-tags="applyTagFilter"
         />
       </template>
 

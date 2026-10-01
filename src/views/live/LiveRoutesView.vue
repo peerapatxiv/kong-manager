@@ -29,7 +29,6 @@ const {
   next,
   loading,
   error,
-  tagFilter,
   load,
   loadMore,
   create: createEntity,
@@ -41,7 +40,6 @@ const {
 })
 
 const search = ref('')
-const tagText = ref('')
 const selectedId = ref<string | null>(null)
 const creating = ref(false)
 const form = ref<RouteFormModel | null>(null)
@@ -167,14 +165,6 @@ async function remove() {
   }
 }
 
-function applyTagFilter() {
-  tagFilter.value = tagText.value
-    .split(',')
-    .map((tag) => tag.trim())
-    .filter(Boolean)
-  void load()
-}
-
 async function loadServices() {
   try {
     services.value = await connection.client<LiveEntity>('services').listAll()
@@ -214,7 +204,6 @@ watch(serviceFilter, (id) => {
       <template #toolbar>
         <LiveListToolbar
           v-model:search="search"
-          v-model:tags="tagText"
           placeholder="Search loaded routes…"
           new-testid="new-route"
           noun="route"
@@ -222,7 +211,6 @@ watch(serviceFilter, (id) => {
           :loading="loading"
           :can-create="connection.canWrite"
           @create="startCreate"
-          @apply-tags="applyTagFilter"
         >
           <AppSelect
             v-model="serviceFilter"
