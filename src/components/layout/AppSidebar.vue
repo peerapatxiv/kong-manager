@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import AppIcon from '../shared/AppIcon.vue'
+import SidebarLink from './SidebarLink.vue'
 import type { IconName } from '../shared/AppIcon.vue'
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import { useConfigStore } from '../../stores/config'
 import { useConnectionStore } from '../../stores/connection'
@@ -42,11 +43,15 @@ const liveLinks: { to: string; label: string; icon: IconName }[] = [
   { to: '/live/consumers', label: 'Consumers', icon: 'user' },
 ]
 
-const linkBase =
-  'flex items-center gap-2.5 rounded-lg border-l-2 border-transparent py-2 pl-2.5 pr-3 text-sm text-ink-muted transition-colors duration-150 hover:bg-elevated hover:text-ink focus-visible:bg-elevated focus-visible:outline-none'
-const linkActive = '!border-accent !bg-accent/10 !text-link font-medium'
-const linkDisabled =
-  'flex items-center gap-2.5 rounded-lg border-l-2 border-transparent py-2 pl-2.5 pr-3 text-sm text-ink-muted/40 cursor-not-allowed'
+const liveHost = computed(() => {
+  const baseUrl = connectionStore.active?.baseUrl
+  if (!baseUrl) return ''
+  try {
+    return new URL(baseUrl).host
+  } catch {
+    return baseUrl
+  }
+})
 </script>
 
 <template>
@@ -57,48 +62,49 @@ const linkDisabled =
       >
         K
       </span>
-      <span class="font-bold text-ink">Manager</span>
+      <div class="leading-tight">
+        <p class="font-bold text-ink">Manager</p>
+        <p class="text-[11px] text-ink-muted">Kong Admin</p>
+      </div>
     </div>
 
     <nav class="flex flex-col gap-0.5 px-3">
-      <RouterLink to="/" :class="linkBase" :active-class="linkActive" @click="emit('navigate')">
-        <AppIcon name="home" class="h-4 w-4 shrink-0" />
-        Load
-      </RouterLink>
-
-      <RouterLink v-if="configStore.isLoaded" to="/browse" :class="linkBase" :active-class="linkActive" @click="emit('navigate')">
-        <AppIcon name="list" class="h-4 w-4 shrink-0" />
-        Browse
-      </RouterLink>
-      <span v-else :class="linkDisabled" title="Load a config first">
-        <AppIcon name="list" class="h-4 w-4 shrink-0" />
-        Browse
-        <AppIcon name="lock" class="ml-auto h-3.5 w-3.5 shrink-0" />
-      </span>
-
-      <RouterLink v-if="configStore.isLoaded" to="/compare" :class="linkBase" :active-class="linkActive" @click="emit('navigate')">
-        <AppIcon name="compare" class="h-4 w-4 shrink-0" />
-        Compare
-      </RouterLink>
-      <span v-else :class="linkDisabled" title="Load a config first">
-        <AppIcon name="compare" class="h-4 w-4 shrink-0" />
-        Compare
-        <AppIcon name="lock" class="ml-auto h-3.5 w-3.5 shrink-0" />
-      </span>
+      <p class="section-heading px-2.5 pb-1 pt-1">Workspace</p>
+      <SidebarLink to="/" label="Load" icon="home" @navigate="emit('navigate')" />
+      <SidebarLink
+        to="/browse"
+        label="Browse"
+        icon="list"
+        :locked="!configStore.isLoaded"
+        locked-title="Load a config first"
+        @navigate="emit('navigate')"
+      />
+      <SidebarLink
+        to="/compare"
+        label="Compare"
+        icon="compare"
+        :locked="!configStore.isLoaded"
+        locked-title="Load a config first"
+        @navigate="emit('navigate')"
+      />
 
       <template v-if="connectionStore.isConnected">
-        <p class="section-heading px-2.5 pb-1 pt-4">Live</p>
-        <RouterLink
+        <p class="section-heading px-2.5 pb-1 pt-5">Live</p>
+        <p
+          class="mx-1 mb-1 flex items-center gap-2 rounded-lg bg-elevated/60 px-2.5 py-1.5 text-[11px] text-ink-muted"
+          :title="connectionStore.active?.baseUrl"
+        >
+          <span class="h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-500" />
+          <span class="truncate font-mono">{{ liveHost }}</span>
+        </p>
+        <SidebarLink
           v-for="link in liveLinks"
           :key="link.to"
           :to="link.to"
-          :class="linkBase"
-          :active-class="linkActive"
-          @click="emit('navigate')"
-        >
-          <AppIcon :name="link.icon" class="h-4 w-4 shrink-0" />
-          {{ link.label }}
-        </RouterLink>
+          :label="link.label"
+          :icon="link.icon"
+          @navigate="emit('navigate')"
+        />
       </template>
     </nav>
 
