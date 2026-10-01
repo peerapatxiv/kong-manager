@@ -23,7 +23,7 @@ const connectErrorMessage = ref<string | null>(null)
 const connecting = ref(false)
 const mode = ref<'connect' | 'file'>('connect')
 // Coming back to this page with a config or connection already in place should show
-// it, not a blank form; "Change source" opens the form when wanted.
+// it, not a blank form; Disconnect or Remove config brings the form back.
 const formExpanded = ref(!(configStore.isLoaded || connectionStore.isConnected))
 
 function onFileSelected({ fileName, text }: { fileName: string; text: string }) {
@@ -106,7 +106,7 @@ function onSelectSaved({
       <p class="mt-1 text-sm text-ink-muted">
         {{
           liveSummary
-            ? 'You are connected. Open a live screen, check the dashboard below, or change your source.'
+            ? 'You are connected. Use the Live links in the sidebar, or check the dashboard below.'
             : !formExpanded
               ? 'Browse this config below, or change your source to load something else.'
               : mode === 'connect'
@@ -135,10 +135,6 @@ function onSelectSaved({
           </div>
         </div>
         <div class="flex shrink-0 items-center gap-2">
-          <button v-if="!formExpanded" type="button" class="btn-secondary btn-sm" @click="formExpanded = true">
-            <AppIcon name="compare" class="h-3.5 w-3.5" />
-            Change source
-          </button>
           <button type="button" class="btn-danger-outline btn-sm" @click="disconnect">
             <AppIcon name="x" class="h-3.5 w-3.5" />
             Disconnect
@@ -156,17 +152,6 @@ function onSelectSaved({
           {{ connectionStore.canWrite ? 'Read & write' : 'Read-only' }}
         </span>
       </div>
-
-      <div class="flex flex-wrap gap-2 border-t border-border pt-4">
-        <RouterLink to="/live/services" class="btn-primary">
-          <AppIcon name="server" class="h-4 w-4" />
-          Open live services
-        </RouterLink>
-        <RouterLink to="/live/routes" class="btn-secondary">
-          <AppIcon name="route" class="h-4 w-4" />
-          Open live routes
-        </RouterLink>
-      </div>
     </div>
 
     <LiveDashboard v-if="connectionStore.isConnected && !configStore.isLoaded" />
@@ -182,10 +167,6 @@ function onSelectSaved({
           </h3>
         </div>
         <div class="flex shrink-0 items-center gap-2">
-          <button v-if="!formExpanded" type="button" class="btn-secondary btn-sm" @click="formExpanded = true">
-            <AppIcon name="compare" class="h-3.5 w-3.5" />
-            Change source
-          </button>
           <button v-if="connectionStore.isConnected" type="button" class="btn-danger-outline btn-sm" @click="disconnect">
             <AppIcon name="x" class="h-3.5 w-3.5" />
             Disconnect

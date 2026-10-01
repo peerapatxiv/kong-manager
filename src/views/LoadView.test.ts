@@ -285,7 +285,7 @@ describe('LoadView', () => {
       const wrapper = mount(LoadView, { global: { plugins: [testRouter()] } })
 
       expect(wrapper.text()).toContain('Loaded: sample-a.yaml')
-      expect(wrapper.text()).toContain('Change source')
+      expect(wrapper.text()).not.toContain('Change source')
       expect(wrapper.text()).not.toContain('New Connection')
     })
 
@@ -334,16 +334,13 @@ describe('LoadView', () => {
       expect(wrapper.text()).toContain('New Connection')
     })
 
-    it('brings the form back from Change source', async () => {
+    it('has no Change source button for a loaded config or a live connection', () => {
       useConfigStore().loadPrimary('sample-a.yaml', SAMPLE)
-      const wrapper = mount(LoadView, { global: { plugins: [testRouter()] } })
+      expect(mount(LoadView, { global: { plugins: [testRouter()] } }).text()).not.toContain('Change source')
 
-      await wrapper
-        .findAll('button')
-        .find((b) => b.text() === 'Change source')!
-        .trigger('click')
-
-      expect(wrapper.text()).toContain('New Connection')
+      setActivePinia(createPinia())
+      useConnectionStore().$patch({ active: { baseUrl: 'http://kong:8001' }, info: { version: '3.4.0', database: 'postgres' } })
+      expect(mount(LoadView, { global: { plugins: [testRouter()] } }).text()).not.toContain('Change source')
     })
   })
 
@@ -366,7 +363,7 @@ describe('LoadView', () => {
       expect(html.indexOf('Loaded:')).toBeLessThan(html.indexOf('New Connection'))
     })
 
-    it('labels the form as a different source and lets you cancel it, which brings back Change source', async () => {
+    it('labels the form as a different source and lets you cancel it', async () => {
       const wrapper = loaded()
       await wrapper.vm.$nextTick()
 
@@ -375,7 +372,6 @@ describe('LoadView', () => {
 
       expect(wrapper.text()).not.toContain('New Connection')
       expect(wrapper.text()).not.toContain('Load a different source')
-      expect(button(wrapper, 'Change source')).toBeTruthy()
     })
 
     it('shows no Cancel button or different-source heading when nothing is loaded', () => {
@@ -452,10 +448,8 @@ describe('LoadView', () => {
       expect(card.text()).toContain('http://localhost:8001')
       expect(card.text()).toContain('Kong 3.4.0')
       expect(card.text()).toContain('postgres')
-      expect(card.findAll('a').map((a) => [a.text(), a.attributes('href')])).toEqual([
-        ['Open live services', '/live/services'],
-        ['Open live routes', '/live/routes'],
-      ])
+      expect(card.text()).not.toContain('Open live services')
+      expect(card.findAll('a')).toHaveLength(0)
       expect(wrapper.text()).not.toContain('Failed to connect')
     })
 
@@ -593,7 +587,7 @@ describe('LoadView', () => {
     expect(wrapper.findComponent(FileDropZone).exists()).toBe(false)
   })
 
-  it('collapses the form after a successful load, and re-expands it via Change source', async () => {
+  it('collapses the form after a successful load', async () => {
     const wrapper = mount(LoadView, { global: { plugins: [testRouter()] } })
 
     await wrapper
@@ -605,13 +599,7 @@ describe('LoadView', () => {
 
     expect(wrapper.findComponent(FileDropZone).exists()).toBe(false)
     expect(wrapper.text()).toContain('Loaded: sample-a.yaml')
-
-    await wrapper
-      .findAll('button')
-      .find((b) => b.text() === 'Change source')!
-      .trigger('click')
-
-    expect(wrapper.findComponent(FileDropZone).exists()).toBe(true)
+    expect(wrapper.text()).not.toContain('Change source')
   })
 
   it('shows a connect error banner instead of crashing when the connection fails', async () => {
