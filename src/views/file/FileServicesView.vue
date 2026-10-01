@@ -17,6 +17,8 @@ const selectedName = ref<string | undefined>(undefined)
 const services = computed(() => configStore.primary?.config.services ?? [])
 const selected = computed(() => services.value.find((s) => s.name === selectedName.value))
 const label = (service: KongService) => service.name ?? service.host
+const routeCount = (service: KongService) => service.routes?.length ?? 0
+const routeCountTitle = (count: number) => (count === 1 ? '1 route' : `${count} routes`)
 
 const filtered = computed(() => {
   const query = search.value.trim().toLowerCase()
@@ -59,6 +61,14 @@ function onUpdate(updated: KongService) {
           >
             {{ label(service) }}
             <template #trail>
+              <span
+                v-if="routeCount(service) > 0"
+                data-testid="route-count"
+                class="inline-flex h-4 min-w-[1.25rem] shrink-0 items-center justify-center rounded-full bg-elevated px-1 text-[10px] font-semibold tabular-nums text-ink-muted"
+                :title="routeCountTitle(routeCount(service))"
+              >
+                {{ routeCount(service) }}
+              </span>
               <Badge v-if="configStore.isModified(`service:${service.name}`)" variant="modified" />
             </template>
           </ListRow>

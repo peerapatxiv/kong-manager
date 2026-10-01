@@ -13,6 +13,7 @@ const make = () =>
     global: { plugins: [createRouter({ history: createMemoryHistory(), routes: [{ path: '/', component: { template: '<div />' } }] })] },
   })
 const rows = (w: ReturnType<typeof make>) => w.findAll('[data-testid="file-row"]')
+const names = (w: ReturnType<typeof make>) => rows(w).map((r) => r.find('span.truncate').text())
 
 beforeEach(() => setActivePinia(createPinia()))
 
@@ -26,7 +27,7 @@ describe('FileServicesView', () => {
 
     it('lists the services by name only, with a placeholder until one is chosen', () => {
       const wrapper = make()
-      expect(rows(wrapper).map((r) => r.text())).toEqual(['billing-service', 'reporting-service'])
+      expect(names(wrapper)).toEqual(['billing-service', 'reporting-service'])
       expect(wrapper.text()).toContain('Select a service from the list to view and edit it.')
     })
 
@@ -38,19 +39,32 @@ describe('FileServicesView', () => {
       expect(wrapper.find('input[type="number"]').element).toHaveProperty('value', '8080')
     })
 
-    it('says how many routes the chosen service has', async () => {
+    it('shows a small route count next to each service that has routes, with the wording as a tooltip', () => {
       const wrapper = make()
-      await rows(wrapper)[0].trigger('click')
-      expect(wrapper.find('[data-testid="route-count"]').text()).toBe('2 routes')
+      const badge = rows(wrapper)[0].find('[data-testid="route-count"]')
 
-      await rows(wrapper)[1].trigger('click')
-      expect(wrapper.find('[data-testid="route-count"]').text()).toBe('No routes')
+      expect(badge.text()).toBe('2')
+      expect(badge.attributes('title')).toBe('2 routes')
+    })
+
+    it('shows no count for a service without routes, and none in the detail panel', async () => {
+      const wrapper = make()
+      expect(rows(wrapper)[1].find('[data-testid="route-count"]').exists()).toBe(false)
+
+      await rows(wrapper)[0].trigger('click')
+      expect(wrapper.findComponent(ServiceDetail).find('[data-testid="route-count"]').exists()).toBe(false)
+    })
+
+    it('says "1 route" in the tooltip for a single route', () => {
+      useConfigStore().loadPrimary('one.yaml', '_format_version: "3.0"\nservices:\n- name: solo\n  host: s.internal\n  routes:\n  - name: only\n')
+      const wrapper = make()
+      expect(rows(wrapper)[0].find('[data-testid="route-count"]').attributes('title')).toBe('1 route')
     })
 
     it('filters the list as you search', async () => {
       const wrapper = make()
       await wrapper.find('input[placeholder="Search services…"]').setValue('reporting')
-      expect(rows(wrapper).map((r) => r.text())).toEqual(['reporting-service'])
+      expect(names(wrapper)).toEqual(['reporting-service'])
     })
 
     it('has no New button, since a loaded file cannot grow here', () => {
