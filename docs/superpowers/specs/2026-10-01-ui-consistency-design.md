@@ -1,7 +1,7 @@
 # UI consistency pass — shared UI pieces
 
 Date: 2026-10-01
-Status: draft, awaiting review
+Status: implemented
 
 ## Goal
 
@@ -31,15 +31,15 @@ colour via `currentColor`. All inline SVGs are replaced. Locked and unlocked sid
 same icon name.
 
 ### 2. Layout pieces (new shared components)
-- `ListRow`: selected-row style, optional avatar/icon slot, optional count badge.
+- `ListRow`: selected-row style, optional initial avatar, `trail` slot for badges and controls, optional check mark.
 - `EmptyState`: icon in a lime circle, title, optional hint and action; also covers loading and
   "nothing found".
-- `PageHeader`: title, subtitle, actions slot.
+- ~~`PageHeader`~~: dropped. The page title and actions already live once, in `AppShell.vue`.
 - `DetailHeader`: avatar, name and ID block (extracted from the consumers view), reused for
   services and routes.
 
 ### 3. Tokens in `style.css`
-Controls use `rounded-lg`, cards use `rounded-xl`; `rounded-md` moves to `rounded-lg`. One `.card`
+Controls and rows use `rounded-lg`, cards use `rounded-xl`, small tag/method chips keep `rounded-md`. One `.card`
 padding and one shared selected-row class.
 
 ### 4. Rollout (one commit per step, checked in the browser in light and dark mode)
