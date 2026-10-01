@@ -416,4 +416,16 @@ describe('credentials panel', () => {
     expect(credRows(wrapper)).toHaveLength(0)
   })
 })
+
+  it('leaves room under the last card: nothing as tall as the panel sits between the panel and its content', async () => {
+    connect()
+    fakeKong()
+    const wrapper = await mountView()
+    const heights = () =>
+      [...wrapper.find('.overflow-y-auto.p-6').element.children].filter((child) => child.classList.contains('h-full'))
+
+    expect(heights()).toHaveLength(0)
+    await wrapper.find('[data-testid="consumer-row"]').trigger('click')
+    expect(heights()).toHaveLength(0)
+  })
 })

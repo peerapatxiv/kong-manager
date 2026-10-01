@@ -261,25 +261,23 @@ watch(serviceFilter, (id) => {
       </template>
 
       <template #detail>
-        <div class="h-full space-y-4">
-          <LiveErrorBanner :messages="validationErrors" :error="error" />
-          <div v-if="form" class="space-y-4">
-            <div class="card space-y-5 p-5">
-              <DetailHeader
-                :initial="(form.name || '?').charAt(0)"
-                :title="creating ? 'New route' : form.name || 'Route'"
-                :subtitle="!creating && selectedId ? selectedId : undefined"
-              />
-              <RouteForm
-                v-model="form"
-                :service-options="serviceOptions"
-                :disabled="!connection.canWrite"
-                :field-errors="fieldErrors"
-              />
-            </div>
+        <LiveErrorBanner :messages="validationErrors" :error="error" />
+        <div v-if="form" class="space-y-4">
+          <div class="card space-y-5 p-5">
+            <DetailHeader
+              :initial="(form.name || '?').charAt(0)"
+              :title="creating ? 'New route' : form.name || 'Route'"
+              :subtitle="!creating && selectedId ? selectedId : undefined"
+            />
+            <RouteForm
+              v-model="form"
+              :service-options="serviceOptions"
+              :disabled="!connection.canWrite"
+              :field-errors="fieldErrors"
+            />
           </div>
-          <EmptyState v-else icon="route" title="Select a route from the list, or create a new one." />
         </div>
+        <EmptyState v-else icon="route" title="Select a route from the list, or create a new one." />
       </template>
 
       <template v-if="form" #detail-footer>

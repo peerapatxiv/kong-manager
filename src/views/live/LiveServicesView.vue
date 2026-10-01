@@ -179,20 +179,18 @@ watch(
       </template>
 
       <template #detail>
-        <div class="h-full space-y-4">
-          <LiveErrorBanner :messages="validationErrors" :error="error" />
-          <div v-if="form" class="space-y-4">
-            <div class="card space-y-5 p-5">
-              <DetailHeader
-                :initial="(form.name || '?').charAt(0)"
-                :title="creating ? 'New service' : form.name || 'Service'"
-                :subtitle="!creating && selectedId ? selectedId : undefined"
-              />
-              <ServiceForm v-model="form" :disabled="!connection.canWrite" :field-errors="fieldErrors" />
-            </div>
+        <LiveErrorBanner :messages="validationErrors" :error="error" />
+        <div v-if="form" class="space-y-4">
+          <div class="card space-y-5 p-5">
+            <DetailHeader
+              :initial="(form.name || '?').charAt(0)"
+              :title="creating ? 'New service' : form.name || 'Service'"
+              :subtitle="!creating && selectedId ? selectedId : undefined"
+            />
+            <ServiceForm v-model="form" :disabled="!connection.canWrite" :field-errors="fieldErrors" />
           </div>
-          <EmptyState v-else icon="server" title="Select a service from the list, or create a new one." />
         </div>
+        <EmptyState v-else icon="server" title="Select a service from the list, or create a new one." />
       </template>
 
       <template v-if="form" #detail-footer>

@@ -30,6 +30,15 @@ describe('LiveWorkspace', () => {
     expect(wrapper.find('#d').element.parentElement?.className).toContain('overflow-y-auto')
   })
 
+  it('lays the detail content out in a column inside padding, so a tall form never sits flush on the pinned bar', () => {
+    const wrapper = mount(LiveWorkspace, { props: { storageKey: 'test:ws' }, slots: { detail: '<i id="d"/>' } })
+    const scroller = wrapper.find('#d').element.parentElement!
+
+    expect(scroller.className).toContain('flex-col')
+    expect(scroller.className).toContain('p-6')
+    expect(scroller.className).toContain('gap-4')
+  })
+
   it('shows the pinned action area only when one is provided', () => {
     const without = mount(LiveWorkspace, { props: { storageKey: 'test:ws' } })
     expect(without.find('[data-testid="live-detail-footer"]').exists()).toBe(false)

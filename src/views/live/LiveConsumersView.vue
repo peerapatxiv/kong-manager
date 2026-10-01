@@ -183,28 +183,26 @@ watch(
       </template>
 
       <template #detail>
-        <div class="h-full space-y-4">
-          <LiveErrorBanner :messages="validationErrors" :error="error" />
-          <div v-if="form" class="space-y-4">
-            <div class="card space-y-5 p-5">
-              <DetailHeader
-                :initial="creating ? '+' : (form.username || form.custom_id || '?').charAt(0)"
-                :title="creating ? 'New consumer' : form.username || form.custom_id || 'Consumer'"
-                :subtitle="!creating && selectedId ? selectedId : undefined"
-              />
-              <ConsumerForm v-model="form" :disabled="!connection.canWrite" :field-errors="fieldErrors" />
-            </div>
-            <div v-if="!creating && selectedId" class="card p-5">
-              <CredentialsPanel
-                :key="selectedId"
-                :consumer-id="selectedId"
-                :disabled="!connection.canWrite"
-                class="!border-t-0 !pt-0"
-              />
-            </div>
+        <LiveErrorBanner :messages="validationErrors" :error="error" />
+        <div v-if="form" class="space-y-4">
+          <div class="card space-y-5 p-5">
+            <DetailHeader
+              :initial="creating ? '+' : (form.username || form.custom_id || '?').charAt(0)"
+              :title="creating ? 'New consumer' : form.username || form.custom_id || 'Consumer'"
+              :subtitle="!creating && selectedId ? selectedId : undefined"
+            />
+            <ConsumerForm v-model="form" :disabled="!connection.canWrite" :field-errors="fieldErrors" />
           </div>
-          <EmptyState v-else icon="user" title="Select a consumer from the list, or create a new one." />
+          <div v-if="!creating && selectedId" class="card p-5">
+            <CredentialsPanel
+              :key="selectedId"
+              :consumer-id="selectedId"
+              :disabled="!connection.canWrite"
+              class="!border-t-0 !pt-0"
+            />
+          </div>
         </div>
+        <EmptyState v-else icon="user" title="Select a consumer from the list, or create a new one." />
       </template>
 
       <template v-if="form" #detail-footer>

@@ -19,4 +19,9 @@ describe('EmptyState', () => {
     const wrapper = mount(EmptyState, { props: { icon: 'list', title: 'Empty' } })
     expect(wrapper.findAll('p')).toHaveLength(1)
   })
+
+  it('grows to fill the space it is given, so it stays centred in a detail panel', () => {
+    const wrapper = mount(EmptyState, { props: { icon: 'list', title: 'Empty' } })
+    expect(wrapper.classes()).toContain('flex-1')
+  })
 })

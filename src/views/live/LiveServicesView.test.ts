@@ -306,4 +306,16 @@ describe('LiveServicesView', () => {
     expect(confirm).not.toHaveBeenCalled()
     expect(router.currentRoute.value.path).toBe('/')
   })
+
+  it('leaves room under the last card: nothing as tall as the panel sits between the panel and its content', async () => {
+    connect()
+    fakeKong(SERVICES)
+    const wrapper = await mountView()
+    const heights = () =>
+      [...wrapper.find('.overflow-y-auto.p-6').element.children].filter((child) => child.classList.contains('h-full'))
+
+    expect(heights()).toHaveLength(0)
+    await wrapper.find('[data-testid="service-row"]').trigger('click')
+    expect(heights()).toHaveLength(0)
+  })
 })
