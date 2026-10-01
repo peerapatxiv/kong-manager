@@ -35,6 +35,7 @@ describe('listRoutes', () => {
   it('gives each route a stable id from its position, so renaming does not change it', () => {
     const rows = listRoutes(config())
     expect(rows.map((r) => r.id)).toEqual(['0/0', '0/1', '1/0'])
+    expect(rows.map((r) => r.modifiedKey)).toEqual(['route:0/0', 'route:0/1', 'route:1/0'])
   })
 
   it('replaces a route in place', () => {
@@ -67,15 +68,9 @@ describe('listPlugins', () => {
     expect(new Set(ids).size).toBe(ids.length)
   })
 
-  it('names the entry that owns a nested plugin, so editing it can mark that entry modified', () => {
+  it('marks each plugin modified under its own key, so one edit counts once and shows on the right row', () => {
     const rows = listPlugins(config())
-    expect(rows.map((r) => r.modifiedKey)).toEqual([
-      'plugin:global/cors',
-      'plugin:global/rate-limiting',
-      'service:billing',
-      'service:billing',
-      'consumer:alice',
-    ])
+    expect(rows.map((r) => r.modifiedKey)).toEqual(['plugin:g/0', 'plugin:g/1', 'plugin:s/0/0', 'plugin:r/0/0/0', 'plugin:c/0/0'])
   })
 
   it('replaces a plugin in place at its own level', () => {

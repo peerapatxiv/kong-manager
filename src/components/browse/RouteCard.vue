@@ -39,6 +39,7 @@ function onPluginUpdate(index: number, updated: NonNullable<KongRoute['plugins']
 <template>
   <div class="card overflow-hidden">
     <button
+      v-if="!defaultExpanded"
       type="button"
       class="flex w-full items-center gap-3 px-3.5 py-2.5 text-left transition-colors duration-150 hover:bg-elevated"
       :aria-expanded="expanded"
@@ -56,7 +57,7 @@ function onPluginUpdate(index: number, updated: NonNullable<KongRoute['plugins']
 
     <div class="grid transition-[grid-template-rows] duration-200 ease-out" :style="{ gridTemplateRows: expanded ? '1fr' : '0fr' }">
       <div class="overflow-hidden">
-        <div class="space-y-5 border-t border-border bg-elevated/60 p-4" :inert="!expanded">
+        <div class="space-y-5 bg-elevated/60 p-4" :class="defaultExpanded ? '' : 'border-t border-border'" :inert="!expanded">
           <section class="space-y-3">
             <label class="block">
               <span class="field-label">Name</span>

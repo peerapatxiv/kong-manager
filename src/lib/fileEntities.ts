@@ -14,7 +14,7 @@ export type RouteEntry = {
   id: string
   label: string
   serviceName: string
-  /** The key under which an edit marks its service modified. */
+  /** The key under which an edit to this route is recorded as modified. */
   modifiedKey: string
   route: KongRoute
   replace: (next: KongRoute) => void
@@ -33,7 +33,7 @@ export function listRoutes(config: KongConfig): RouteEntry[] {
         id: `${serviceIndex}/${routeIndex}`,
         label: routeLabel(route, routeIndex),
         serviceName: serviceName(service),
-        modifiedKey: `service:${serviceName(service)}`,
+        modifiedKey: `route:${serviceIndex}/${routeIndex}`,
         route,
         replace: (next) => {
           routes![routeIndex] = next
@@ -56,17 +56,13 @@ export type PluginEntry = {
 
 export function listPlugins(config: KongConfig): PluginEntry[] {
   const entries: PluginEntry[] = []
-  const add = (
-    list: KongPlugin[],
-    idPrefix: string,
-    scope: PluginScope,
-    modifiedKey: (plugin: KongPlugin) => string,
-  ) => {
+  const add = (list: KongPlugin[], idPrefix: string, scope: PluginScope) => {
     list.forEach((plugin, index) => {
+      const id = `${idPrefix}/${index}`
       entries.push({
-        id: `${idPrefix}/${index}`,
+        id,
         scope,
-        modifiedKey: modifiedKey(plugin),
+        modifiedKey: `plugin:${id}`,
         plugin,
         replace: (next) => {
           list[index] = next
@@ -75,28 +71,20 @@ export function listPlugins(config: KongConfig): PluginEntry[] {
     })
   }
 
-  add(asList<KongPlugin>(config.plugins), 'g', { kind: 'global', label: 'global' }, (p) => `plugin:global/${p.name}`)
+  add(asList<KongPlugin>(config.plugins), 'g', { kind: 'global', label: 'global' })
 
   asList<KongService>(config.services).forEach((service, serviceIndex) => {
-    const owner = `service:${serviceName(service)}`
-    add(asList<KongPlugin>(service.plugins), `s/${serviceIndex}`, { kind: 'service', label: serviceName(service) }, () => owner)
+    add(asList<KongPlugin>(service.plugins), `s/${serviceIndex}`, { kind: 'service', label: serviceName(service) })
     asList<KongRoute>(service.routes).forEach((route, routeIndex) => {
-      add(
-        asList<KongPlugin>(route.plugins),
-        `r/${serviceIndex}/${routeIndex}`,
-        { kind: 'route', label: routeLabel(route, routeIndex) },
-        () => owner,
-      )
+      add(asList<KongPlugin>(route.plugins), `r/${serviceIndex}/${routeIndex}`, {
+        kind: 'route',
+        label: routeLabel(route, routeIndex),
+      })
     })
   })
 
   asList<KongConsumer>(config.consumers).forEach((consumer, consumerIndex) => {
-    add(
-      asList<KongPlugin>(consumer.plugins),
-      `c/${consumerIndex}`,
-      { kind: 'consumer', label: consumerName(consumer) },
-      () => `consumer:${consumerName(consumer)}`,
-    )
+    add(asList<KongPlugin>(consumer.plugins), `c/${consumerIndex}`, { kind: 'consumer', label: consumerName(consumer) })
   })
 
   return entries
