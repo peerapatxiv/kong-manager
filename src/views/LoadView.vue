@@ -68,6 +68,33 @@ async function onConnect({ baseUrl, auth, name }: ConnectRequest) {
 }
 
 // A live connection with no file loaded: the page is about that connection, not a config to load.
+// The connection's display name can be changed in place, here and in the saved connection.
+const editingName = ref(false)
+const nameDraft = ref('')
+
+function startEditName() {
+  nameDraft.value = connectionStore.active?.name ?? ''
+  editingName.value = true
+}
+
+function cancelEditName() {
+  editingName.value = false
+}
+
+function saveName() {
+  const active = connectionStore.active
+  if (!active) return
+  const name = nameDraft.value.trim()
+  connectionStore.rename(name)
+  savedConnectionsStore.upsert({
+    baseUrl: active.baseUrl,
+    username: active.auth?.username,
+    password: active.auth?.password,
+    name,
+  })
+  editingName.value = false
+}
+
 const fileSummary = computed(() => configStore.isLoaded && !formExpanded.value)
 const liveSummary = computed(() => connectionStore.isConnected && !configStore.isLoaded && !formExpanded.value)
 
@@ -141,7 +168,35 @@ function onSelectSaved({
             <h3 class="truncate font-bold text-ink">
               Connected: <span class="font-mono">{{ connectionStore.active?.baseUrl }}</span>
             </h3>
-            <p v-if="connectionStore.active?.name" class="truncate text-sm text-ink-muted">{{ connectionStore.active.name }}</p>
+            <div v-if="editingName" class="mt-1 flex flex-wrap items-center gap-2">
+              <input
+                v-model="nameDraft"
+                type="text"
+                class="input-field w-56 max-w-full py-1"
+                data-testid="name-input"
+                aria-label="Connection name"
+                placeholder="Connection name"
+                autofocus
+                @keydown.enter.prevent="saveName"
+                @keydown.esc.prevent="cancelEditName"
+              />
+              <button type="button" class="btn-primary btn-sm" data-testid="name-save" @click="saveName">Save</button>
+              <button type="button" class="btn-secondary btn-sm" data-testid="name-cancel" @click="cancelEditName">Cancel</button>
+            </div>
+            <p v-else class="flex items-center gap-1.5 text-sm text-ink-muted">
+              <span v-if="connectionStore.active?.name" class="truncate">{{ connectionStore.active.name }}</span>
+              <button
+                type="button"
+                class="inline-flex shrink-0 items-center gap-1 rounded-md p-1 text-ink-muted transition-colors duration-150 hover:bg-elevated hover:text-ink"
+                data-testid="edit-name"
+                :aria-label="connectionStore.active?.name ? 'Edit name' : 'Add name'"
+                :title="connectionStore.active?.name ? 'Edit name' : 'Add name'"
+                @click="startEditName"
+              >
+                <AppIcon name="edit" class="h-3.5 w-3.5" />
+                <span v-if="!connectionStore.active?.name" class="text-xs font-medium">Add name</span>
+              </button>
+            </p>
           </div>
         </div>
         <div class="flex shrink-0 items-center gap-2">

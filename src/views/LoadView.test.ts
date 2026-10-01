@@ -329,6 +329,88 @@ describe('LoadView', () => {
       expect(wrapper.text()).not.toContain('Connected:')
     })
 
+    describe('editing the connection name', () => {
+      const connect = (name?: string) => {
+        useSavedConnectionsStore().upsert({ baseUrl: 'http://kong:8001', username: 'kong', password: 'pw', name })
+        useConnectionStore().$patch({
+          active: { baseUrl: 'http://kong:8001', auth: { username: 'kong', password: 'pw' }, ...(name ? { name } : {}) },
+          info: { version: '3.4.0', database: 'postgres' },
+        })
+        return mount(LoadView, { global: { plugins: [testRouter()] } })
+      }
+      const card = (w: ReturnType<typeof connect>) => w.find('[data-testid="live-connected"]')
+
+      it('offers a pencil beside the name, and opens an input holding the current name', async () => {
+        const wrapper = connect('Kong CE')
+        expect(card(wrapper).text()).toContain('Kong CE')
+
+        await card(wrapper).find('[data-testid="edit-name"]').trigger('click')
+
+        expect((card(wrapper).find('[data-testid="name-input"]').element as HTMLInputElement).value).toBe('Kong CE')
+      })
+
+      it('saves the new name everywhere: the card, the connection and the saved connection', async () => {
+        const wrapper = connect('Kong CE')
+        await card(wrapper).find('[data-testid="edit-name"]').trigger('click')
+        await card(wrapper).find('[data-testid="name-input"]').setValue('  Kong Prod  ')
+        await card(wrapper).find('[data-testid="name-save"]').trigger('click')
+
+        expect(useConnectionStore().active?.name).toBe('Kong Prod')
+        expect(useSavedConnectionsStore().connections[0].name).toBe('Kong Prod')
+        expect(card(wrapper).find('[data-testid="name-input"]').exists()).toBe(false)
+        expect(card(wrapper).text()).toContain('Kong Prod')
+        expect(card(wrapper).text()).not.toContain('Kong CE')
+      })
+
+      it('saves with Enter and cancels with Escape', async () => {
+        const wrapper = connect('Kong CE')
+        await card(wrapper).find('[data-testid="edit-name"]').trigger('click')
+        await card(wrapper).find('[data-testid="name-input"]').setValue('Changed')
+        await card(wrapper).find('[data-testid="name-input"]').trigger('keydown', { key: 'Escape' })
+        expect(useConnectionStore().active?.name).toBe('Kong CE')
+        expect(card(wrapper).find('[data-testid="name-input"]').exists()).toBe(false)
+
+        await card(wrapper).find('[data-testid="edit-name"]').trigger('click')
+        await card(wrapper).find('[data-testid="name-input"]').setValue('Entered')
+        await card(wrapper).find('[data-testid="name-input"]').trigger('keydown', { key: 'Enter' })
+        expect(useConnectionStore().active?.name).toBe('Entered')
+      })
+
+      it('keeps the old name when Cancel is pressed', async () => {
+        const wrapper = connect('Kong CE')
+        await card(wrapper).find('[data-testid="edit-name"]').trigger('click')
+        await card(wrapper).find('[data-testid="name-input"]').setValue('Nope')
+        await card(wrapper).find('[data-testid="name-cancel"]').trigger('click')
+
+        expect(useConnectionStore().active?.name).toBe('Kong CE')
+        expect(useSavedConnectionsStore().connections[0].name).toBe('Kong CE')
+        expect(card(wrapper).text()).toContain('Kong CE')
+      })
+
+      it('clears the name when it is saved empty, and then offers to add one', async () => {
+        const wrapper = connect('Kong CE')
+        await card(wrapper).find('[data-testid="edit-name"]').trigger('click')
+        await card(wrapper).find('[data-testid="name-input"]').setValue('   ')
+        await card(wrapper).find('[data-testid="name-save"]').trigger('click')
+
+        expect(useConnectionStore().active?.name).toBeUndefined()
+        expect(card(wrapper).text()).not.toContain('Kong CE')
+        expect(card(wrapper).find('[data-testid="edit-name"]').text()).toContain('Add name')
+      })
+
+      it('lets a connection without a name be given one', async () => {
+        const wrapper = connect()
+        expect(card(wrapper).find('[data-testid="edit-name"]').text()).toContain('Add name')
+
+        await card(wrapper).find('[data-testid="edit-name"]').trigger('click')
+        await card(wrapper).find('[data-testid="name-input"]').setValue('Staging')
+        await card(wrapper).find('[data-testid="name-save"]').trigger('click')
+
+        expect(useConnectionStore().active?.name).toBe('Staging')
+        expect(card(wrapper).text()).toContain('Staging')
+      })
+    })
+
     it('starts with the source form collapsed when a live connection already exists', () => {
       useConnectionStore().$patch({
         active: { baseUrl: 'http://kong:8001' },

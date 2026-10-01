@@ -62,6 +62,27 @@ describe('useConnectionStore', () => {
     expect(store.availablePlugins).toEqual([])
   })
 
+  it('renames the open connection, trimming the name, and clears it when the name is empty', () => {
+    const store = useConnectionStore()
+    store.$patch({ active: { baseUrl: 'http://kong:8001', name: 'Old' }, info: { version: '3.5.0', database: 'postgres' } })
+
+    store.rename('  Kong Prod  ')
+    expect(store.active?.name).toBe('Kong Prod')
+
+    store.rename('   ')
+    expect(store.active?.name).toBeUndefined()
+  })
+
+  it('keeps the rest of the connection when renaming, and ignores a rename with no connection', () => {
+    const store = useConnectionStore()
+    expect(() => store.rename('x')).not.toThrow()
+    expect(store.active).toBeNull()
+
+    store.$patch({ active: { baseUrl: 'http://kong:8001', auth: { username: 'kong' } }, info: { version: '3.5.0', database: 'postgres' } })
+    store.rename('Named')
+    expect(store.active).toEqual({ baseUrl: 'http://kong:8001', auth: { username: 'kong' }, name: 'Named' })
+  })
+
   it('treats DB-less Kong as connected but read-only, and blocks writes before any request', async () => {
     const f = vi.fn().mockResolvedValue(rootResponse({ version: '3.4.1', configuration: { database: 'off' } }))
     vi.stubGlobal('fetch', f)

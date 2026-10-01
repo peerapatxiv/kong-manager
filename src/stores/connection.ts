@@ -31,6 +31,13 @@ export const useConnectionStore = defineStore('connection', {
       this.info = { version: root.version, database: root.configuration?.database ?? 'unknown' }
       this.availablePlugins = Object.keys(root.plugins?.available_on_server ?? {}).sort()
     },
+    /** Gives the open connection a display name; an empty name removes it. */
+    rename(name: string) {
+      if (!this.active) return
+      const trimmed = name.trim()
+      const { name: _old, ...rest } = this.active
+      this.active = trimmed ? { ...rest, name: trimmed } : rest
+    },
     disconnect() {
       this.active = null
       this.info = null
