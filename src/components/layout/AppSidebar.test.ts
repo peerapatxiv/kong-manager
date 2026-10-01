@@ -71,6 +71,21 @@ describe('AppSidebar', () => {
     expect(wrapper.find('[data-testid="live-connection"]').text()).toBe('kong:8001')
   })
 
+  it('describes the live connection in the footer instead of "No config loaded"', () => {
+    useConnectionStore().$patch({
+      active: { baseUrl: 'https://kong.example.com/admin-api', name: 'Kong CE' },
+      info: { version: '3.5.0', database: 'postgres' },
+    })
+    const wrapper = mount(AppSidebar, { global: { plugins: [testRouter()] } })
+    const footer = wrapper.find('[data-testid="sidebar-footer"]')
+
+    expect(footer.text()).toContain('Connection')
+    expect(footer.text()).toContain('Kong CE')
+    expect(footer.text()).toContain('Kong 3.5.0')
+    expect(footer.text()).toContain('postgres')
+    expect(wrapper.text()).not.toContain('No config loaded')
+  })
+
   it('hides the locked Browse and Compare entries while connected live with no config', () => {
     useConnectionStore().$patch({ active: { baseUrl: 'http://kong:8001' }, info: { version: '3.4.0', database: 'postgres' } })
     const wrapper = mount(AppSidebar, { global: { plugins: [testRouter()] } })

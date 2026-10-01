@@ -147,7 +147,17 @@ const liveHost = computed(() => {
         </button>
       </div>
 
-      <div class="border-t border-border px-5 py-3.5">
+      <div v-if="showLive" class="border-t border-border px-5 py-3.5" data-testid="sidebar-footer">
+        <p class="text-[11px] font-medium uppercase tracking-wide text-ink-muted">Connection</p>
+        <p class="mt-0.5 truncate text-xs font-semibold text-ink" :title="connectionStore.active?.baseUrl">
+          {{ connectionStore.active?.name || liveHost }}
+        </p>
+        <p v-if="connectionStore.info" class="truncate font-mono text-[11px] text-ink-muted">
+          Kong {{ connectionStore.info.version }} · {{ connectionStore.info.database }}
+        </p>
+      </div>
+
+      <div v-else class="border-t border-border px-5 py-3.5" data-testid="sidebar-footer">
         <div class="flex items-center justify-between gap-2">
           <p class="text-[11px] font-medium uppercase tracking-wide text-ink-muted">Config</p>
           <button
