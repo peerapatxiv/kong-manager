@@ -46,7 +46,7 @@ const liveLinks: { to: string; label: string; icon: IconName }[] = [
 // One mode at a time, as on the Load page: a loaded config means file browsing, a live
 // connection without one means live editing.
 const showLive = computed(() => connectionStore.isConnected && !configStore.isLoaded)
-const showFileLinks = computed(() => configStore.isLoaded || !connectionStore.isConnected)
+const showFileLinks = computed(() => configStore.isLoaded)
 
 const liveHost = computed(() => {
   const baseUrl = connectionStore.active?.baseUrl
@@ -81,35 +81,18 @@ const liveHost = computed(() => {
           to="/browse"
           label="Browse"
           icon="list"
-          :locked="!configStore.isLoaded"
-          locked-title="Load a config first"
           @navigate="emit('navigate')"
         />
         <SidebarLink
           to="/compare"
           label="Compare"
           icon="compare"
-          :locked="!configStore.isLoaded"
-          locked-title="Load a config first"
           @navigate="emit('navigate')"
         />
       </template>
 
       <template v-if="showLive">
         <p class="section-heading px-2.5 pb-1 pt-5">Live</p>
-        <div
-          class="mx-1 mb-1 flex items-center gap-2.5 rounded-lg bg-elevated/60 px-2.5 py-2"
-          data-testid="live-connection"
-          :title="connectionStore.active?.baseUrl"
-        >
-          <span class="h-2 w-2 shrink-0 rounded-full bg-emerald-500 ring-4 ring-emerald-500/20" />
-          <span class="min-w-0 leading-tight">
-            <span v-if="connectionStore.active?.name" class="block truncate text-xs font-semibold text-ink">
-              {{ connectionStore.active.name }}
-            </span>
-            <span class="block truncate font-mono text-[11px] text-ink-muted">{{ liveHost }}</span>
-          </span>
-        </div>
         <SidebarLink
           v-for="link in liveLinks"
           :key="link.to"
@@ -149,10 +132,18 @@ const liveHost = computed(() => {
 
       <div v-if="showLive" class="border-t border-border px-5 py-3.5" data-testid="sidebar-footer">
         <p class="text-[11px] font-medium uppercase tracking-wide text-ink-muted">Connection</p>
-        <p class="mt-0.5 truncate text-xs font-semibold text-ink" :title="connectionStore.active?.baseUrl">
-          {{ connectionStore.active?.name || liveHost }}
-        </p>
-        <p v-if="connectionStore.info" class="truncate font-mono text-[11px] text-ink-muted">
+        <div class="mt-1.5 flex items-center gap-2.5" :title="connectionStore.active?.baseUrl">
+          <span class="h-2 w-2 shrink-0 rounded-full bg-emerald-500 ring-4 ring-emerald-500/20" />
+          <span class="min-w-0 leading-tight">
+            <span class="block truncate text-xs font-semibold text-ink">
+              {{ connectionStore.active?.name || liveHost }}
+            </span>
+            <span v-if="connectionStore.active?.name" class="block truncate font-mono text-[11px] text-ink-muted">
+              {{ liveHost }}
+            </span>
+          </span>
+        </div>
+        <p v-if="connectionStore.info" class="mt-1.5 truncate font-mono text-[11px] text-ink-muted">
           Kong {{ connectionStore.info.version }} · {{ connectionStore.info.database }}
         </p>
       </div>

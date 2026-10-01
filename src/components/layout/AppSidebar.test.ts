@@ -53,22 +53,25 @@ describe('AppSidebar', () => {
     ])
   })
 
-  it('shows the connection name with its host in the Live group', () => {
+  it('shows the connection name with its host in the footer only, not in the Live group', () => {
     useConnectionStore().$patch({
       active: { baseUrl: 'https://kong.example.com/admin-api', name: 'Kong CE' },
       info: { version: '3.5.0', database: 'postgres' },
     })
     const wrapper = mount(AppSidebar, { global: { plugins: [testRouter()] } })
+    const footer = wrapper.find('[data-testid="sidebar-footer"]')
 
-    expect(wrapper.find('[data-testid="live-connection"]').text()).toContain('Kong CE')
-    expect(wrapper.find('[data-testid="live-connection"]').text()).toContain('kong.example.com')
+    expect(footer.text()).toContain('Kong CE')
+    expect(footer.text()).toContain('kong.example.com')
+    expect(wrapper.text().split('Kong CE').length - 1).toBe(1)
+    expect(wrapper.find('[data-testid="live-connection"]').exists()).toBe(false)
   })
 
-  it('falls back to the host alone when the connection has no name', () => {
+  it('falls back to the host alone, shown once, when the connection has no name', () => {
     useConnectionStore().$patch({ active: { baseUrl: 'http://kong:8001' }, info: { version: '3.4.0', database: 'postgres' } })
     const wrapper = mount(AppSidebar, { global: { plugins: [testRouter()] } })
 
-    expect(wrapper.find('[data-testid="live-connection"]').text()).toBe('kong:8001')
+    expect(wrapper.text().split('kong:8001').length - 1).toBe(1)
   })
 
   it('describes the live connection in the footer instead of "No config loaded"', () => {
@@ -104,9 +107,12 @@ describe('AppSidebar', () => {
     expect(wrapper.findAll('a').map((a) => a.text())).toEqual(['Overview', 'Browse', 'Compare'])
   })
 
-  it('shows disabled Browse/Compare links and no Change control until a config is loaded', () => {
+  it('hides Browse and Compare, and the Change control, until a config is loaded', () => {
     const wrapper = mount(AppSidebar, { global: { plugins: [testRouter()] } })
 
+    expect(wrapper.text()).not.toContain('Browse')
+    expect(wrapper.text()).not.toContain('Compare')
+    expect(wrapper.find('span[title="Load a config first"]').exists()).toBe(false)
     expect(wrapper.text()).toContain('No config loaded')
     expect(wrapper.text()).not.toContain('Change')
     expect(wrapper.findAll('a').map((a) => a.text())).toEqual(['Overview'])

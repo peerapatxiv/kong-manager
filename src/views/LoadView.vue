@@ -124,20 +124,13 @@ function onSelectSaved({
             Connected: <span class="font-mono">{{ connectionStore.active?.baseUrl }}</span>
           </h3>
         </div>
-        <div class="flex shrink-0 items-center gap-3">
-          <button
-            v-if="!formExpanded"
-            type="button"
-            class="text-xs font-medium text-link underline hover:text-accent-hover"
-            @click="formExpanded = true"
-          >
+        <div class="flex shrink-0 items-center gap-2">
+          <button v-if="!formExpanded" type="button" class="btn-secondary btn-sm" @click="formExpanded = true">
+            <AppIcon name="compare" class="h-3.5 w-3.5" />
             Change source
           </button>
-          <button
-            type="button"
-            class="text-xs font-medium text-red-600 underline hover:text-red-700 dark:text-red-400"
-            @click="disconnect"
-          >
+          <button type="button" class="btn-danger-outline btn-sm" @click="disconnect">
+            <AppIcon name="x" class="h-3.5 w-3.5" />
             Disconnect
           </button>
         </div>
@@ -162,28 +155,17 @@ function onSelectSaved({
             Loaded: <span class="font-mono">{{ configStore.primary?.fileName }}</span>
           </h3>
         </div>
-        <div class="flex shrink-0 items-center gap-3">
-          <button
-            v-if="!formExpanded"
-            type="button"
-            class="text-xs font-medium text-link underline hover:text-accent-hover"
-            @click="formExpanded = true"
-          >
+        <div class="flex shrink-0 items-center gap-2">
+          <button v-if="!formExpanded" type="button" class="btn-secondary btn-sm" @click="formExpanded = true">
+            <AppIcon name="compare" class="h-3.5 w-3.5" />
             Change source
           </button>
-          <button
-            v-if="connectionStore.isConnected"
-            type="button"
-            class="text-xs font-medium text-red-600 underline hover:text-red-700 dark:text-red-400"
-            @click="disconnect"
-          >
+          <button v-if="connectionStore.isConnected" type="button" class="btn-danger-outline btn-sm" @click="disconnect">
+            <AppIcon name="x" class="h-3.5 w-3.5" />
             Disconnect
           </button>
-          <button
-            type="button"
-            class="text-xs font-medium text-red-600 underline hover:text-red-700 dark:text-red-400"
-            @click="removeConfig"
-          >
+          <button type="button" class="btn-danger-outline btn-sm" @click="removeConfig">
+            <AppIcon name="trash" class="h-3.5 w-3.5" />
             Remove config
           </button>
         </div>

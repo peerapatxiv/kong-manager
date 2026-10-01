@@ -3,7 +3,7 @@ import { RouterLink } from 'vue-router'
 import AppIcon from '../shared/AppIcon.vue'
 import type { IconName } from '../shared/AppIcon.vue'
 
-defineProps<{ to: string; label: string; icon: IconName; locked?: boolean; lockedTitle?: string }>()
+defineProps<{ to: string; label: string; icon: IconName }>()
 const emit = defineEmits<{ navigate: [] }>()
 
 const row = 'group flex items-center gap-2.5 rounded-lg py-1.5 pl-1.5 pr-3 text-sm transition-colors duration-150'
@@ -12,13 +12,7 @@ const tile =
 </script>
 
 <template>
-  <span v-if="locked" :class="[row, 'cursor-not-allowed text-ink-muted/50']" :title="lockedTitle">
-    <span :class="[tile, 'text-ink-muted/50']"><AppIcon :name="icon" class="h-4 w-4" /></span>
-    {{ label }}
-    <AppIcon name="lock" class="ml-auto h-3.5 w-3.5 shrink-0" />
-  </span>
   <RouterLink
-    v-else
     :to="to"
     :class="[
       row,
