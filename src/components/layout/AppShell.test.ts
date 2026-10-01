@@ -87,6 +87,22 @@ describe('AppShell', () => {
       expect((await mountShell()).find('[data-testid="page-count"]').text()).toBe('100+')
     })
 
+    it('writes big numbers with thousands separators', async () => {
+      usePageMetaStore().set(1724)
+      expect((await mountShell()).find('[data-testid="page-count"]').text()).toBe('1,724')
+      usePageMetaStore().set(1000, true)
+      expect((await mountShell()).find('[data-testid="page-count"]').text()).toBe('1,000+')
+    })
+
+    it('is styled as the app\'s accent pill, level with the title', async () => {
+      usePageMetaStore().set(5)
+      const wrapper = await mountShell()
+      const chip = wrapper.find('[data-testid="page-count"]')
+
+      expect(chip.classes()).toEqual(expect.arrayContaining(['bg-accent/15', 'text-accent-secondary', 'tabular-nums']))
+      expect(chip.element.parentElement).toBe(wrapper.find('h1').element.parentElement)
+    })
+
     it('shows nothing when there is no count, and zero as a number', async () => {
       expect((await mountShell()).find('[data-testid="page-count"]').exists()).toBe(false)
       usePageMetaStore().set(0)

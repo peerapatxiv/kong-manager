@@ -55,9 +55,10 @@ const pageTitle = computed(() => {
         <span
           v-if="pageMeta.count !== null"
           data-testid="page-count"
-          class="rounded-full bg-elevated px-2 py-0.5 text-xs font-semibold tabular-nums text-ink-muted"
+          class="inline-flex h-6 min-w-[1.75rem] items-center justify-center rounded-full bg-accent/15 px-2.5 text-xs font-semibold tabular-nums text-accent-secondary ring-1 ring-inset ring-accent/40 dark:bg-accent/20 dark:text-accent"
+          :title="pageMeta.approximate ? 'Still counting' : undefined"
         >
-          {{ pageMeta.count }}{{ pageMeta.approximate ? '+' : '' }}
+          {{ pageMeta.count.toLocaleString('en-US') }}{{ pageMeta.approximate ? '+' : '' }}
         </span>
         <div class="ml-auto flex gap-2">
           <button v-if="configStore.isLoaded" type="button" class="btn-primary" @click="exportModalOpen = true">
