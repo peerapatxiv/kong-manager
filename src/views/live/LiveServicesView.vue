@@ -169,7 +169,7 @@ watch(
 
 <template>
   <LiveGate>
-    <LiveWorkspace storage-key="kong-config:live-services-panel-width">
+    <LiveWorkspace storage-key="kong-config:live-services-panel-width" :has-more="Boolean(next)" :loading="loading" @load-more="loadMore">
       <template #toolbar>
         <LiveListToolbar
           v-model:search="search"
@@ -211,16 +211,6 @@ watch(
       <template #footer>
         <p v-if="loading" class="px-3 pb-2 text-xs text-ink-muted">Loading…</p>
         <p v-else-if="filtered.length === 0" class="px-3 pb-2 text-xs text-ink-muted">No services.</p>
-        <button
-          v-if="next"
-          type="button"
-          class="btn-secondary mx-3 mb-3"
-          data-testid="load-more"
-          :disabled="loading"
-          @click="loadMore"
-        >
-          Load more
-        </button>
       </template>
 
       <template #detail>

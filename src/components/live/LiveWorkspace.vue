@@ -1,7 +1,26 @@
 <script setup lang="ts">
+import { nextTick, onMounted, ref, watch } from 'vue'
 import { useResizablePanel } from '../../composables/useResizablePanel'
 
-const props = defineProps<{ storageKey: string }>()
+const props = defineProps<{ storageKey: string; hasMore?: boolean; loading?: boolean }>()
+const emit = defineEmits<{ loadMore: [] }>()
+
+// The list fetches its next page by itself when scrolled near the bottom, and keeps going
+// until the panel is full, so there is no "Load more" button to reach for.
+const LOAD_AHEAD_PX = 160
+const scrollEl = ref<HTMLElement | null>(null)
+
+function loadMoreIfNeeded() {
+  const el = scrollEl.value
+  if (!el || !props.hasMore || props.loading) return
+  if (el.scrollHeight - el.scrollTop - el.clientHeight < LOAD_AHEAD_PX) emit('loadMore')
+}
+
+onMounted(loadMoreIfNeeded)
+watch(
+  () => [props.hasMore, props.loading],
+  () => void nextTick(loadMoreIfNeeded),
+)
 
 // Same drag-to-resize list panel as Browse; the list and the detail scroll on their own
 // so the toolbar and the action bar stay in view.
@@ -21,7 +40,9 @@ const { panelStyle, isResizing, startResize, resetPanelWidth } = useResizablePan
       data-testid="live-list-panel"
     >
       <div class="shrink-0"><slot name="toolbar" /></div>
-      <div class="min-h-0 flex-1 overflow-y-auto"><slot name="list" /></div>
+      <div ref="scrollEl" data-testid="live-list-scroll" class="min-h-0 flex-1 overflow-y-auto" @scroll.passive="loadMoreIfNeeded">
+        <slot name="list" />
+      </div>
       <div class="flex shrink-0 flex-col"><slot name="footer" /></div>
 
       <div

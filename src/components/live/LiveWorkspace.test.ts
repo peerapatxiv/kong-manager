@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 import { describe, it, expect, beforeEach } from 'vitest'
+import { nextTick } from 'vue'
 import { mount } from '@vue/test-utils'
 import LiveWorkspace from './LiveWorkspace.vue'
 
@@ -36,5 +37,47 @@ describe('LiveWorkspace', () => {
     const wrapper = mount(LiveWorkspace, { props: { storageKey: 'test:ws' } })
     await wrapper.find('[role="separator"]').trigger('dblclick')
     expect(localStorage.getItem('test:ws')).toBe('336')
+  })
+
+  describe('loading more as the list is scrolled', () => {
+    function scrollbox(wrapper: ReturnType<typeof mount>, sizes: { scrollHeight: number; clientHeight: number; scrollTop: number }) {
+      const el = wrapper.find('[data-testid="live-list-scroll"]').element as HTMLElement
+      for (const [key, value] of Object.entries(sizes)) Object.defineProperty(el, key, { value, configurable: true })
+      return el
+    }
+
+    it('asks for the next page when the user scrolls near the bottom', async () => {
+      const wrapper = mount(LiveWorkspace, { props: { storageKey: 'test:ws', hasMore: true, loading: false } })
+      await nextTick()
+      wrapper.emitted('loadMore')
+      const before = wrapper.emitted('loadMore')?.length ?? 0
+
+      const el = scrollbox(wrapper, { scrollHeight: 2000, clientHeight: 400, scrollTop: 100 })
+      await wrapper.find('[data-testid="live-list-scroll"]').trigger('scroll')
+      expect(wrapper.emitted('loadMore')?.length ?? 0).toBe(before)
+
+      Object.defineProperty(el, 'scrollTop', { value: 1500, configurable: true })
+      await wrapper.find('[data-testid="live-list-scroll"]').trigger('scroll')
+      expect(wrapper.emitted('loadMore')?.length ?? 0).toBe(before + 1)
+    })
+
+    it('does not ask while a page is loading or when there is nothing more', async () => {
+      const wrapper = mount(LiveWorkspace, { props: { storageKey: 'test:ws', hasMore: true, loading: true } })
+      scrollbox(wrapper, { scrollHeight: 500, clientHeight: 400, scrollTop: 100 })
+      await wrapper.find('[data-testid="live-list-scroll"]').trigger('scroll')
+      expect(wrapper.emitted('loadMore')).toBeUndefined()
+
+      await wrapper.setProps({ loading: false, hasMore: false })
+      await wrapper.find('[data-testid="live-list-scroll"]').trigger('scroll')
+      expect(wrapper.emitted('loadMore')).toBeUndefined()
+    })
+
+    it('keeps loading until a short list fills the panel, so a tall window is never left half empty', async () => {
+      const wrapper = mount(LiveWorkspace, { props: { storageKey: 'test:ws', hasMore: true, loading: true } })
+      scrollbox(wrapper, { scrollHeight: 300, clientHeight: 800, scrollTop: 0 })
+      await wrapper.setProps({ loading: false })
+      await nextTick()
+      expect(wrapper.emitted('loadMore')).toHaveLength(1)
+    })
   })
 })
