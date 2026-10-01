@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import AppIcon from '../components/shared/AppIcon.vue'
 import EmptyState from '../components/shared/EmptyState.vue'
-import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
+import { useResizablePanel } from '../composables/useResizablePanel'
+import { ref, computed, watch } from 'vue'
 import { useConfigStore } from '../stores/config'
 import Sidebar from '../components/layout/Sidebar.vue'
 import PluginEditor from '../components/shared/PluginEditor.vue'
@@ -117,71 +118,14 @@ function discardPlugin() {
   pluginDraft.value = pluginBaseline.value ? clonePlugin(pluginBaseline.value) : null
 }
 
-// The list panel's width is user-resizable (drag the handle on its right edge)
-// since real service/consumer names vary wildly in length — no fixed width
-// suits everyone. Persisted so the choice survives a reload.
-const PANEL_WIDTH_KEY = 'kong-config:browse-panel-width'
-const PANEL_WIDTH_DEFAULT = 384
-const PANEL_WIDTH_MIN = 260
-const PANEL_WIDTH_MAX = 720
-
-function clampPanelWidth(width: number): number {
-  return Math.min(PANEL_WIDTH_MAX, Math.max(PANEL_WIDTH_MIN, width))
-}
-
-function loadStoredPanelWidth(): number {
-  const stored = Number(localStorage.getItem(PANEL_WIDTH_KEY))
-  return Number.isFinite(stored) && stored > 0 ? clampPanelWidth(stored) : PANEL_WIDTH_DEFAULT
-}
-
-const panelWidth = ref(loadStoredPanelWidth())
-const isDesktop = ref(false)
-const isResizing = ref(false)
-
-const panelStyle = computed(() => (isDesktop.value ? { width: `${panelWidth.value}px` } : {}))
-
-let desktopQuery: MediaQueryList | undefined
-function syncIsDesktop() {
-  isDesktop.value = desktopQuery?.matches ?? false
-}
-
-onMounted(() => {
-  if (typeof window.matchMedia !== 'function') return
-  desktopQuery = window.matchMedia('(min-width: 1024px)')
-  syncIsDesktop()
-  desktopQuery.addEventListener('change', syncIsDesktop)
+// The list panel's width is user-resizable (drag the handle on its right edge) since real
+// service/consumer names vary wildly in length. Persisted so the choice survives a reload.
+const { panelStyle, isResizing, startResize, resetPanelWidth } = useResizablePanel({
+  storageKey: 'kong-config:browse-panel-width',
+  defaultWidth: 384,
+  min: 260,
+  max: 720,
 })
-onUnmounted(() => desktopQuery?.removeEventListener('change', syncIsDesktop))
-
-let resizeStartX = 0
-let resizeStartWidth = 0
-
-function startResize(event: PointerEvent) {
-  isResizing.value = true
-  resizeStartX = event.clientX
-  resizeStartWidth = panelWidth.value
-  document.body.style.cursor = 'col-resize'
-  document.body.style.userSelect = 'none'
-  window.addEventListener('pointermove', onResizeMove)
-  window.addEventListener('pointerup', stopResize, { once: true })
-}
-
-function onResizeMove(event: PointerEvent) {
-  panelWidth.value = clampPanelWidth(resizeStartWidth + (event.clientX - resizeStartX))
-}
-
-function stopResize() {
-  isResizing.value = false
-  document.body.style.cursor = ''
-  document.body.style.userSelect = ''
-  window.removeEventListener('pointermove', onResizeMove)
-  localStorage.setItem(PANEL_WIDTH_KEY, String(panelWidth.value))
-}
-
-function resetPanelWidth() {
-  panelWidth.value = PANEL_WIDTH_DEFAULT
-  localStorage.setItem(PANEL_WIDTH_KEY, String(PANEL_WIDTH_DEFAULT))
-}
 </script>
 
 <template>
