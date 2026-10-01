@@ -1,6 +1,7 @@
 <script setup lang="ts">
+import LiveDashboard from '../components/live/LiveDashboard.vue'
 import AppIcon from '../components/shared/AppIcon.vue'
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 import FileDropZone from '../components/FileDropZone.vue'
 import KongConnectForm from '../components/KongConnectForm.vue'
@@ -67,6 +68,9 @@ async function onConnect({ baseUrl, auth, name }: ConnectRequest) {
   }
 }
 
+// A live connection with no file loaded: the page is about that connection, not a config to load.
+const liveSummary = computed(() => connectionStore.isConnected && !configStore.isLoaded && !formExpanded.value)
+
 function removeConfig() {
   if (configStore.modifiedKeys.size > 0 && !window.confirm('You have unsaved edits — remove this config anyway?')) {
     return
@@ -98,14 +102,16 @@ function onSelectSaved({
 <template>
   <div class="space-y-4 p-4 sm:p-6">
     <div>
-      <h2 class="text-xl font-bold text-ink">Load a Kong declarative config</h2>
+      <h2 class="text-xl font-bold text-ink">{{ liveSummary ? 'Live Kong connection' : 'Load a Kong declarative config' }}</h2>
       <p class="mt-1 text-sm text-ink-muted">
         {{
-          !formExpanded
-            ? 'Browse this config below, or change your source to load something else.'
-            : mode === 'connect'
-              ? 'Pull the live declarative config from a running Kong instance (DB-less mode), or switch to load a YAML file.'
-              : 'Drop in a YAML file to browse, edit, and compare its entities.'
+          liveSummary
+            ? 'You are connected. Open a live screen, check the dashboard below, or change your source.'
+            : !formExpanded
+              ? 'Browse this config below, or change your source to load something else.'
+              : mode === 'connect'
+                ? 'Pull the live declarative config from a running Kong instance (DB-less mode), or switch to load a YAML file.'
+                : 'Drop in a YAML file to browse, edit, and compare its entities.'
         }}
       </p>
     </div>
@@ -115,14 +121,18 @@ function onSelectSaved({
       data-testid="live-connected"
       class="card space-y-4 p-5"
     >
-      <div class="flex items-center justify-between gap-2.5">
-        <div class="flex min-w-0 items-center gap-2.5">
-          <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-accent/15 text-accent-secondary">
-            <AppIcon name="check" class="h-3.5 w-3.5" />
+      <div class="flex flex-wrap items-start justify-between gap-3">
+        <div class="flex min-w-0 items-center gap-3.5">
+          <span class="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-accent/15 text-accent-secondary">
+            <AppIcon name="plug" class="h-5 w-5" />
+            <span class="absolute -right-0.5 -top-0.5 h-3 w-3 rounded-full bg-emerald-500 ring-2 ring-surface" />
           </span>
-          <h3 class="truncate font-bold text-ink">
-            Connected: <span class="font-mono">{{ connectionStore.active?.baseUrl }}</span>
-          </h3>
+          <div class="min-w-0">
+            <h3 class="truncate font-bold text-ink">
+              Connected: <span class="font-mono">{{ connectionStore.active?.baseUrl }}</span>
+            </h3>
+            <p v-if="connectionStore.active?.name" class="truncate text-sm text-ink-muted">{{ connectionStore.active.name }}</p>
+          </div>
         </div>
         <div class="flex shrink-0 items-center gap-2">
           <button v-if="!formExpanded" type="button" class="btn-secondary btn-sm" @click="formExpanded = true">
@@ -135,15 +145,31 @@ function onSelectSaved({
           </button>
         </div>
       </div>
-      <p class="text-sm text-ink-muted">
-        Kong {{ connectionStore.info?.version }} · {{ connectionStore.info?.database }} database. Manage its services
-        and routes live.
-      </p>
-      <div class="flex flex-wrap gap-2">
-        <RouterLink to="/live/services" class="btn-primary">Open live services</RouterLink>
-        <RouterLink to="/live/routes" class="btn-secondary">Open live routes</RouterLink>
+
+      <div class="flex flex-wrap gap-2 text-xs font-medium" data-testid="live-badges">
+        <span class="rounded-full bg-elevated px-2.5 py-1 text-ink">Kong {{ connectionStore.info?.version }}</span>
+        <span class="rounded-full bg-elevated px-2.5 py-1 text-ink">{{ connectionStore.info?.database }}</span>
+        <span
+          class="rounded-full px-2.5 py-1"
+          :class="connectionStore.canWrite ? 'bg-accent/15 text-accent-secondary dark:text-accent' : 'bg-amber-100 text-amber-800 dark:bg-amber-950/50 dark:text-amber-300'"
+        >
+          {{ connectionStore.canWrite ? 'Read & write' : 'Read-only' }}
+        </span>
+      </div>
+
+      <div class="flex flex-wrap gap-2 border-t border-border pt-4">
+        <RouterLink to="/live/services" class="btn-primary">
+          <AppIcon name="server" class="h-4 w-4" />
+          Open live services
+        </RouterLink>
+        <RouterLink to="/live/routes" class="btn-secondary">
+          <AppIcon name="route" class="h-4 w-4" />
+          Open live routes
+        </RouterLink>
       </div>
     </div>
+
+    <LiveDashboard v-if="connectionStore.isConnected && !configStore.isLoaded" />
 
     <div v-if="configStore.isLoaded" class="card space-y-5 p-5">
       <div class="flex items-center justify-between gap-2.5">
@@ -205,11 +231,8 @@ function onSelectSaved({
     <div v-if="formExpanded" class="space-y-4">
       <div v-if="configStore.isLoaded" class="flex items-center justify-between gap-2">
         <h3 class="section-heading">Load a different source</h3>
-        <button
-          type="button"
-          class="text-xs font-medium text-link underline hover:text-accent-hover"
-          @click="formExpanded = false"
-        >
+        <button type="button" class="btn-secondary btn-sm" @click="formExpanded = false">
+          <AppIcon name="x" class="h-3.5 w-3.5" />
           Cancel
         </button>
       </div>

@@ -19,7 +19,7 @@ describe('AppIcon', () => {
   it('renders every named icon with at least one path', () => {
     const names = [
       'home', 'list', 'compare', 'server', 'route', 'user', 'plug', 'link', 'upload', 'trash',
-      'eye', 'eye-off', 'search', 'x', 'plus', 'check', 'chevron-right', 'chevron-down', 'menu', 'moon', 'lock', 'warning',
+      'eye', 'eye-off', 'search', 'x', 'plus', 'check', 'chevron-right', 'chevron-down', 'refresh', 'menu', 'moon', 'lock', 'warning',
     ] as const
     for (const name of names) {
       expect(mount(AppIcon, { props: { name } }).findAll('path').length, name).toBeGreaterThan(0)

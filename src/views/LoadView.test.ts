@@ -289,6 +289,33 @@ describe('LoadView', () => {
       expect(wrapper.text()).not.toContain('New Connection')
     })
 
+    it('introduces a live connection as that, not as a config to load, and shows its access level', () => {
+      useConnectionStore().$patch({
+        active: { baseUrl: 'http://kong:8001', name: 'Kong CE' },
+        info: { version: '3.4.0', database: 'postgres' },
+      })
+
+      const wrapper = mount(LoadView, { global: { plugins: [testRouter()] } })
+      const card = wrapper.find('[data-testid="live-connected"]')
+
+      expect(wrapper.find('h2').text()).toBe('Live Kong connection')
+      expect(wrapper.text()).not.toContain('Browse this config below')
+      expect(card.find('[data-testid="live-badges"]').text()).toContain('Kong 3.4.0')
+      expect(card.find('[data-testid="live-badges"]').text()).toContain('postgres')
+      expect(card.find('[data-testid="live-badges"]').text()).toContain('Read & write')
+    })
+
+    it('says the connection is read-only when Kong has no database to write to', () => {
+      useConnectionStore().$patch({
+        active: { baseUrl: 'http://kong:8001' },
+        info: { version: '3.4.0', database: 'off' },
+      })
+
+      const wrapper = mount(LoadView, { global: { plugins: [testRouter()] } })
+
+      expect(wrapper.find('[data-testid="live-badges"]').text()).toContain('Read-only')
+    })
+
     it('starts with the source form collapsed when a live connection already exists', () => {
       useConnectionStore().$patch({
         active: { baseUrl: 'http://kong:8001' },
