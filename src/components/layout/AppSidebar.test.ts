@@ -40,14 +40,13 @@ describe('AppSidebar', () => {
     expect(wrapper.findAll('a').map((a) => a.text())).toEqual(['Overview'])
   })
 
-  it('links to the live dashboard, services, routes, plugins and consumers once connected', () => {
+  it('links to the live services, routes, consumers and plugins once connected', () => {
     useConnectionStore().$patch({ active: { baseUrl: 'http://kong:8001' }, info: { version: '3.4.0', database: 'postgres' } })
     const wrapper = mount(AppSidebar, { global: { plugins: [testRouter()] } })
 
     expect(wrapper.text()).toContain('Live')
     const live = wrapper.findAll('a').filter((a) => a.attributes('href')?.startsWith('/live'))
     expect(live.map((a) => [a.text(), a.attributes('href')])).toEqual([
-      ['Dashboard', '/live/dashboard'],
       ['Services', '/live/services'],
       ['Routes', '/live/routes'],
       ['Consumers', '/live/consumers'],
