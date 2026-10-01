@@ -66,8 +66,7 @@ describe('SavedConnectionsList', () => {
     expect(wrapper.emitted('connect')).toBeUndefined()
   })
 
-  it('shows each connection with its name, URL and created date', () => {
-    vi.spyOn(Date, 'now').mockReturnValue(1_700_000_000_000)
+  it('shows each connection with its name and URL, without a created date', () => {
     const store = useSavedConnectionsStore()
     store.upsert({ baseUrl: 'https://kong.internal:8444', name: 'Staging server' })
 
@@ -76,11 +75,11 @@ describe('SavedConnectionsList', () => {
     const row = wrapper.find('li')
     expect(row.find('strong').text()).toBe('Staging server')
     expect(row.text()).toContain('https://kong.internal:8444')
-    expect(row.text()).toContain(`Created on: ${new Date(1_700_000_000_000).toLocaleDateString()}`)
+    expect(row.text()).not.toContain('Created on')
     expect(row.find('[data-testid="connection-icon"]').attributes('style')).toBeUndefined()
   })
 
-  it('falls back to the host and a dash for older entries without those fields', () => {
+  it('falls back to the host for older entries without a name', () => {
     localStorage.setItem(
       'kong-manager:saved-connections',
       JSON.stringify([{ id: '1', baseUrl: 'http://localhost:8002' }]),
@@ -91,7 +90,7 @@ describe('SavedConnectionsList', () => {
 
     const row = wrapper.find('li')
     expect(row.find('strong').text()).toBe('localhost:8002')
-    expect(row.text()).toContain('Created on: -')
+    expect(row.text()).not.toContain('Created on')
   })
 
   it('shows no Auto badge, even for an older entry that still carries the flag', () => {

@@ -13,10 +13,6 @@ function select(conn: SavedConnection) {
 function displayName(conn: SavedConnection): string {
   return conn.name || conn.baseUrl.replace(/^https?:\/\//i, '')
 }
-
-function createdOn(conn: SavedConnection): string {
-  return conn.createdAt ? new Date(conn.createdAt).toLocaleDateString() : '-'
-}
 </script>
 
 <template>
@@ -27,13 +23,13 @@ function createdOn(conn: SavedConnection): string {
       <li
         v-for="conn in savedConnectionsStore.connections"
         :key="conn.id"
-        class="group flex cursor-pointer items-start gap-3 rounded-xl border border-border px-3 py-2.5 transition duration-150 hover:border-accent hover:bg-accent/5 hover:shadow-sm"
+        class="group flex cursor-pointer items-center gap-3 rounded-xl border border-border px-3 py-2.5 transition duration-150 hover:border-accent hover:bg-accent/5 hover:shadow-sm"
         title="Connect"
         @click="select(conn)"
       >
         <span
           data-testid="connection-icon"
-          class="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-accent/15 text-accent-secondary transition-colors duration-150 group-hover:bg-accent group-hover:text-accent-on"
+          class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-accent/15 text-accent-secondary transition-colors duration-150 group-hover:bg-accent group-hover:text-accent-on"
         >
           <AppIcon name="server" class="h-4 w-4" />
         </span>
@@ -50,7 +46,6 @@ function createdOn(conn: SavedConnection): string {
               <AppIcon name="user" class="h-3 w-3" />
               {{ conn.username }}
             </span>
-            <span>Created on: {{ createdOn(conn) }}</span>
           </p>
         </div>
         <button
