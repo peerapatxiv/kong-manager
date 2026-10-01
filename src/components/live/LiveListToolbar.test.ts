@@ -36,4 +36,10 @@ describe('LiveListToolbar', () => {
     })
     expect(wrapper.find('[data-testid="extra"]').exists()).toBe(true)
   })
+
+  it('leaves the New button out when the list cannot create anything', () => {
+    const wrapper = mount(LiveListToolbar, { props: { placeholder: 'Search…', search: '' } })
+    expect(wrapper.find('button').exists()).toBe(false)
+    expect(wrapper.find('input').exists()).toBe(true)
+  })
 })

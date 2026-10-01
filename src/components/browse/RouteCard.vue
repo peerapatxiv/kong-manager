@@ -8,10 +8,10 @@ import ProtocolPicker from '../shared/ProtocolPicker.vue'
 import MethodPicker from '../shared/MethodPicker.vue'
 import PluginEditor from '../shared/PluginEditor.vue'
 
-const props = defineProps<{ modelValue: KongRoute; serviceName: string }>()
+const props = defineProps<{ modelValue: KongRoute; serviceName: string; defaultExpanded?: boolean }>()
 const emit = defineEmits<{ 'update:modelValue': [value: KongRoute]; modified: [] }>()
 
-const expanded = ref(false)
+const expanded = ref(props.defaultExpanded ?? false)
 
 const summary = computed(() => {
   const parts: string[] = []

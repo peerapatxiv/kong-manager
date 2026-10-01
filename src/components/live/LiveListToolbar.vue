@@ -3,8 +3,8 @@ import SearchInput from '../shared/SearchInput.vue'
 
 defineProps<{
   placeholder: string
-  newTestid: string
-  canCreate: boolean
+  newTestid?: string
+  canCreate?: boolean
   search: string
 }>()
 const emit = defineEmits<{
@@ -19,7 +19,14 @@ const emit = defineEmits<{
       <div class="min-w-0 flex-1">
         <SearchInput :model-value="search" :placeholder="placeholder" @update:model-value="emit('update:search', $event)" />
       </div>
-      <button type="button" class="btn-primary" :data-testid="newTestid" :disabled="!canCreate" @click="emit('create')">
+      <button
+        v-if="newTestid"
+        type="button"
+        class="btn-primary"
+        :data-testid="newTestid"
+        :disabled="!canCreate"
+        @click="emit('create')"
+      >
         New
       </button>
     </div>
