@@ -25,7 +25,10 @@ withDefaults(defineProps<{ selected?: boolean; showCheck?: boolean; initial?: st
     >
       {{ initial }}
     </span>
-    <span class="min-w-0 flex-1 truncate font-mono"><slot /></span>
+    <div class="min-w-0 flex-1">
+      <span class="block truncate font-mono"><slot /></span>
+      <div v-if="$slots.sub" class="mt-0.5 font-sans text-[11px] font-normal text-ink-muted"><slot name="sub" /></div>
+    </div>
     <slot name="trail" />
     <AppIcon v-if="showCheck && selected" name="check" class="h-3.5 w-3.5 shrink-0 text-accent-secondary" />
   </li>

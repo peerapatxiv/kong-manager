@@ -5,6 +5,7 @@ import type { LiveEntity } from '../../composables/useLiveEntities'
 import { newCredentialForm, toCredentialPayload, validateCredential } from '../../lib/live/credentials'
 import type { CredentialForm, CredentialType } from '../../lib/live/credentials'
 import FieldError from './FieldError.vue'
+import AppIcon from '../shared/AppIcon.vue'
 import AppSelect from '../shared/AppSelect.vue'
 import LiveErrorBanner from './LiveErrorBanner.vue'
 import SecretField from '../shared/SecretField.vue'
@@ -104,7 +105,7 @@ onMounted(() => void load())
         v-for="item in items"
         :key="item.id"
         data-testid="cred-row"
-        class="flex items-center gap-3 rounded-lg border border-border px-3 py-2 text-sm"
+        class="flex items-center gap-3 rounded-xl border border-border bg-elevated/30 px-3 py-2.5 text-sm"
       >
         <div class="min-w-0 flex-1 space-y-0.5">
           <p v-for="key in type.summaryKeys" :key="key" class="truncate font-mono text-xs text-ink">
@@ -115,19 +116,21 @@ onMounted(() => void load())
           v-if="hasSecretSummary"
           type="button"
           data-testid="cred-reveal"
-          class="shrink-0 text-xs font-medium text-link underline hover:text-accent-hover"
+          class="btn-secondary btn-sm shrink-0"
           :aria-label="revealed.has(item.id) ? 'Hide credential' : 'Reveal credential'"
           @click="toggleReveal(item.id)"
         >
+          <AppIcon :name="revealed.has(item.id) ? 'eye-off' : 'eye'" class="h-3.5 w-3.5" />
           {{ revealed.has(item.id) ? 'Hide' : 'Reveal' }}
         </button>
         <button
           type="button"
           data-testid="cred-delete"
-          class="btn-danger-ghost shrink-0 !px-2 !py-1 text-xs"
+          class="btn-danger-outline btn-sm shrink-0"
           :disabled="disabled"
           @click="removeCredential(item.id)"
         >
+          <AppIcon name="trash" class="h-3.5 w-3.5" />
           Delete
         </button>
       </li>

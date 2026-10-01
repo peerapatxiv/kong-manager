@@ -107,15 +107,19 @@ describe('LiveRoutesView', () => {
     expect(calls).toHaveLength(0)
   })
 
-  it('lists routes by name only, without the service underneath', async () => {
+  it('lists each route by name with its methods and path, but not its service', async () => {
     connect()
     fakeKong()
 
     const wrapper = await mountView()
 
     expect(rows(wrapper)).toHaveLength(2)
-    expect(rows(wrapper)[0].text()).toBe('billing-route')
-    expect(rows(wrapper)[1].text()).toBe('reports-route')
+    expect(rows(wrapper)[0].text()).toContain('billing-route')
+    expect(rows(wrapper)[0].text()).toContain('/billing')
+    expect(rows(wrapper)[1].text()).toContain('reports-route')
+    expect(rows(wrapper)[1].text()).toContain('GET')
+    expect(rows(wrapper)[1].text()).toContain('/reports')
+    expect(rows(wrapper)[1].text()).not.toContain('reports.internal')
   })
 
   it('lists only one service\'s routes through service_routes when ?service= is given', async () => {

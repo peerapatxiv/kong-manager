@@ -41,4 +41,12 @@ describe('ListRow', () => {
     const wrapper = mount(ListRow, { slots: { default: 'x'.repeat(200) } })
     expect(wrapper.find('span.truncate').exists()).toBe(true)
   })
+
+  it('shows an optional second line under the label, and nothing when there is none', () => {
+    const plain = mount(ListRow, { slots: { default: 'alpha' } })
+    expect(plain.find('[data-testid="sub"]').exists()).toBe(false)
+    const withSub = mount(ListRow, { slots: { default: 'alpha', sub: '<i data-testid="sub">GET /a</i>' } })
+    expect(withSub.find('[data-testid="sub"]').text()).toBe('GET /a')
+    expect(withSub.find('span.truncate').text()).toBe('alpha')
+  })
 })

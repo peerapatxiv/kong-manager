@@ -10,6 +10,7 @@ import LiveGate from '../../components/live/LiveGate.vue'
 import LiveErrorBanner from '../../components/live/LiveErrorBanner.vue'
 import RouteForm from '../../components/live/RouteForm.vue'
 import AppSelect from '../../components/shared/AppSelect.vue'
+import { summarizeRoute } from '../../lib/live/routeSummary'
 import LiveWorkspace from '../../components/live/LiveWorkspace.vue'
 import LiveListToolbar from '../../components/live/LiveListToolbar.vue'
 import LiveActionBar from '../../components/live/LiveActionBar.vue'
@@ -66,6 +67,8 @@ function serviceNameOf(routeEntity: LiveEntity): string {
   if (!id) return ''
   return serviceOptions.value.find((option) => option.id === id)?.label ?? id
 }
+
+const summarize = (routeEntity: LiveEntity) => summarizeRoute(routeEntity)
 
 function label(routeEntity: LiveEntity): string {
   if (typeof routeEntity.name === 'string' && routeEntity.name) return routeEntity.name
@@ -230,6 +233,24 @@ watch(serviceFilter, (id) => {
             @click="select(routeEntity)"
           >
             {{ label(routeEntity) }}
+            <template #sub>
+              <span class="flex items-center gap-1.5">
+                <span
+                  v-for="method in summarize(routeEntity).methods"
+                  :key="method"
+                  class="shrink-0 rounded bg-elevated px-1 py-px font-mono text-[10px] font-semibold uppercase tracking-wide"
+                >
+                  {{ method }}
+                </span>
+                <span v-if="summarize(routeEntity).moreMethods > 0" class="shrink-0">
+                  +{{ summarize(routeEntity).moreMethods }}
+                </span>
+                <span class="min-w-0 truncate font-mono">{{ summarize(routeEntity).target }}</span>
+                <span v-if="summarize(routeEntity).moreTargets > 0" class="shrink-0">
+                  +{{ summarize(routeEntity).moreTargets }}
+                </span>
+              </span>
+            </template>
           </ListRow>
         </ul>
       </template>
