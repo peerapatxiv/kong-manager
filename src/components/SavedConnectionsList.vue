@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import AppIcon from './shared/AppIcon.vue'
 import { useSavedConnectionsStore } from '../stores/savedConnections'
 import type { SavedConnection } from '../lib/savedConnections'
 
@@ -34,11 +35,7 @@ function createdOn(conn: SavedConnection): string {
           data-testid="connection-icon"
           class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-accent/15 text-accent-secondary"
         >
-          <svg viewBox="0 0 20 20" fill="none" class="h-4 w-4">
-            <rect x="3" y="4" width="14" height="4.5" rx="1.2" stroke="currentColor" stroke-width="1.5" />
-            <rect x="3" y="11.5" width="14" height="4.5" rx="1.2" stroke="currentColor" stroke-width="1.5" />
-            <path d="M6 6.25h.01M6 13.75h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
-          </svg>
+          <AppIcon name="server" class="h-4 w-4" />
         </span>
         <div class="min-w-0 flex-1">
           <p class="flex items-center gap-1.5">
@@ -55,15 +52,7 @@ function createdOn(conn: SavedConnection): string {
           class="shrink-0 text-ink-muted hover:text-red-600 dark:hover:text-red-400"
           @click.stop="savedConnectionsStore.remove(conn.id)"
         >
-          <svg viewBox="0 0 20 20" fill="none" class="h-4 w-4">
-            <path
-              d="M4 6h12M8 6V4.5a1 1 0 011-1h2a1 1 0 011 1V6m2 0-.7 9.1a1.5 1.5 0 01-1.5 1.4H7.2a1.5 1.5 0 01-1.5-1.4L5 6"
-              stroke="currentColor"
-              stroke-width="1.5"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            />
-          </svg>
+          <AppIcon name="trash" class="h-4 w-4" />
         </button>
       </li>
     </ul>
@@ -73,11 +62,7 @@ function createdOn(conn: SavedConnection): string {
       class="flex flex-col items-center gap-1.5 rounded-lg border border-dashed border-border px-3 py-6 text-center"
     >
       <span class="flex h-9 w-9 items-center justify-center rounded-full bg-elevated text-ink-muted">
-        <svg viewBox="0 0 20 20" fill="none" class="h-4 w-4">
-          <rect x="3" y="4" width="14" height="4.5" rx="1.2" stroke="currentColor" stroke-width="1.5" />
-          <rect x="3" y="11.5" width="14" height="4.5" rx="1.2" stroke="currentColor" stroke-width="1.5" />
-          <path d="M6 6.25h.01M6 13.75h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
-        </svg>
+        <AppIcon name="server" class="h-4 w-4" />
       </span>
       <p class="text-sm font-medium text-ink">No connections are saved!</p>
       <p class="text-xs text-ink-muted">Connect once and it will be saved here.</p>

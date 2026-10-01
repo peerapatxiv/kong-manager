@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import AppIcon from '../shared/AppIcon.vue'
 import { ref, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { useConfigStore } from '../../stores/config'
@@ -44,9 +45,7 @@ const pageTitle = computed(() => {
           class="-ml-1 rounded-lg p-1.5 text-ink-muted hover:bg-elevated md:hidden"
           @click="mobileNavOpen = true"
         >
-          <svg viewBox="0 0 20 20" fill="none" class="h-5 w-5">
-            <path d="M3 5h14M3 10h14M3 15h14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
-          </svg>
+          <AppIcon name="menu" class="h-5 w-5" />
         </button>
         <h1 class="text-lg font-bold text-ink">{{ pageTitle }}</h1>
         <div class="ml-auto flex gap-2">

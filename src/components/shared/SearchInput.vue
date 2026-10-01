@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import AppIcon from './AppIcon.vue'
 import { ref, onMounted, onUnmounted } from 'vue'
 
 defineProps<{ modelValue: string; placeholder: string }>()
@@ -29,14 +30,7 @@ onUnmounted(() => document.removeEventListener('keydown', onGlobalKeydown))
 
 <template>
   <div class="relative">
-    <svg
-      class="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-muted"
-      viewBox="0 0 20 20"
-      fill="none"
-    >
-      <circle cx="9" cy="9" r="6" stroke="currentColor" stroke-width="1.5" />
-      <path d="M17 17l-3.5-3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
-    </svg>
+    <AppIcon name="search" class="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-muted" />
 
     <input
       ref="inputRef"
@@ -57,9 +51,7 @@ onUnmounted(() => document.removeEventListener('keydown', onGlobalKeydown))
       class="absolute right-2 top-1/2 -translate-y-1/2 rounded text-ink-muted hover:text-ink"
       @click="clear"
     >
-      <svg viewBox="0 0 20 20" fill="none" class="h-4 w-4">
-        <path d="M5 5l10 10M15 5L5 15" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
-      </svg>
+      <AppIcon name="x" class="h-4 w-4" />
     </button>
     <kbd
       v-else-if="!focused"

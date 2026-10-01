@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import AppIcon from '../shared/AppIcon.vue'
+import type { IconName } from '../shared/AppIcon.vue'
 import { ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import { useConfigStore } from '../../stores/config'
@@ -34,27 +36,10 @@ async function onChangeFileSelected(event: Event) {
   }
 }
 
-// Same 20x20 stroke icons as the Services, Routes and Consumers tiles on the Browse page.
-const liveLinks = [
-  {
-    to: '/live/services',
-    label: 'Services',
-    paths: [
-      'M4 5h12a1 1 0 011 1v1.2a1 1 0 01-1 1H4a1 1 0 01-1-1V6a1 1 0 011-1z',
-      'M4 10h12a1 1 0 011 1v1.2a1 1 0 01-1 1H4a1 1 0 01-1-1V11a1 1 0 011-1z',
-      'M6 15.5h.01M9 15.5h5',
-    ],
-  },
-  {
-    to: '/live/routes',
-    label: 'Routes',
-    paths: ['M5 15a2 2 0 100-.01M15 5a2 2 0 100-.01', 'M7 15h4.5a3 3 0 003-3V9a3 3 0 00-3-3H10'],
-  },
-  {
-    to: '/live/consumers',
-    label: 'Consumers',
-    paths: ['M10 9a3 3 0 100-6 3 3 0 000 6z', 'M4 17a6 6 0 0112 0'],
-  },
+const liveLinks: { to: string; label: string; icon: IconName }[] = [
+  { to: '/live/services', label: 'Services', icon: 'server' },
+  { to: '/live/routes', label: 'Routes', icon: 'route' },
+  { to: '/live/consumers', label: 'Consumers', icon: 'user' },
 ]
 
 const linkBase =
@@ -77,55 +62,28 @@ const linkDisabled =
 
     <nav class="flex flex-col gap-0.5 px-3">
       <RouterLink to="/" :class="linkBase" :active-class="linkActive" @click="emit('navigate')">
-        <svg viewBox="0 0 20 20" fill="none" class="h-4 w-4 shrink-0">
-          <path
-            d="M10 3l7 5.5V17a1 1 0 01-1 1h-4v-5H8v5H4a1 1 0 01-1-1V8.5L10 3z"
-            stroke="currentColor"
-            stroke-width="1.5"
-            stroke-linejoin="round"
-          />
-        </svg>
+        <AppIcon name="home" class="h-4 w-4 shrink-0" />
         Load
       </RouterLink>
 
       <RouterLink v-if="configStore.isLoaded" to="/browse" :class="linkBase" :active-class="linkActive" @click="emit('navigate')">
-        <svg viewBox="0 0 20 20" fill="none" class="h-4 w-4 shrink-0">
-          <rect x="3" y="4" width="14" height="3.2" rx="1" stroke="currentColor" stroke-width="1.5" />
-          <rect x="3" y="9" width="14" height="3.2" rx="1" stroke="currentColor" stroke-width="1.5" />
-          <rect x="3" y="14" width="8" height="3.2" rx="1" stroke="currentColor" stroke-width="1.5" />
-        </svg>
+        <AppIcon name="list" class="h-4 w-4 shrink-0" />
         Browse
       </RouterLink>
       <span v-else :class="linkDisabled" title="Load a config first">
-        <svg viewBox="0 0 20 20" fill="none" class="h-4 w-4 shrink-0">
-          <rect x="3" y="4" width="14" height="3.2" rx="1" stroke="currentColor" stroke-width="1.5" />
-          <rect x="3" y="9" width="14" height="3.2" rx="1" stroke="currentColor" stroke-width="1.5" />
-          <rect x="3" y="14" width="8" height="3.2" rx="1" stroke="currentColor" stroke-width="1.5" />
-        </svg>
+        <AppIcon name="list" class="h-4 w-4 shrink-0" />
         Browse
-        <svg viewBox="0 0 20 20" fill="none" class="ml-auto h-3.5 w-3.5 shrink-0">
-          <rect x="5" y="9" width="10" height="7" rx="1.5" stroke="currentColor" stroke-width="1.5" />
-          <path d="M7.5 9V6.5a2.5 2.5 0 015 0V9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
-        </svg>
+        <AppIcon name="lock" class="ml-auto h-3.5 w-3.5 shrink-0" />
       </span>
 
       <RouterLink v-if="configStore.isLoaded" to="/compare" :class="linkBase" :active-class="linkActive" @click="emit('navigate')">
-        <svg viewBox="0 0 20 20" fill="none" class="h-4 w-4 shrink-0">
-          <path d="M7 3v14M7 3L4 6M7 3l3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
-          <path d="M13 17V3M13 17l3-3M13 17l-3-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
-        </svg>
+        <AppIcon name="compare" class="h-4 w-4 shrink-0" />
         Compare
       </RouterLink>
       <span v-else :class="linkDisabled" title="Load a config first">
-        <svg viewBox="0 0 20 20" fill="none" class="h-4 w-4 shrink-0">
-          <path d="M7 3v14M7 3L4 6M7 3l3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
-          <path d="M13 17V3M13 17l3-3M13 17l-3-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
-        </svg>
+        <AppIcon name="compare" class="h-4 w-4 shrink-0" />
         Compare
-        <svg viewBox="0 0 20 20" fill="none" class="ml-auto h-3.5 w-3.5 shrink-0">
-          <rect x="5" y="9" width="10" height="7" rx="1.5" stroke="currentColor" stroke-width="1.5" />
-          <path d="M7.5 9V6.5a2.5 2.5 0 015 0V9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
-        </svg>
+        <AppIcon name="lock" class="ml-auto h-3.5 w-3.5 shrink-0" />
       </span>
 
       <template v-if="connectionStore.isConnected">
@@ -138,17 +96,7 @@ const linkDisabled =
           :active-class="linkActive"
           @click="emit('navigate')"
         >
-          <svg viewBox="0 0 20 20" fill="none" class="h-4 w-4 shrink-0">
-            <path
-              v-for="d in link.paths"
-              :key="d"
-              :d="d"
-              stroke="currentColor"
-              stroke-width="1.5"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            />
-          </svg>
+          <AppIcon :name="link.icon" class="h-4 w-4 shrink-0" />
           {{ link.label }}
         </RouterLink>
       </template>
@@ -164,14 +112,7 @@ const linkDisabled =
           @click="toggleTheme"
         >
           <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-elevated text-ink-muted">
-            <svg viewBox="0 0 20 20" fill="none" class="h-4 w-4">
-              <path
-                d="M17 11.2A7 7 0 018.8 3 7 7 0 1017 11.2z"
-                stroke="currentColor"
-                stroke-width="1.5"
-                stroke-linejoin="round"
-              />
-            </svg>
+            <AppIcon name="moon" class="h-4 w-4" />
           </span>
           <span class="flex-1 text-left font-medium">Dark mode</span>
           <span

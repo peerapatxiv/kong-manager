@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import AppIcon from './AppIcon.vue'
 import { ref } from 'vue'
 import { inferValueType, isCodeStringArray } from '../../lib/valueType'
 import { isSecretField } from '../../lib/secretFields'
@@ -152,9 +153,7 @@ function syncCodeScroll(event: Event) {
               class="absolute right-1.5 top-1.5 rounded p-1 text-ink-muted/60 opacity-0 transition-opacity duration-150 hover:bg-red-50 hover:text-red-600 group-hover:opacity-100 dark:hover:bg-red-950/50 dark:hover:text-red-400"
               @click="removeCodeArrayItem(String(key), value as string[], i)"
             >
-              <svg viewBox="0 0 16 16" fill="none" class="h-3.5 w-3.5">
-                <path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
-              </svg>
+              <AppIcon name="x" class="h-3.5 w-3.5" />
             </button>
           </div>
           <button
@@ -162,9 +161,7 @@ function syncCodeScroll(event: Event) {
             class="inline-flex items-center gap-1 rounded-lg border border-dashed border-border px-2.5 py-1.5 text-xs font-medium text-ink-muted transition-colors duration-150 hover:border-accent hover:bg-accent/5 hover:text-accent-secondary"
             @click="addCodeArrayItem(String(key), value as string[])"
           >
-            <svg viewBox="0 0 16 16" fill="none" class="h-3 w-3">
-              <path d="M8 3.5v9M3.5 8h9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
-            </svg>
+            <AppIcon name="plus" class="h-3 w-3" />
             Add function
           </button>
         </div>
@@ -202,9 +199,7 @@ function syncCodeScroll(event: Event) {
         class="mt-1 shrink-0 rounded p-1 text-ink-muted/60 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/50 dark:hover:text-red-400"
         @click="removeField(String(key))"
       >
-        <svg viewBox="0 0 16 16" fill="none" class="h-3.5 w-3.5">
-          <path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
-        </svg>
+        <AppIcon name="x" class="h-3.5 w-3.5" />
       </button>
     </div>
 
@@ -221,9 +216,7 @@ function syncCodeScroll(event: Event) {
         class="inline-flex items-center gap-1 rounded-lg border border-dashed border-border px-2.5 py-1.5 text-xs font-medium text-ink-muted transition-colors duration-150 hover:border-accent hover:bg-accent/5 hover:text-accent-secondary"
         @click="addField"
       >
-        <svg viewBox="0 0 16 16" fill="none" class="h-3 w-3">
-          <path d="M8 3.5v9M3.5 8h9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
-        </svg>
+        <AppIcon name="plus" class="h-3 w-3" />
         Add key
       </button>
     </div>

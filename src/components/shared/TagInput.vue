@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import AppIcon from './AppIcon.vue'
 import { ref } from 'vue'
 
 const props = withDefaults(
@@ -72,9 +73,7 @@ function editAt(index: number) {
     <div
       class="flex min-w-[7rem] flex-1 items-center gap-1 rounded-md border border-dashed border-border px-2 py-0.5 transition-colors duration-150 focus-within:border-accent focus-within:bg-accent/5 hover:border-accent/40"
     >
-      <svg viewBox="0 0 16 16" fill="none" class="h-3 w-3 shrink-0 text-ink-muted">
-        <path d="M8 3.5v9M3.5 8h9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
-      </svg>
+      <AppIcon name="plus" class="h-3 w-3 shrink-0 text-ink-muted" />
       <input
         ref="inputRef"
         v-model="draft"

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import AppIcon from './shared/AppIcon.vue'
 import { ref } from 'vue'
 import { readTextFile } from '../lib/readTextFile'
 
@@ -41,15 +42,7 @@ function onInputChange(event: Event) {
     <div
       class="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-accent/15 text-accent-secondary"
     >
-      <svg viewBox="0 0 20 20" fill="none" class="h-5 w-5">
-        <path
-          d="M10 13V4m0 0L6.5 7.5M10 4l3.5 3.5M4 14v1a1 1 0 001 1h10a1 1 0 001-1v-1"
-          stroke="currentColor"
-          stroke-width="1.5"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        />
-      </svg>
+      <AppIcon name="upload" class="h-5 w-5" />
     </div>
     <p class="font-medium text-ink">{{ label }}</p>
     <p class="mt-1 text-sm text-ink-muted">Drag & drop a YAML file, or click to choose one</p>

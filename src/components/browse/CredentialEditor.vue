@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import AppIcon from '../shared/AppIcon.vue'
 import { isSecretField } from '../../lib/secretFields'
 import SecretField from '../shared/SecretField.vue'
 import TagInput from '../shared/TagInput.vue'
@@ -48,9 +49,7 @@ function removeEntry(index: number) {
           class="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-xs text-ink-muted hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/50 dark:hover:text-red-400"
           @click="removeEntry(index)"
         >
-          <svg viewBox="0 0 16 16" fill="none" class="h-3.5 w-3.5">
-            <path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
-          </svg>
+          <AppIcon name="x" class="h-3.5 w-3.5" />
           Remove {{ listKey.replace(/_credentials$/, '') }} entry
         </button>
       </div>
