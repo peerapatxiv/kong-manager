@@ -37,6 +37,7 @@ const ICONS = {
   plus: ['M10 4.4v11.2M4.4 10h11.2'],
   check: ['M4.4 10.6l3.7 3.7 7.5-8.7'],
   'chevron-right': ['M7.5 5l5 5-5 5'],
+  'chevron-down': ['M5 7.5l5 5 5-5'],
   menu: ['M3 5h14M3 10h14M3 15h14'],
   moon: ['M17 11.2A7 7 0 018.8 3 7 7 0 1017 11.2z'],
   lock: [
