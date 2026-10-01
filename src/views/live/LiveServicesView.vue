@@ -226,7 +226,7 @@ watch(
       <template #detail>
         <div class="h-full space-y-4">
           <LiveErrorBanner :messages="validationErrors" :error="error" />
-          <div v-if="form" class="max-w-3xl space-y-4">
+          <div v-if="form" class="space-y-4">
             <div class="card space-y-5 p-5">
               <DetailHeader
                 :initial="(form.name || '?').charAt(0)"
