@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import AppIcon from '../shared/AppIcon.vue'
 import { ref, computed, watch } from 'vue'
 import type { KongConsumer } from '../../types/kong'
 import { isCredentialListKey } from '../../lib/secretFields'
@@ -71,9 +72,7 @@ const credentialListKeys = computed(() =>
             v-if="justSaved"
             class="mt-1 inline-flex items-center gap-1 rounded-full bg-accent/15 px-2 py-0.5 text-[11px] font-medium text-accent-secondary dark:bg-accent/20 dark:text-accent"
           >
-            <svg viewBox="0 0 16 16" fill="none" class="h-3 w-3">
-              <path d="M3.5 8.5l3 3 6-7" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" />
-            </svg>
+            <AppIcon name="check" class="h-3 w-3" />
             Saved
           </span>
           <span v-else-if="isDirty" class="mt-1 inline-flex items-center gap-1 text-[11px] font-medium text-ink-muted">

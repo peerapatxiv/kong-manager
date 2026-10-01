@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import AppIcon from '../shared/AppIcon.vue'
 import { ref, computed } from 'vue'
 import type { KongRoute } from '../../types/kong'
 import ValueListEditor from '../shared/ValueListEditor.vue'
@@ -43,14 +44,7 @@ function onPluginUpdate(index: number, updated: NonNullable<KongRoute['plugins']
       :aria-expanded="expanded"
       @click="expanded = !expanded"
     >
-      <svg
-        class="h-3.5 w-3.5 shrink-0 text-ink-muted transition-transform duration-150"
-        :class="expanded ? 'rotate-90' : ''"
-        viewBox="0 0 16 16"
-        fill="none"
-      >
-        <path d="M6 4l4 4-4 4" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" />
-      </svg>
+      <AppIcon name="chevron-right" class="h-3.5 w-3.5 shrink-0 text-ink-muted transition-transform duration-150" :class="expanded ? 'rotate-90' : ''" />
       <div class="min-w-0 flex-1">
         <p class="truncate font-mono text-sm text-ink" :title="modelValue.name ?? '(unnamed route)'">
           {{ modelValue.name ?? '(unnamed route)' }}

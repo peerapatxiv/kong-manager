@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import AppIcon from '../components/shared/AppIcon.vue'
 import { ref, computed } from 'vue'
 import { useConfigStore } from '../stores/config'
 import { diffKongConfigs, hasDiff } from '../lib/diff'
@@ -59,15 +60,7 @@ const anyDiff = computed(() => {
         File B: <span class="font-mono text-ink">{{ configStore.compareTarget.fileName }}</span>
       </p>
       <p v-if="sameFileName" class="flex items-center gap-1.5 text-amber-700">
-        <svg viewBox="0 0 16 16" fill="none" class="h-3.5 w-3.5 shrink-0">
-          <path
-            d="M8 5.5v3.25M8 11.25h.01M2.5 13.5h11a1 1 0 00.87-1.5l-5.5-9.5a1 1 0 00-1.74 0l-5.5 9.5a1 1 0 00.87 1.5z"
-            stroke="currentColor"
-            stroke-width="1.3"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          />
-        </svg>
+        <AppIcon name="warning" class="h-3.5 w-3.5 shrink-0" />
         Both files are named "{{ configStore.compareTarget?.fileName }}" — make sure File B is the one you meant
         to compare against.
       </p>
@@ -84,9 +77,7 @@ const anyDiff = computed(() => {
 
       <div v-if="!anyDiff" class="card flex items-center gap-3 p-5">
         <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent/15 text-accent-secondary">
-          <svg viewBox="0 0 16 16" fill="none" class="h-4 w-4">
-            <path d="M3.5 8.5l3 3 6-7" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" />
-          </svg>
+          <AppIcon name="check" class="h-4 w-4" />
         </span>
         <div>
           <p class="font-bold text-ink">No differences found</p>

@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import AppIcon from '../components/shared/AppIcon.vue'
+import EmptyState from '../components/shared/EmptyState.vue'
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useConfigStore } from '../stores/config'
 import Sidebar from '../components/layout/Sidebar.vue'
@@ -188,41 +190,22 @@ function resetPanelWidth() {
       <div class="grid grid-cols-2 gap-2 sm:grid-cols-4">
         <StatTile compact label="Services" :value="configStore.summary.services">
           <template #icon>
-            <svg viewBox="0 0 20 20" fill="none" class="h-3.5 w-3.5">
-              <rect x="3" y="4" width="14" height="3.2" rx="1" stroke="currentColor" stroke-width="1.5" />
-              <rect x="3" y="9" width="14" height="3.2" rx="1" stroke="currentColor" stroke-width="1.5" />
-              <rect x="3" y="14" width="8" height="3.2" rx="1" stroke="currentColor" stroke-width="1.5" />
-            </svg>
+            <AppIcon name="list" class="h-3.5 w-3.5" />
           </template>
         </StatTile>
         <StatTile compact label="Routes" :value="configStore.summary.routes">
           <template #icon>
-            <svg viewBox="0 0 20 20" fill="none" class="h-3.5 w-3.5">
-              <circle cx="4.5" cy="15" r="1.6" stroke="currentColor" stroke-width="1.4" />
-              <circle cx="15.5" cy="5" r="1.6" stroke="currentColor" stroke-width="1.4" />
-              <path d="M5.7 13.8L14.3 6.2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-dasharray="0.2 2.8" />
-            </svg>
+            <AppIcon name="route" class="h-3.5 w-3.5" />
           </template>
         </StatTile>
         <StatTile compact label="Consumers" :value="configStore.summary.consumers">
           <template #icon>
-            <svg viewBox="0 0 20 20" fill="none" class="h-3.5 w-3.5">
-              <circle cx="10" cy="7" r="3" stroke="currentColor" stroke-width="1.5" />
-              <path d="M3.5 17c0-3.3 3-6 6.5-6s6.5 2.7 6.5 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
-            </svg>
+            <AppIcon name="user" class="h-3.5 w-3.5" />
           </template>
         </StatTile>
         <StatTile compact label="Global plugins" :value="configStore.summary.globalPlugins">
           <template #icon>
-            <svg viewBox="0 0 20 20" fill="none" class="h-3.5 w-3.5">
-              <path
-                d="M7 3v3M13 3v3M5 7h10v3a5 5 0 01-5 5 5 5 0 01-5-5V7zM10 15v3"
-                stroke="currentColor"
-                stroke-width="1.5"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              />
-            </svg>
+            <AppIcon name="plug" class="h-3.5 w-3.5" />
           </template>
         </StatTile>
       </div>
@@ -274,12 +257,7 @@ function resetPanelWidth() {
             @update:model-value="onServiceUpdate"
             @modified="onServiceModified"
           />
-          <div v-else class="flex h-full min-h-[16rem] flex-col items-center justify-center gap-2 text-center">
-            <svg viewBox="0 0 24 24" fill="none" class="h-8 w-8 text-ink-muted/40">
-              <path d="M4 6h16M4 12h16M4 18h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
-            </svg>
-            <p class="text-sm text-ink-muted">Select a service from the list to view and edit it.</p>
-          </div>
+          <EmptyState v-else icon="list" title="Select a service from the list to view and edit it." />
         </div>
 
         <div v-else-if="activeTab === 'consumers'" class="flex-1">
@@ -289,18 +267,7 @@ function resetPanelWidth() {
             @update:model-value="onConsumerUpdate"
             @modified="onConsumerModified"
           />
-          <div v-else class="flex h-full min-h-[16rem] flex-col items-center justify-center gap-2 text-center">
-            <svg viewBox="0 0 24 24" fill="none" class="h-8 w-8 text-ink-muted/40">
-              <path
-                d="M12 12a4 4 0 100-8 4 4 0 000 8zM4 20c0-3.3 3.6-6 8-6s8 2.7 8 6"
-                stroke="currentColor"
-                stroke-width="1.5"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              />
-            </svg>
-            <p class="text-sm text-ink-muted">Select a consumer from the list to view and edit it.</p>
-          </div>
+          <EmptyState v-else icon="user" title="Select a consumer from the list to view and edit it." />
         </div>
 
         <div v-else class="max-w-4xl flex-1">
@@ -316,9 +283,7 @@ function resetPanelWidth() {
                   v-if="pluginJustSaved"
                   class="inline-flex items-center gap-1 rounded-full bg-accent/15 px-2 py-0.5 text-[11px] font-medium text-accent-secondary dark:bg-accent/20 dark:text-accent"
                 >
-                  <svg viewBox="0 0 16 16" fill="none" class="h-3 w-3">
-                    <path d="M3.5 8.5l3 3 6-7" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" />
-                  </svg>
+                  <AppIcon name="check" class="h-3 w-3" />
                   Saved
                 </span>
                 <span v-else-if="pluginDirty" class="inline-flex items-center gap-1 text-[11px] font-medium text-ink-muted">
@@ -334,18 +299,7 @@ function resetPanelWidth() {
             </div>
             <PluginEditor :model-value="pluginDraft" @update:model-value="onPluginDraftUpdate" />
           </div>
-          <div v-else class="flex h-full min-h-[16rem] flex-col items-center justify-center gap-2 text-center">
-            <svg viewBox="0 0 24 24" fill="none" class="h-8 w-8 text-ink-muted/40">
-              <path
-                d="M7 3v3M12 3v3M5 7h9v3a4.5 4.5 0 01-4.5 4.5A4.5 4.5 0 015 10V7zM9.5 14.5V19"
-                stroke="currentColor"
-                stroke-width="1.5"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              />
-            </svg>
-            <p class="text-sm text-ink-muted">Select a plugin from the list to view and edit it.</p>
-          </div>
+          <EmptyState v-else icon="plug" title="Select a plugin from the list to view and edit it." />
         </div>
       </div>
     </div>
