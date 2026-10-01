@@ -6,6 +6,7 @@ import { mount } from '@vue/test-utils'
 import FileConsumersView from './FileConsumersView.vue'
 import ConsumerDetail from '../../components/browse/ConsumerDetail.vue'
 import { useConfigStore } from '../../stores/config'
+import { usePageMetaStore } from '../../stores/pageMeta'
 import { SAMPLE } from './sample'
 
 const make = () =>
@@ -73,6 +74,22 @@ describe('FileConsumersView', () => {
 
       expect(useConfigStore().isModified('consumer:alice-renamed')).toBe(true)
       expect(wrapper.text()).not.toContain('Select a consumer from the list')
+    })
+
+    it('reports how many there are to the page header, whatever the search shows', async () => {
+      const wrapper = make()
+      expect(usePageMetaStore().count).toBe(2)
+      expect(usePageMetaStore().approximate).toBe(false)
+
+      await wrapper.find('input[placeholder^="Search"]').setValue('zzz-no-match')
+      expect(rows(wrapper)).toHaveLength(0)
+      expect(usePageMetaStore().count).toBe(2)
+    })
+
+    it('clears the header count when the page is left', () => {
+      const wrapper = make()
+      wrapper.unmount()
+      expect(usePageMetaStore().count).toBeNull()
     })
   })
 })

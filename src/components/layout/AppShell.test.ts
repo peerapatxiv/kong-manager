@@ -5,6 +5,7 @@ import { createRouter, createMemoryHistory } from 'vue-router'
 import { mount } from '@vue/test-utils'
 import AppShell from './AppShell.vue'
 import { useConfigStore } from '../../stores/config'
+import { usePageMetaStore } from '../../stores/pageMeta'
 
 function testRouter() {
   return createRouter({
@@ -64,5 +65,39 @@ describe('AppShell', () => {
     await router.isReady()
     const wrapper = mount(AppShell, { global: { plugins: [router] }, slots: { default: '<div />' } })
     expect(wrapper.find('h1').text()).toBe(title)
+  })
+
+  describe('page count', () => {
+    const mountShell = async () => {
+      const router = testRouter()
+      router.push('/live/plugins')
+      await router.isReady()
+      return mount(AppShell, { global: { plugins: [router] }, slots: { default: '<div />' } })
+    }
+
+    it('shows a small number next to the page title when the page has a count', async () => {
+      usePageMetaStore().set(159)
+      const wrapper = await mountShell()
+      expect(wrapper.find('h1').text()).toBe('Live plugins')
+      expect(wrapper.find('[data-testid="page-count"]').text()).toBe('159')
+    })
+
+    it('adds a plus when only part of the list has loaded', async () => {
+      usePageMetaStore().set(100, true)
+      expect((await mountShell()).find('[data-testid="page-count"]').text()).toBe('100+')
+    })
+
+    it('shows nothing when there is no count, and zero as a number', async () => {
+      expect((await mountShell()).find('[data-testid="page-count"]').exists()).toBe(false)
+      usePageMetaStore().set(0)
+      expect((await mountShell()).find('[data-testid="page-count"]').text()).toBe('0')
+    })
+
+    it('updates when the count changes', async () => {
+      const wrapper = await mountShell()
+      usePageMetaStore().set(3)
+      await wrapper.vm.$nextTick()
+      expect(wrapper.find('[data-testid="page-count"]').text()).toBe('3')
+    })
   })
 })

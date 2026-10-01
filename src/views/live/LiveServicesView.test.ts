@@ -5,6 +5,7 @@ import { createRouter, createMemoryHistory } from 'vue-router'
 import { flushPromises, mount } from '@vue/test-utils'
 import LiveServicesView from './LiveServicesView.vue'
 import { useConnectionStore } from '../../stores/connection'
+import { usePageMetaStore } from '../../stores/pageMeta'
 
 type Call = { method: string; url: string; body?: Record<string, unknown> }
 type Reply = { ok: boolean; status: number; json?: () => Promise<unknown>; text: () => Promise<string> }
@@ -317,5 +318,25 @@ describe('LiveServicesView', () => {
     expect(heights()).toHaveLength(0)
     await wrapper.find('[data-testid="service-row"]').trigger('click')
     expect(heights()).toHaveLength(0)
+  })
+
+  it('reports how many it lists to the page header', async () => {
+    connect()
+    fakeKong(SERVICES)
+    const wrapper = await mountView()
+
+    const meta = usePageMetaStore()
+    expect(meta.count).toBe(wrapper.findAll('[data-testid="service-row"]').length)
+    expect(meta.count).toBeGreaterThan(0)
+    expect(meta.approximate).toBe(false)
+  })
+
+  it('clears the header count when the page is left', async () => {
+    connect()
+    fakeKong(SERVICES)
+    const wrapper = await mountView()
+    wrapper.unmount()
+
+    expect(usePageMetaStore().count).toBeNull()
   })
 })

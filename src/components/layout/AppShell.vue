@@ -3,11 +3,13 @@ import AppIcon from '../shared/AppIcon.vue'
 import { ref, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { useConfigStore } from '../../stores/config'
+import { usePageMetaStore } from '../../stores/pageMeta'
 import AppSidebar from './AppSidebar.vue'
 import ExportModal from '../ExportModal.vue'
 
 const configStore = useConfigStore()
 const route = useRoute()
+const pageMeta = usePageMetaStore()
 const exportModalOpen = ref(false)
 const mobileNavOpen = ref(false)
 
@@ -50,6 +52,13 @@ const pageTitle = computed(() => {
           <AppIcon name="menu" class="h-5 w-5" />
         </button>
         <h1 class="text-lg font-bold text-ink">{{ pageTitle }}</h1>
+        <span
+          v-if="pageMeta.count !== null"
+          data-testid="page-count"
+          class="rounded-full bg-elevated px-2 py-0.5 text-xs font-semibold tabular-nums text-ink-muted"
+        >
+          {{ pageMeta.count }}{{ pageMeta.approximate ? '+' : '' }}
+        </span>
         <div class="ml-auto flex gap-2">
           <button v-if="configStore.isLoaded" type="button" class="btn-primary" @click="exportModalOpen = true">
             Generate new config

@@ -3,6 +3,7 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { onBeforeRouteLeave } from 'vue-router'
 import { useConnectionStore } from '../../stores/connection'
 import { useLiveEntities } from '../../composables/useLiveEntities'
+import { usePageCount } from '../../composables/usePageCount'
 import type { LiveEntity } from '../../composables/useLiveEntities'
 import { fromEntity, newPluginForm, toPayload, validatePlugin } from '../../lib/live/pluginForm'
 import type { PluginForm as PluginFormModel } from '../../lib/live/pluginForm'
@@ -20,6 +21,7 @@ const connection = useConnectionStore()
 const {
   items,
   next,
+  total,
   loading,
   error,
   load,
@@ -27,7 +29,7 @@ const {
   create: createEntity,
   save: saveEntity,
   remove: removeEntity,
-} = useLiveEntities<LiveEntity>('plugins')
+} = useLiveEntities<LiveEntity>('plugins', { withTotal: true })
 
 const search = ref('')
 const selectedId = ref<string | null>(null)
@@ -90,6 +92,9 @@ const filtered = computed(() => {
     return haystack.includes(query)
   })
 })
+
+// The page title shows how many there are: exact once counted, otherwise what has loaded so far.
+usePageCount(() => ({ count: total.value ?? items.value.length, approximate: total.value === null && next.value !== null }))
 
 const fieldErrors = computed(() =>
   Object.fromEntries(

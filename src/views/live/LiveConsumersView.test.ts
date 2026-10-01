@@ -5,6 +5,7 @@ import { createRouter, createMemoryHistory } from 'vue-router'
 import { flushPromises, mount } from '@vue/test-utils'
 import LiveConsumersView from './LiveConsumersView.vue'
 import { useConnectionStore } from '../../stores/connection'
+import { usePageMetaStore } from '../../stores/pageMeta'
 
 type Call = { method: string; url: string; body?: Record<string, unknown> }
 type Reply = { ok: boolean; status: number; json?: () => Promise<unknown>; text: () => Promise<string> }
@@ -427,5 +428,25 @@ describe('credentials panel', () => {
     expect(heights()).toHaveLength(0)
     await wrapper.find('[data-testid="consumer-row"]').trigger('click')
     expect(heights()).toHaveLength(0)
+  })
+
+  it('reports how many it lists to the page header', async () => {
+    connect()
+    fakeKong()
+    const wrapper = await mountView()
+
+    const meta = usePageMetaStore()
+    expect(meta.count).toBe(wrapper.findAll('[data-testid="consumer-row"]').length)
+    expect(meta.count).toBeGreaterThan(0)
+    expect(meta.approximate).toBe(false)
+  })
+
+  it('clears the header count when the page is left', async () => {
+    connect()
+    fakeKong()
+    const wrapper = await mountView()
+    wrapper.unmount()
+
+    expect(usePageMetaStore().count).toBeNull()
   })
 })

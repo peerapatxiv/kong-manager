@@ -105,6 +105,100 @@ describe('useLiveEntities', () => {
     expect(live.items.value.map((i) => i.id)).toEqual(['1', '2'])
   })
 
+  describe('total', () => {
+    it('is the number loaded when the first page is also the last', async () => {
+      connect()
+      vi.stubGlobal('fetch', vi.fn().mockResolvedValue(json({ data: [{ id: '1' }, { id: '2' }] })))
+      const live = useLiveEntities('services', { withTotal: true })
+
+      await live.load()
+
+      expect(live.total.value).toBe(2)
+    })
+
+    it('counts the pages that were not loaded, in big steps, without keeping their items', async () => {
+      connect()
+      const f = vi
+        .fn()
+        .mockResolvedValueOnce(json({ data: [{ id: '1' }, { id: '2' }], offset: 'o1' }))
+        .mockResolvedValueOnce(json({ data: [{ id: '3' }, { id: '4' }, { id: '5' }], offset: 'o2' }))
+        .mockResolvedValueOnce(json({ data: [{ id: '6' }] }))
+      vi.stubGlobal('fetch', f)
+      const live = useLiveEntities('services', { withTotal: true })
+
+      await live.load()
+      await vi.waitFor(() => expect(live.total.value).toBe(6))
+
+      expect(f.mock.calls[1][0]).toBe('http://kong:8001/services?size=1000&offset=o1')
+      expect(f.mock.calls[2][0]).toBe('http://kong:8001/services?size=1000&offset=o2')
+      expect(live.items.value).toHaveLength(2)
+      expect(live.next.value).toBe('o1')
+    })
+
+    it('stays unknown, and costs no extra request, unless asked for', async () => {
+      connect()
+      const f = vi.fn().mockResolvedValue(json({ data: [{ id: '1' }], offset: 'o1' }))
+      vi.stubGlobal('fetch', f)
+      const live = useLiveEntities('services')
+
+      await live.load()
+
+      expect(live.total.value).toBeNull()
+      expect(f).toHaveBeenCalledTimes(1)
+    })
+
+    it('stays unknown, quietly, when counting the rest fails', async () => {
+      connect()
+      const f = vi
+        .fn()
+        .mockResolvedValueOnce(json({ data: [{ id: '1' }], offset: 'o1' }))
+        .mockResolvedValueOnce(json({ message: 'boom' }, 500))
+      vi.stubGlobal('fetch', f)
+      const live = useLiveEntities('services', { withTotal: true })
+
+      await live.load()
+      await vi.waitFor(() => expect(f).toHaveBeenCalledTimes(2))
+
+      expect(live.total.value).toBeNull()
+      expect(live.error.value).toBeNull()
+    })
+
+    it('starts over when the list is loaded again, ignoring a count that was still running', async () => {
+      connect()
+      const slow = deferred<ReturnType<typeof json>>()
+      const f = vi
+        .fn()
+        .mockResolvedValueOnce(json({ data: [{ id: '1' }], offset: 'o1' }))
+        .mockReturnValueOnce(slow.promise)
+        .mockResolvedValueOnce(json({ data: [{ id: 'a' }, { id: 'b' }] }))
+      vi.stubGlobal('fetch', f)
+      const live = useLiveEntities('services', { withTotal: true })
+
+      await live.load()
+      await live.load()
+      slow.resolve(json({ data: [{ id: 'x' }, { id: 'y' }, { id: 'z' }] }))
+      await Promise.resolve()
+      await vi.waitFor(() => expect(live.total.value).toBe(2))
+    })
+
+    it('goes up when something is created and down when something is deleted', async () => {
+      connect()
+      const f = vi
+        .fn()
+        .mockResolvedValueOnce(json({ data: [{ id: '1' }, { id: '2' }] }))
+        .mockResolvedValueOnce(json({ id: '3' }, 201))
+        .mockResolvedValueOnce({ ok: true, status: 204, text: async () => '' })
+      vi.stubGlobal('fetch', f)
+      const live = useLiveEntities('services', { withTotal: true })
+      await live.load()
+
+      await live.create({ name: 'new' })
+      expect(live.total.value).toBe(3)
+      await live.remove('1')
+      expect(live.total.value).toBe(2)
+    })
+  })
+
   it('ignores a stale response when load() is started again', async () => {
     connect()
     const slow = deferred<ReturnType<typeof json>>()

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useConfigStore } from '../../stores/config'
+import { usePageCount } from '../../composables/usePageCount'
 import { listPlugins } from '../../lib/fileEntities'
 import type { PluginEntry } from '../../lib/fileEntities'
 import FileGate from '../../components/file/FileGate.vue'
@@ -21,6 +22,7 @@ const selectedId = ref<string | undefined>(undefined)
 const pane = ref<{ dirty: boolean; justSaved: boolean; save: () => void; discard: () => void } | null>(null)
 
 const entries = computed(() => (configStore.primary ? listPlugins(configStore.primary.config) : []))
+usePageCount(() => ({ count: entries.value.length }))
 const selected = computed(() => entries.value.find((entry) => entry.id === selectedId.value))
 
 // Names repeat across levels, so what a plugin applies to is part of what you can search for.

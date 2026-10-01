@@ -5,6 +5,7 @@ import { createRouter, createMemoryHistory } from 'vue-router'
 import { mount } from '@vue/test-utils'
 import FilePluginsView from './FilePluginsView.vue'
 import { useConfigStore } from '../../stores/config'
+import { usePageMetaStore } from '../../stores/pageMeta'
 import { SAMPLE } from './sample'
 
 const make = () =>
@@ -102,6 +103,22 @@ describe('FilePluginsView', () => {
 
       expect(confirm).toHaveBeenCalledWith('Discard your unsaved changes?')
       expect((wrapper.find('input[type="number"]').element as HTMLInputElement).value).toBe('5')
+    })
+
+    it('reports how many there are to the page header, whatever the search shows', async () => {
+      const wrapper = make()
+      expect(usePageMetaStore().count).toBe(4)
+      expect(usePageMetaStore().approximate).toBe(false)
+
+      await wrapper.find('input[placeholder^="Search"]').setValue('zzz-no-match')
+      expect(rows(wrapper)).toHaveLength(0)
+      expect(usePageMetaStore().count).toBe(4)
+    })
+
+    it('clears the header count when the page is left', () => {
+      const wrapper = make()
+      wrapper.unmount()
+      expect(usePageMetaStore().count).toBeNull()
     })
   })
 })

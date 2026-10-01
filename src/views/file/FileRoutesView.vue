@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useConfigStore } from '../../stores/config'
+import { usePageCount } from '../../composables/usePageCount'
 import { listRoutes } from '../../lib/fileEntities'
 import type { RouteEntry } from '../../lib/fileEntities'
 import FileGate from '../../components/file/FileGate.vue'
@@ -21,6 +22,7 @@ const selectedId = ref<string | undefined>(undefined)
 const pane = ref<{ dirty: boolean; justSaved: boolean; save: () => void; discard: () => void } | null>(null)
 
 const entries = computed(() => (configStore.primary ? listRoutes(configStore.primary.config) : []))
+usePageCount(() => ({ count: entries.value.length }))
 const selected = computed(() => entries.value.find((entry) => entry.id === selectedId.value))
 
 const filtered = computed(() => {

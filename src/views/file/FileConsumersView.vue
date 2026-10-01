@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useConfigStore } from '../../stores/config'
+import { usePageCount } from '../../composables/usePageCount'
 import FileGate from '../../components/file/FileGate.vue'
 import LiveWorkspace from '../../components/live/LiveWorkspace.vue'
 import LiveListToolbar from '../../components/live/LiveListToolbar.vue'
@@ -15,6 +16,7 @@ const search = ref('')
 const selectedUsername = ref<string | undefined>(undefined)
 
 const consumers = computed(() => configStore.primary?.config.consumers ?? [])
+usePageCount(() => ({ count: consumers.value.length }))
 const selected = computed(() => consumers.value.find((c) => c.username === selectedUsername.value))
 const label = (consumer: KongConsumer) => consumer.username ?? consumer.custom_id ?? ''
 

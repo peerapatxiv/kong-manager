@@ -19,6 +19,8 @@ export type UseLiveEntitiesOptions = {
   parentId?: string | (() => string | undefined)
   /** Lists through another resource (for example a service's routes) while writes use `resource`. */
   listVia?: () => { resource: EntityResourceName; parentId?: string } | undefined
+  /** Also counts the pages that were not loaded, in the background, to learn the full total. */
+  withTotal?: boolean
 }
 
 export function useLiveEntities<T extends LiveEntity = LiveEntity>(
@@ -31,6 +33,9 @@ export function useLiveEntities<T extends LiveEntity = LiveEntity>(
   const loading = ref(false)
   const error = ref<LiveError | null>(null)
   const tagFilter = ref<string[]>([])
+  // How many there are in all. Known at once for a short list; for a long one only after the
+  // background count (opt-in), and null while unknown.
+  const total = ref<number | null>(null)
   let requestToken = 0
 
   const parentId = () => (typeof options.parentId === 'function' ? options.parentId() : options.parentId)
@@ -46,15 +51,37 @@ export function useLiveEntities<T extends LiveEntity = LiveEntity>(
     error.value = null
     items.value = []
     next.value = null
+    total.value = null
     try {
       const page = await listClient().list({ tags: tagFilter.value })
       if (token !== requestToken) return
       items.value = page.data
       next.value = page.next
+      if (page.next === null) total.value = page.data.length
+      else if (options.withTotal) void countRest(token, page.data.length, page.next)
     } catch (err) {
       if (token === requestToken) error.value = toLiveError(err)
     } finally {
       if (token === requestToken) loading.value = false
+    }
+  }
+
+  async function countRest(token: number, counted: number, offset: string) {
+    let cursor: string | null = offset
+    try {
+      while (cursor) {
+        const page: { data: unknown[]; next: string | null } = await listClient().list({
+          tags: tagFilter.value,
+          size: 1000,
+          offset: cursor,
+        })
+        if (token !== requestToken) return
+        counted += page.data.length
+        cursor = page.next
+      }
+      if (token === requestToken) total.value = counted
+    } catch {
+      // The count is a convenience: the header keeps showing what is loaded.
     }
   }
 
@@ -88,6 +115,7 @@ export function useLiveEntities<T extends LiveEntity = LiveEntity>(
     run(async () => {
       const created = await client().create(body)
       items.value = [created, ...items.value]
+      if (total.value !== null) total.value += 1
       return created
     })
 
@@ -102,9 +130,10 @@ export function useLiveEntities<T extends LiveEntity = LiveEntity>(
     run(async () => {
       await client().remove(id)
       items.value = items.value.filter((item) => item.id !== id)
+      if (total.value !== null) total.value = Math.max(0, total.value - 1)
     })
 
   const toggleEnabled = (id: string, enabled: boolean) => save(id, { enabled } as unknown as Partial<T>)
 
-  return { items, next, loading, error, tagFilter, load, loadMore, create, save, remove, toggleEnabled }
+  return { items, next, total, loading, error, tagFilter, load, loadMore, create, save, remove, toggleEnabled }
 }

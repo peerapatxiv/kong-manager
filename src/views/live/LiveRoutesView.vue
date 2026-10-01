@@ -3,6 +3,7 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { onBeforeRouteLeave, useRoute, useRouter } from 'vue-router'
 import { useConnectionStore } from '../../stores/connection'
 import { useLiveEntities } from '../../composables/useLiveEntities'
+import { usePageCount } from '../../composables/usePageCount'
 import type { LiveEntity } from '../../composables/useLiveEntities'
 import { fromEntity, newRouteForm, toPayload, validateRoute } from '../../lib/live/routeForm'
 import type { RouteForm as RouteFormModel } from '../../lib/live/routeForm'
@@ -28,6 +29,7 @@ const services = ref<LiveEntity[]>([])
 const {
   items,
   next,
+  total,
   loading,
   error,
   load,
@@ -38,7 +40,11 @@ const {
 } = useLiveEntities<LiveEntity>('routes', {
   listVia: () =>
     serviceFilter.value ? { resource: 'service_routes', parentId: serviceFilter.value } : undefined,
+  withTotal: true,
 })
+
+// The page title shows how many there are: exact once counted, otherwise what has loaded so far.
+usePageCount(() => ({ count: total.value ?? items.value.length, approximate: total.value === null && next.value !== null }))
 
 const search = ref('')
 const selectedId = ref<string | null>(null)

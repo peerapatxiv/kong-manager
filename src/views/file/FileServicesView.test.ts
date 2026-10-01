@@ -6,6 +6,7 @@ import { mount } from '@vue/test-utils'
 import FileServicesView from './FileServicesView.vue'
 import ServiceDetail from '../../components/browse/ServiceDetail.vue'
 import { useConfigStore } from '../../stores/config'
+import { usePageMetaStore } from '../../stores/pageMeta'
 import { SAMPLE } from './sample'
 
 const make = () =>
@@ -110,6 +111,22 @@ describe('FileServicesView', () => {
 
       expect(useConfigStore().primary?.config.services?.[0].name).toBe('billing-v2')
       expect(wrapper.text()).not.toContain('Select a service from the list')
+    })
+
+    it('reports how many there are to the page header, whatever the search shows', async () => {
+      const wrapper = make()
+      expect(usePageMetaStore().count).toBe(2)
+      expect(usePageMetaStore().approximate).toBe(false)
+
+      await wrapper.find('input[placeholder^="Search"]').setValue('zzz-no-match')
+      expect(rows(wrapper)).toHaveLength(0)
+      expect(usePageMetaStore().count).toBe(2)
+    })
+
+    it('clears the header count when the page is left', () => {
+      const wrapper = make()
+      wrapper.unmount()
+      expect(usePageMetaStore().count).toBeNull()
     })
   })
 })
