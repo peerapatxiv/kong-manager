@@ -167,7 +167,7 @@ watch(
 
 <template>
   <LiveGate>
-    <div class="flex flex-1 flex-col lg:h-[calc(100vh-4rem)] lg:flex-row lg:overflow-hidden">
+    <div class="flex flex-1 flex-col lg:h-[calc(100vh-4rem)] lg:flex-none lg:flex-row lg:overflow-hidden">
       <div
         class="flex w-full shrink-0 flex-col border-b border-border bg-surface lg:w-80 lg:border-b-0 lg:border-r"
         data-testid="live-list-panel"

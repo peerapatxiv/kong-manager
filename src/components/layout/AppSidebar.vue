@@ -43,7 +43,7 @@ const liveLinks: { to: string; label: string; icon: IconName }[] = [
 ]
 
 const linkBase =
-  'flex items-center gap-2.5 rounded-lg border-l-2 border-transparent py-2 pl-2.5 pr-3 text-sm text-ink-muted transition-colors duration-150 hover:bg-elevated hover:text-ink'
+  'flex items-center gap-2.5 rounded-lg border-l-2 border-transparent py-2 pl-2.5 pr-3 text-sm text-ink-muted transition-colors duration-150 hover:bg-elevated hover:text-ink focus-visible:bg-elevated focus-visible:outline-none'
 const linkActive = '!border-accent !bg-accent/10 !text-link font-medium'
 const linkDisabled =
   'flex items-center gap-2.5 rounded-lg border-l-2 border-transparent py-2 pl-2.5 pr-3 text-sm text-ink-muted/40 cursor-not-allowed'
