@@ -190,7 +190,7 @@ watch(
             v-for="consumer in filtered"
             :key="consumer.id"
             data-testid="consumer-row"
-            class="cursor-pointer rounded-lg border-l-2 py-1.5 pl-2 pr-2 text-sm transition-colors duration-150"
+            class="flex cursor-pointer items-center gap-2.5 rounded-lg border-l-2 py-1.5 pl-2 pr-2 text-sm transition-colors duration-150"
             :class="
               consumer.id === selectedId
                 ? 'border-accent bg-accent/10 font-medium text-link'
@@ -198,7 +198,14 @@ watch(
             "
             @click="select(consumer)"
           >
-            <span class="block truncate font-mono" :title="label(consumer)">{{ label(consumer) }}</span>
+            <span
+              aria-hidden="true"
+              class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-elevated text-[11px] font-semibold uppercase text-ink-muted"
+              :class="consumer.id === selectedId ? '!bg-accent !text-accent-on' : ''"
+            >
+              {{ label(consumer).charAt(0) }}
+            </span>
+            <span class="block min-w-0 flex-1 truncate font-mono" :title="label(consumer)">{{ label(consumer) }}</span>
           </li>
         </ul>
         <p v-if="loading" class="px-3 pb-2 text-xs text-ink-muted">Loading…</p>
@@ -218,7 +225,21 @@ watch(
       <div class="flex-1 space-y-4 overflow-y-auto p-6">
         <LiveErrorBanner :messages="validationErrors" :error="error" />
         <div v-if="form" class="max-w-3xl space-y-4">
-          <ConsumerForm v-model="form" :disabled="!connection.canWrite" :field-errors="fieldErrors" />
+          <div class="card space-y-5 p-5">
+            <div class="flex items-center gap-3">
+              <span
+                aria-hidden="true"
+                class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent text-base font-semibold uppercase text-accent-on"
+              >
+                {{ creating ? '+' : (form.username || form.custom_id || '?').charAt(0) }}
+              </span>
+              <div class="min-w-0">
+                <p class="truncate font-semibold text-ink">{{ creating ? 'New consumer' : form.username || form.custom_id || 'Consumer' }}</p>
+                <p v-if="!creating && selectedId" class="truncate font-mono text-xs text-ink-muted">{{ selectedId }}</p>
+              </div>
+            </div>
+            <ConsumerForm v-model="form" :disabled="!connection.canWrite" :field-errors="fieldErrors" />
+          </div>
           <div class="flex flex-wrap items-center gap-2">
             <button
               v-if="!creating"
@@ -243,14 +264,22 @@ watch(
               </button>
             </div>
           </div>
-          <CredentialsPanel
-            v-if="!creating && selectedId"
-            :key="selectedId"
-            :consumer-id="selectedId"
-            :disabled="!connection.canWrite"
-          />
+          <div v-if="!creating && selectedId" class="card p-5">
+            <CredentialsPanel
+              :key="selectedId"
+              :consumer-id="selectedId"
+              :disabled="!connection.canWrite"
+              class="!border-t-0 !pt-0"
+            />
+          </div>
         </div>
-        <div v-else class="flex h-full min-h-[16rem] items-center justify-center text-center">
+        <div v-else class="flex h-full min-h-[16rem] flex-col items-center justify-center gap-3 text-center">
+          <span class="flex h-12 w-12 items-center justify-center rounded-full bg-accent/10 text-link">
+            <svg viewBox="0 0 20 20" fill="none" class="h-6 w-6">
+              <path d="M10 9a3 3 0 100-6 3 3 0 000 6z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+              <path d="M4 17a6 6 0 0112 0" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+            </svg>
+          </span>
           <p class="text-sm text-ink-muted">Select a consumer from the list, or create a new one.</p>
         </div>
       </div>

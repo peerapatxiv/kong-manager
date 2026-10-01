@@ -34,10 +34,27 @@ async function onChangeFileSelected(event: Event) {
   }
 }
 
+// Same 20x20 stroke icons as the Services, Routes and Consumers tiles on the Browse page.
 const liveLinks = [
-  { to: '/live/services', label: 'Services' },
-  { to: '/live/routes', label: 'Routes' },
-  { to: '/live/consumers', label: 'Consumers' },
+  {
+    to: '/live/services',
+    label: 'Services',
+    paths: [
+      'M4 5h12a1 1 0 011 1v1.2a1 1 0 01-1 1H4a1 1 0 01-1-1V6a1 1 0 011-1z',
+      'M4 10h12a1 1 0 011 1v1.2a1 1 0 01-1 1H4a1 1 0 01-1-1V11a1 1 0 011-1z',
+      'M6 15.5h.01M9 15.5h5',
+    ],
+  },
+  {
+    to: '/live/routes',
+    label: 'Routes',
+    paths: ['M5 15a2 2 0 100-.01M15 5a2 2 0 100-.01', 'M7 15h4.5a3 3 0 003-3V9a3 3 0 00-3-3H10'],
+  },
+  {
+    to: '/live/consumers',
+    label: 'Consumers',
+    paths: ['M10 9a3 3 0 100-6 3 3 0 000 6z', 'M4 17a6 6 0 0112 0'],
+  },
 ]
 
 const linkBase =
@@ -122,8 +139,15 @@ const linkDisabled =
           @click="emit('navigate')"
         >
           <svg viewBox="0 0 20 20" fill="none" class="h-4 w-4 shrink-0">
-            <circle cx="10" cy="10" r="3" stroke="currentColor" stroke-width="1.5" />
-            <path d="M10 3v2M10 15v2M3 10h2M15 10h2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+            <path
+              v-for="d in link.paths"
+              :key="d"
+              :d="d"
+              stroke="currentColor"
+              stroke-width="1.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
           </svg>
           {{ link.label }}
         </RouterLink>
