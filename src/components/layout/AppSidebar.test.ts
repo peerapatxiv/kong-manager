@@ -118,11 +118,19 @@ describe('AppSidebar', () => {
       })
     const disconnectButton = (wrapper: ReturnType<typeof mount>) => wrapper.find('[data-testid="sidebar-disconnect"]')
 
-    it('is offered under the connection details', () => {
+    it('is a small icon beside the Connection heading, named and explained for screen readers and hover', () => {
       connectLive()
       const wrapper = mount(AppSidebar, { global: { plugins: [testRouter()] } })
-      expect(disconnectButton(wrapper).text()).toContain('Disconnect')
-      expect(wrapper.find('[data-testid="sidebar-footer"]').find('[data-testid="sidebar-disconnect"]').exists()).toBe(true)
+      const footer = wrapper.find('[data-testid="sidebar-footer"]')
+      const button = footer.find('[data-testid="sidebar-disconnect"]')
+
+      expect(button.exists()).toBe(true)
+      expect(button.attributes('aria-label')).toBe('Disconnect')
+      expect(button.attributes('title')).toBe('Disconnect')
+      expect(button.text()).toBe('')
+      expect(button.find('svg').exists()).toBe(true)
+      // On the same row as the heading, not a full-width button under the details.
+      expect(button.element.parentElement?.textContent).toContain('Connection')
     })
 
     it('is not there without a live connection, or when a file is loaded instead', () => {

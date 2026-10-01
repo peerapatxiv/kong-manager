@@ -151,7 +151,19 @@ const liveHost = computed(() => {
       </div>
 
       <div v-if="showLive" class="border-t border-border px-5 py-3.5" data-testid="sidebar-footer">
-        <p class="text-[11px] font-medium uppercase tracking-wide text-ink-muted">Connection</p>
+        <div class="flex items-center justify-between gap-2">
+          <p class="text-[11px] font-medium uppercase tracking-wide text-ink-muted">Connection</p>
+          <button
+            type="button"
+            data-testid="sidebar-disconnect"
+            aria-label="Disconnect"
+            title="Disconnect"
+            class="-mr-1.5 flex h-6 w-6 items-center justify-center rounded-md text-ink-muted transition-colors duration-150 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/50 dark:hover:text-red-400"
+            @click="disconnect"
+          >
+            <AppIcon name="power" class="h-3.5 w-3.5" />
+          </button>
+        </div>
         <div class="mt-1.5 flex items-center gap-2.5" :title="connectionStore.active?.baseUrl">
           <span class="h-2 w-2 shrink-0 rounded-full bg-emerald-500 ring-4 ring-emerald-500/20" />
           <span class="min-w-0 leading-tight">
@@ -166,10 +178,6 @@ const liveHost = computed(() => {
         <p v-if="connectionStore.info" class="mt-1.5 truncate font-mono text-[11px] text-ink-muted">
           Kong {{ connectionStore.info.version }} · {{ connectionStore.info.database }}
         </p>
-        <button type="button" class="btn-danger-outline btn-sm mt-3 w-full" data-testid="sidebar-disconnect" @click="disconnect">
-          <AppIcon name="x" class="h-3.5 w-3.5" />
-          Disconnect
-        </button>
       </div>
 
       <div v-else class="border-t border-border px-5 py-3.5" data-testid="sidebar-footer">

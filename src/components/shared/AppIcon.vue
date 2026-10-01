@@ -39,6 +39,7 @@ const ICONS = {
   'chevron-right': ['M7.5 5l5 5-5 5'],
   'chevron-down': ['M5 7.5l5 5 5-5'],
   menu: ['M3 5h14M3 10h14M3 15h14'],
+  power: ['M10 3v6.5', 'M5.7 5.9a6 6 0 108.6 0'],
   refresh: ['M16.5 10a6.5 6.5 0 11-2-4.7', 'M16.5 3.5v3.2h-3.2'],
   dashboard: [
     'M4.5 3.5h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4a1 1 0 011-1z',
