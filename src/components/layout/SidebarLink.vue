@@ -24,7 +24,7 @@ const tile =
     <span
       :class="[
         tile,
-        'bg-elevated/70 text-ink-muted group-hover:text-ink group-[.is-active]:bg-accent group-[.is-active]:text-accent-on',
+        'bg-elevated/70 text-ink-muted group-hover:bg-surface group-hover:text-ink group-focus-visible:bg-surface group-[.is-active]:bg-accent group-[.is-active]:text-accent-on',
       ]"
     >
       <AppIcon :name="icon" class="h-4 w-4" />

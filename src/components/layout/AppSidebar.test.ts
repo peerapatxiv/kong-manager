@@ -21,7 +21,7 @@ function testRouter() {
       { path: '/', component: { template: '<div />' } },
       { path: '/compare', component: { template: '<div />' } },
       { path: '/live/services', component: { template: '<div />' } },
-      ...['dashboard', 'services', 'routes', 'consumers', 'plugins'].map((page) => ({
+      ...['services', 'routes', 'consumers', 'plugins'].map((page) => ({
         path: `/file/${page}`,
         component: { template: '<div />' },
       })),
@@ -102,7 +102,6 @@ describe('AppSidebar', () => {
     expect(wrapper.findAll('a').map((a) => [a.text(), a.attributes('href')])).toEqual([
       ['Overview', '/'],
       ['Compare', '/compare'],
-      ['Dashboard', '/file/dashboard'],
       ['Services', '/file/services'],
       ['Routes', '/file/routes'],
       ['Consumers', '/file/consumers'],
@@ -203,7 +202,6 @@ describe('AppSidebar', () => {
     expect(wrapper.findAll('a').map((a) => a.text())).toEqual([
       'Overview',
       'Compare',
-      'Dashboard',
       'Services',
       'Routes',
       'Consumers',
@@ -215,7 +213,7 @@ describe('AppSidebar', () => {
     const wrapper = mount(AppSidebar, { global: { plugins: [testRouter()] } })
 
     expect(wrapper.text()).not.toContain('Compare')
-    expect(wrapper.text()).not.toContain('Dashboard')
+    expect(wrapper.text()).not.toContain('Services')
     expect(wrapper.find('span[title="Load a config first"]').exists()).toBe(false)
     expect(wrapper.text()).toContain('No config loaded')
     expect(wrapper.text()).not.toContain('Change')

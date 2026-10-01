@@ -12,7 +12,6 @@ const exportModalOpen = ref(false)
 const mobileNavOpen = ref(false)
 
 const pageTitle = computed(() => {
-  if (route.path === '/file/dashboard') return 'File dashboard'
   if (route.path === '/file/services') return 'File services'
   if (route.path === '/file/routes') return 'File routes'
   if (route.path === '/file/consumers') return 'File consumers'

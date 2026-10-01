@@ -63,10 +63,11 @@ describe('LoadView', () => {
     await wrapper.vm.$nextTick()
 
     expect(wrapper.text()).toContain('Loaded: sample-a.yaml')
-    expect(wrapper.text()).toMatch(/Services\s+1/)
-    expect(wrapper.text()).toMatch(/Routes\s+1/)
-    expect(wrapper.text()).toMatch(/Consumers\s+1/)
-    expect(wrapper.text()).toMatch(/Global plugins\s+1/)
+    const dashboard = wrapper.find('[data-testid="file-dashboard"]')
+    expect(dashboard.exists()).toBe(true)
+    for (const kind of ['services', 'routes', 'consumers', 'plugins']) {
+      expect(dashboard.find(`[data-testid="tile-${kind}"]`).text()).toContain('1')
+    }
     expect(wrapper.text()).not.toContain('Failed to parse YAML')
   })
 
@@ -365,17 +366,23 @@ describe('LoadView', () => {
     const button = (wrapper: ReturnType<typeof mount>, label: string) =>
       wrapper.findAll('button').find((b) => b.text() === label)
 
-    it('opens the file dashboard from the loaded summary', async () => {
-      const router = testRouter()
-      const wrapper = mount(LoadView, { global: { plugins: [router] } })
+    it('shows the file dashboard right under the loaded summary, with no separate button to open one', async () => {
+      const wrapper = mount(LoadView, { global: { plugins: [testRouter()] } })
       useConfigStore().loadPrimary('sample-a.yaml', SAMPLE)
       await wrapper.vm.$nextTick()
 
-      await button(wrapper, 'Open dashboard')!.trigger('click')
-      await flushPromises()
+      const html = wrapper.html()
+      expect(html.indexOf('Loaded:')).toBeLessThan(html.indexOf('data-testid="file-dashboard"'))
+      expect(button(wrapper, 'Open dashboard')).toBeUndefined()
+      expect(wrapper.find('[data-testid="load-stats"]').exists()).toBe(false)
+    })
 
-      expect(router.currentRoute.value.path).toBe('/file/dashboard')
-      expect(button(wrapper, 'Browse this config')).toBeUndefined()
+    it('introduces a loaded file as that, not as a config to load', () => {
+      useConfigStore().loadPrimary('sample-a.yaml', SAMPLE)
+      const wrapper = mount(LoadView, { global: { plugins: [testRouter()] } })
+
+      expect(wrapper.find('h2').text()).toBe('Your Kong config')
+      expect(wrapper.text()).not.toContain('Browse this config below')
     })
 
     it('shows the loaded summary above the source form, not below it', async () => {
@@ -438,15 +445,6 @@ describe('LoadView', () => {
       await wrapper.vm.$nextTick()
 
       expect(button(wrapper, 'Disconnect')).toBeUndefined()
-    })
-
-    it('lays the four counts out two across on small screens and four across on large ones', async () => {
-      const wrapper = loaded()
-      await wrapper.vm.$nextTick()
-
-      const stats = wrapper.find('[data-testid="load-stats"]')
-      expect(stats.classes()).toContain('grid-cols-2')
-      expect(stats.classes()).toContain('lg:grid-cols-4')
     })
   })
 

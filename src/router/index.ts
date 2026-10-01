@@ -1,7 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import LoadView from '../views/LoadView.vue'
 import CompareView from '../views/CompareView.vue'
-import FileDashboardView from '../views/file/FileDashboardView.vue'
 import FileServicesView from '../views/file/FileServicesView.vue'
 import FileRoutesView from '../views/file/FileRoutesView.vue'
 import FileConsumersView from '../views/file/FileConsumersView.vue'
@@ -16,9 +15,8 @@ export const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     { path: '/', name: 'load', component: LoadView },
-    // The old single Browse page is now one page per kind of entity, plus a dashboard.
-    { path: '/browse', redirect: '/file/dashboard' },
-    { path: '/file/dashboard', name: 'file-dashboard', component: FileDashboardView },
+    // The old single Browse page is now one page per kind of entity; the dashboard is on Overview.
+    { path: '/browse', redirect: '/file/services' },
     { path: '/file/services', name: 'file-services', component: FileServicesView },
     { path: '/file/routes', name: 'file-routes', component: FileRoutesView },
     { path: '/file/consumers', name: 'file-consumers', component: FileConsumersView },

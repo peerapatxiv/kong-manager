@@ -1,12 +1,12 @@
 <script setup lang="ts">
+import FileDashboard from '../components/file/FileDashboard.vue'
 import LiveDashboard from '../components/live/LiveDashboard.vue'
 import AppIcon from '../components/shared/AppIcon.vue'
 import { computed, ref, watch } from 'vue'
-import { RouterLink, useRouter } from 'vue-router'
+import { RouterLink } from 'vue-router'
 import FileDropZone from '../components/FileDropZone.vue'
 import KongConnectForm from '../components/KongConnectForm.vue'
 import SavedConnectionsList from '../components/SavedConnectionsList.vue'
-import StatTile from '../components/shared/StatTile.vue'
 import { useConfigStore } from '../stores/config'
 import { useSavedConnectionsStore } from '../stores/savedConnections'
 import { useConnectionStore } from '../stores/connection'
@@ -17,7 +17,6 @@ import type { KongNodeInfo } from '../stores/connection'
 const configStore = useConfigStore()
 const savedConnectionsStore = useSavedConnectionsStore()
 const connectionStore = useConnectionStore()
-const router = useRouter()
 const errorMessage = ref<string | null>(null)
 const connectErrorMessage = ref<string | null>(null)
 const connecting = ref(false)
@@ -69,6 +68,7 @@ async function onConnect({ baseUrl, auth, name }: ConnectRequest) {
 }
 
 // A live connection with no file loaded: the page is about that connection, not a config to load.
+const fileSummary = computed(() => configStore.isLoaded && !formExpanded.value)
 const liveSummary = computed(() => connectionStore.isConnected && !configStore.isLoaded && !formExpanded.value)
 
 // The connection can also end from the sidebar; the page then needs its connect form back.
@@ -110,12 +110,14 @@ function onSelectSaved({
 <template>
   <div class="space-y-4 p-4 sm:p-6">
     <div>
-      <h2 class="text-xl font-bold text-ink">{{ liveSummary ? 'Live Kong connection' : 'Load a Kong declarative config' }}</h2>
+      <h2 class="text-xl font-bold text-ink">{{ liveSummary ? 'Live Kong connection' : fileSummary ? 'Your Kong config' : 'Load a Kong declarative config' }}</h2>
       <p class="mt-1 text-sm text-ink-muted">
         {{
           liveSummary
             ? 'You are connected. Use the Live links in the sidebar, or check the dashboard below.'
-            : !formExpanded
+            : fileSummary
+              ? 'Everything below comes from this file. Use the File pages in the sidebar to browse and edit it.'
+              : !formExpanded
               ? 'Browse this config below, or change your source to load something else.'
               : mode === 'connect'
                 ? 'Pull the live declarative config from a running Kong instance (DB-less mode), or switch to load a YAML file.'
@@ -186,36 +188,12 @@ function onSelectSaved({
         </div>
       </div>
 
-      <div data-testid="load-stats" class="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <StatTile label="Services" :value="configStore.summary.services">
-          <template #icon>
-            <AppIcon name="list" class="h-4 w-4" />
-          </template>
-        </StatTile>
-        <StatTile label="Routes" :value="configStore.summary.routes">
-          <template #icon>
-            <AppIcon name="route" class="h-4 w-4" />
-          </template>
-        </StatTile>
-        <StatTile label="Consumers" :value="configStore.summary.consumers">
-          <template #icon>
-            <AppIcon name="user" class="h-4 w-4" />
-          </template>
-        </StatTile>
-        <StatTile label="Global plugins" :value="configStore.summary.globalPlugins">
-          <template #icon>
-            <AppIcon name="plug" class="h-4 w-4" />
-          </template>
-        </StatTile>
-      </div>
-
-      <div class="flex flex-wrap gap-2">
-        <button type="button" class="btn-primary" @click="router.push('/file/dashboard')">Open dashboard</button>
-        <RouterLink v-if="connectionStore.isConnected" to="/live/services" class="btn-secondary">
-          Open live services
-        </RouterLink>
+      <div v-if="connectionStore.isConnected" class="flex flex-wrap gap-2">
+        <RouterLink to="/live/services" class="btn-secondary">Open live services</RouterLink>
       </div>
     </div>
+
+    <FileDashboard v-if="configStore.isLoaded" />
 
     <div v-if="formExpanded" class="space-y-4">
       <div v-if="configStore.isLoaded" class="flex items-center justify-between gap-2">

@@ -50,7 +50,6 @@ async function onChangeFileSelected(event: Event) {
 }
 
 const fileLinks: { to: string; label: string; icon: IconName }[] = [
-  { to: '/file/dashboard', label: 'Dashboard', icon: 'dashboard' },
   { to: '/file/services', label: 'Services', icon: 'server' },
   { to: '/file/routes', label: 'Routes', icon: 'route' },
   { to: '/file/consumers', label: 'Consumers', icon: 'user' },

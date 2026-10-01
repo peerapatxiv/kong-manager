@@ -9,7 +9,7 @@ import { useConfigStore } from '../../stores/config'
 function testRouter() {
   return createRouter({
     history: createMemoryHistory(),
-    routes: ['/', '/compare', '/file/dashboard', '/file/services', '/file/routes', '/file/consumers', '/file/plugins', '/live/plugins'].map((path) => ({
+    routes: ['/', '/compare', '/file/services', '/file/routes', '/file/consumers', '/file/plugins', '/live/plugins'].map((path) => ({
       path,
       component: { template: '<div />' },
     })),
@@ -51,7 +51,6 @@ describe('AppShell', () => {
   })
 
   it.each([
-    ['/file/dashboard', 'File dashboard'],
     ['/file/services', 'File services'],
     ['/file/routes', 'File routes'],
     ['/file/consumers', 'File consumers'],
