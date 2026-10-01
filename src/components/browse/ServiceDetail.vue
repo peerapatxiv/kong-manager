@@ -6,6 +6,7 @@ import TagInput from '../shared/TagInput.vue'
 import ToggleSwitch from '../shared/ToggleSwitch.vue'
 import YamlCodeEditor from '../shared/YamlCodeEditor.vue'
 import RouteCard from './RouteCard.vue'
+import RouteCountChip from '../shared/RouteCountChip.vue'
 import { parseYamlEntity, dumpYamlEntity } from '../../lib/yaml'
 
 const props = defineProps<{ modelValue: KongService }>()
@@ -114,7 +115,10 @@ function discardEntity() {
   <div class="card max-w-5xl space-y-6 p-6">
     <div class="flex flex-wrap items-start justify-between gap-3">
       <div>
-        <h2 class="font-mono text-lg font-bold text-ink">{{ draft.name ?? '(unnamed service)' }}</h2>
+        <div class="flex flex-wrap items-center gap-2.5">
+          <h2 class="font-mono text-lg font-bold text-ink">{{ draft.name ?? '(unnamed service)' }}</h2>
+          <RouteCountChip :count="(draft.routes ?? []).length" />
+        </div>
         <div class="mt-1 flex items-center gap-2 text-xs text-ink-muted">
           <span>Read-only here — switch to Code to rename.</span>
           <Transition

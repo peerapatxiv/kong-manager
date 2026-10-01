@@ -38,6 +38,15 @@ describe('FileServicesView', () => {
       expect(wrapper.find('input[type="number"]').element).toHaveProperty('value', '8080')
     })
 
+    it('says how many routes the chosen service has', async () => {
+      const wrapper = make()
+      await rows(wrapper)[0].trigger('click')
+      expect(wrapper.find('[data-testid="route-count"]').text()).toBe('2 routes')
+
+      await rows(wrapper)[1].trigger('click')
+      expect(wrapper.find('[data-testid="route-count"]').text()).toBe('No routes')
+    })
+
     it('filters the list as you search', async () => {
       const wrapper = make()
       await wrapper.find('input[placeholder="Search services…"]').setValue('reporting')
