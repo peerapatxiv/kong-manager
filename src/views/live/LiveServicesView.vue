@@ -10,6 +10,9 @@ import LiveGate from '../../components/live/LiveGate.vue'
 import LiveErrorBanner from '../../components/live/LiveErrorBanner.vue'
 import ServiceForm from '../../components/live/ServiceForm.vue'
 import SearchInput from '../../components/shared/SearchInput.vue'
+import ListRow from '../../components/shared/ListRow.vue'
+import EmptyState from '../../components/shared/EmptyState.vue'
+import DetailHeader from '../../components/shared/DetailHeader.vue'
 import ToggleSwitch from '../../components/shared/ToggleSwitch.vue'
 
 const connection = useConnectionStore()
@@ -195,26 +198,24 @@ watch(
         </div>
 
         <ul class="min-h-0 flex-1 space-y-0.5 overflow-y-auto px-2 pb-3">
-          <li
+          <ListRow
             v-for="service in filtered"
             :key="service.id"
             data-testid="service-row"
-            class="flex cursor-pointer items-center gap-2 rounded-lg border-l-2 py-1.5 pl-2 pr-2 text-sm transition-colors duration-150"
-            :class="
-              service.id === selectedId
-                ? 'border-accent bg-accent/10 font-medium text-link'
-                : 'border-transparent text-ink-muted hover:bg-elevated'
-            "
+            :title="label(service)"
+            :selected="service.id === selectedId"
             @click="select(service)"
           >
-            <span class="min-w-0 flex-1 truncate font-mono" :title="label(service)">{{ label(service) }}</span>
-            <fieldset :disabled="!connection.canWrite" class="contents" @click.stop>
-              <ToggleSwitch
-                :model-value="service.enabled !== false"
-                @update:model-value="(value) => toggle(service, value)"
-              />
-            </fieldset>
-          </li>
+            {{ label(service) }}
+            <template #trail>
+              <fieldset :disabled="!connection.canWrite" class="contents" @click.stop>
+                <ToggleSwitch
+                  :model-value="service.enabled !== false"
+                  @update:model-value="(value) => toggle(service, value)"
+                />
+              </fieldset>
+            </template>
+          </ListRow>
         </ul>
         <p v-if="loading" class="px-3 pb-2 text-xs text-ink-muted">Loading…</p>
         <p v-else-if="filtered.length === 0" class="px-3 pb-2 text-xs text-ink-muted">No services.</p>
@@ -233,7 +234,14 @@ watch(
       <div class="flex-1 space-y-4 overflow-y-auto p-6">
         <LiveErrorBanner :messages="validationErrors" :error="error" />
         <div v-if="form" class="max-w-3xl space-y-4">
-          <ServiceForm v-model="form" :disabled="!connection.canWrite" :field-errors="fieldErrors" />
+          <div class="card space-y-5 p-5">
+            <DetailHeader
+              :initial="(form.name || '?').charAt(0)"
+              :title="creating ? 'New service' : form.name || 'Service'"
+              :subtitle="!creating && selectedId ? selectedId : undefined"
+            />
+            <ServiceForm v-model="form" :disabled="!connection.canWrite" :field-errors="fieldErrors" />
+          </div>
           <div class="flex flex-wrap items-center gap-2">
             <button
               v-if="!creating"
@@ -259,9 +267,7 @@ watch(
             </div>
           </div>
         </div>
-        <div v-else class="flex h-full min-h-[16rem] items-center justify-center text-center">
-          <p class="text-sm text-ink-muted">Select a service from the list, or create a new one.</p>
-        </div>
+        <EmptyState v-else icon="server" title="Select a service from the list, or create a new one." />
       </div>
     </div>
   </LiveGate>

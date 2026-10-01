@@ -10,6 +10,9 @@ import LiveGate from '../../components/live/LiveGate.vue'
 import LiveErrorBanner from '../../components/live/LiveErrorBanner.vue'
 import RouteForm from '../../components/live/RouteForm.vue'
 import SearchInput from '../../components/shared/SearchInput.vue'
+import ListRow from '../../components/shared/ListRow.vue'
+import EmptyState from '../../components/shared/EmptyState.vue'
+import DetailHeader from '../../components/shared/DetailHeader.vue'
 
 const connection = useConnectionStore()
 const route = useRoute()
@@ -235,23 +238,18 @@ watch(serviceFilter, (id) => {
         </div>
 
         <ul class="min-h-0 flex-1 space-y-0.5 overflow-y-auto px-2 pb-3">
-          <li
+          <ListRow
             v-for="routeEntity in filtered"
             :key="routeEntity.id"
             data-testid="route-row"
-            class="cursor-pointer rounded-lg border-l-2 py-1.5 pl-2 pr-2 text-sm transition-colors duration-150"
-            :class="
-              routeEntity.id === selectedId
-                ? 'border-accent bg-accent/10 font-medium text-link'
-                : 'border-transparent text-ink-muted hover:bg-elevated'
-            "
+            :selected="routeEntity.id === selectedId"
             @click="select(routeEntity)"
           >
-            <span class="block truncate font-mono" :title="label(routeEntity)">{{ label(routeEntity) }}</span>
-            <span v-if="serviceNameOf(routeEntity)" class="block truncate text-[11px] text-ink-muted">
+            <span class="block truncate" :title="label(routeEntity)">{{ label(routeEntity) }}</span>
+            <span v-if="serviceNameOf(routeEntity)" class="block truncate font-sans text-[11px] font-normal text-ink-muted">
               {{ serviceNameOf(routeEntity) }}
             </span>
-          </li>
+          </ListRow>
         </ul>
         <p v-if="loading" class="px-3 pb-2 text-xs text-ink-muted">Loading…</p>
         <p v-else-if="filtered.length === 0" class="px-3 pb-2 text-xs text-ink-muted">No routes.</p>
@@ -270,12 +268,19 @@ watch(serviceFilter, (id) => {
       <div class="flex-1 space-y-4 overflow-y-auto p-6">
         <LiveErrorBanner :messages="validationErrors" :error="error" />
         <div v-if="form" class="max-w-3xl space-y-4">
-          <RouteForm
-            v-model="form"
-            :service-options="serviceOptions"
-            :disabled="!connection.canWrite"
-            :field-errors="fieldErrors"
-          />
+          <div class="card space-y-5 p-5">
+            <DetailHeader
+              :initial="(form.name || '?').charAt(0)"
+              :title="creating ? 'New route' : form.name || 'Route'"
+              :subtitle="!creating && selectedId ? selectedId : undefined"
+            />
+            <RouteForm
+              v-model="form"
+              :service-options="serviceOptions"
+              :disabled="!connection.canWrite"
+              :field-errors="fieldErrors"
+            />
+          </div>
           <div class="flex flex-wrap items-center gap-2">
             <button
               v-if="!creating"
@@ -301,9 +306,7 @@ watch(serviceFilter, (id) => {
             </div>
           </div>
         </div>
-        <div v-else class="flex h-full min-h-[16rem] items-center justify-center text-center">
-          <p class="text-sm text-ink-muted">Select a route from the list, or create a new one.</p>
-        </div>
+        <EmptyState v-else icon="route" title="Select a route from the list, or create a new one." />
       </div>
     </div>
   </LiveGate>
