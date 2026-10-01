@@ -70,6 +70,11 @@ async function mountView(query = '') {
 type Wrapper = Awaited<ReturnType<typeof mountView>>
 const byId = (wrapper: Wrapper, id: string) => wrapper.find(`[data-testid="${id}"]`)
 const rows = (wrapper: Wrapper) => wrapper.findAll('[data-testid="route-row"]')
+// Opens one of the custom dropdowns and picks an option by its value.
+async function choose(wrapper: Wrapper, id: string, value: string) {
+  await byId(wrapper, id).find('button').trigger('click')
+  await byId(wrapper, id).find(`[role="option"][data-value="${value}"]`).trigger('click')
+}
 const valueOf = (wrapper: Wrapper, id: string) => (byId(wrapper, id).element as HTMLInputElement).value
 
 beforeEach(() => setActivePinia(createPinia()))
@@ -102,16 +107,15 @@ describe('LiveRoutesView', () => {
     expect(calls).toHaveLength(0)
   })
 
-  it('lists routes with their service names', async () => {
+  it('lists routes by name only, without the service underneath', async () => {
     connect()
     fakeKong()
 
     const wrapper = await mountView()
 
     expect(rows(wrapper)).toHaveLength(2)
-    expect(rows(wrapper)[0].text()).toContain('billing-route')
-    expect(rows(wrapper)[0].text()).toContain('billing')
-    expect(rows(wrapper)[1].text()).toContain('reports')
+    expect(rows(wrapper)[0].text()).toBe('billing-route')
+    expect(rows(wrapper)[1].text()).toBe('reports-route')
   })
 
   it('lists only one service\'s routes through service_routes when ?service= is given', async () => {
@@ -122,7 +126,7 @@ describe('LiveRoutesView', () => {
 
     expect(calls.some((c) => c.url === 'http://kong:8001/services/svc-1/routes')).toBe(true)
     expect(rows(wrapper)).toHaveLength(1)
-    expect((byId(wrapper, 'service-filter').element as HTMLSelectElement).value).toBe('svc-1')
+    expect(byId(wrapper, 'service-filter').attributes('data-value')).toBe('svc-1')
   })
 
   it('on DB-less Kong shows the notice and disables every write control', async () => {
@@ -145,7 +149,7 @@ describe('LiveRoutesView', () => {
 
     await rows(wrapper)[0].trigger('click')
     expect(valueOf(wrapper, 'route-name')).toBe('billing-route')
-    expect(valueOf(wrapper, 'route-service')).toBe('svc-1')
+    expect(byId(wrapper, 'route-service').attributes('data-value')).toBe('svc-1')
 
     await byId(wrapper, 'route-name').setValue('renamed')
     await byId(wrapper, 'save').trigger('click')
@@ -164,7 +168,7 @@ describe('LiveRoutesView', () => {
     await byId(wrapper, 'new-route').trigger('click')
     await byId(wrapper, 'route-name').setValue('fresh')
     await wrapper.findAll('button[aria-pressed]').find((b) => b.text() === 'http')!.trigger('click')
-    await byId(wrapper, 'route-service').setValue('svc-2')
+    await choose(wrapper, 'route-service', 'svc-2')
     const pathInput = wrapper.find('[data-testid="route-paths"] input[placeholder*="Add path"]')
     await pathInput.setValue('/fresh')
     await pathInput.trigger('keydown', { key: 'Enter' })
@@ -185,7 +189,7 @@ describe('LiveRoutesView', () => {
 
     await byId(wrapper, 'new-route').trigger('click')
 
-    expect(valueOf(wrapper, 'route-service')).toBe('svc-1')
+    expect(byId(wrapper, 'route-service').attributes('data-value')).toBe('svc-1')
   })
 
   it('blocks Save with the Primate message when no protocol is selected', async () => {

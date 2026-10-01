@@ -39,7 +39,7 @@ describe('KongConnectForm', () => {
   it('uses the selected protocol and no name or credentials when left blank', async () => {
     const wrapper = mountForm()
 
-    await byId(wrapper, 'protocol').setValue('https')
+    await byId(wrapper, 'protocol').find('[data-value="https"]').trigger('click')
     await byId(wrapper, 'host').setValue('  kong.internal  ')
     await connectButton(wrapper).trigger('click')
 
@@ -54,13 +54,13 @@ describe('KongConnectForm', () => {
     ])
   })
 
-  it('splits a pasted full URL into the protocol dropdown and the host field', async () => {
+  it('splits a pasted full URL into the protocol toggle and the host field', async () => {
     const wrapper = mountForm()
 
     await byId(wrapper, 'host').setValue('https://kong.internal:8444/')
     await connectButton(wrapper).trigger('click')
 
-    expect((byId(wrapper, 'protocol').element as HTMLSelectElement).value).toBe('https')
+    expect(byId(wrapper, 'protocol').attributes('data-value')).toBe('https')
     expect((byId(wrapper, 'host').element as HTMLInputElement).value).toBe('kong.internal:8444/')
     expect(wrapper.emitted('connect')?.[0][0]).toMatchObject({ baseUrl: 'https://kong.internal:8444' })
   })
@@ -100,7 +100,7 @@ describe('KongConnectForm', () => {
     expect(footer.findAll('button').map((b) => b.text())).toEqual(['Connect'])
   })
 
-  it('styles the protocol dropdown as a distinct prefix of the address field', () => {
+  it('styles the protocol toggle as a distinct prefix of the address field', () => {
     const wrapper = mountForm()
 
     expect(byId(wrapper, 'protocol').classes()).toContain('bg-elevated/60')

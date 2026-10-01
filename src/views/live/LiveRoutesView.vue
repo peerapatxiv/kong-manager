@@ -9,6 +9,7 @@ import type { RouteForm as RouteFormModel } from '../../lib/live/routeForm'
 import LiveGate from '../../components/live/LiveGate.vue'
 import LiveErrorBanner from '../../components/live/LiveErrorBanner.vue'
 import RouteForm from '../../components/live/RouteForm.vue'
+import AppSelect from '../../components/shared/AppSelect.vue'
 import LiveWorkspace from '../../components/live/LiveWorkspace.vue'
 import LiveListToolbar from '../../components/live/LiveListToolbar.vue'
 import LiveActionBar from '../../components/live/LiveActionBar.vue'
@@ -57,6 +58,10 @@ function serviceLabel(service: LiveEntity): string {
   return typeof service.name === 'string' && service.name ? service.name : String(service.host ?? service.id)
 }
 const serviceOptions = computed(() => services.value.map((s) => ({ id: s.id, label: serviceLabel(s) })))
+const serviceFilterOptions = computed(() => [
+  { value: '', label: 'All services' },
+  ...serviceOptions.value.map((option) => ({ value: option.id, label: option.label })),
+])
 
 function serviceNameOf(routeEntity: LiveEntity): string {
   const id = (routeEntity.service as { id?: string } | null | undefined)?.id
@@ -219,10 +224,13 @@ watch(serviceFilter, (id) => {
           @create="startCreate"
           @apply-tags="applyTagFilter"
         >
-          <select v-model="serviceFilter" class="input-field text-xs" data-testid="service-filter">
-            <option value="">All services</option>
-            <option v-for="option in serviceOptions" :key="option.id" :value="option.id">{{ option.label }}</option>
-          </select>
+          <AppSelect
+            v-model="serviceFilter"
+            :options="serviceFilterOptions"
+            searchable
+            aria-label="Filter by service"
+            data-testid="service-filter"
+          />
         </LiveListToolbar>
       </template>
 
@@ -232,13 +240,11 @@ watch(serviceFilter, (id) => {
             v-for="routeEntity in filtered"
             :key="routeEntity.id"
             data-testid="route-row"
+            :title="label(routeEntity)"
             :selected="routeEntity.id === selectedId"
             @click="select(routeEntity)"
           >
-            <span class="block truncate" :title="label(routeEntity)">{{ label(routeEntity) }}</span>
-            <span v-if="serviceNameOf(routeEntity)" class="block truncate font-sans text-[11px] font-normal text-ink-muted">
-              {{ serviceNameOf(routeEntity) }}
-            </span>
+            {{ label(routeEntity) }}
           </ListRow>
         </ul>
       </template>

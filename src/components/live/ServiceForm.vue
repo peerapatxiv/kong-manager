@@ -3,9 +3,16 @@ import { computed } from 'vue'
 import { SERVICE_PROTOCOLS, serviceProtocolUsesPath, serviceProtocolUsesTls } from '../../lib/live/serviceForm'
 import type { ServiceForm } from '../../lib/live/serviceForm'
 import FieldError from './FieldError.vue'
+import AppSelect from '../shared/AppSelect.vue'
 import TagInput from '../shared/TagInput.vue'
 import ToggleSwitch from '../shared/ToggleSwitch.vue'
 import ValueListEditor from '../shared/ValueListEditor.vue'
+
+const TLS_VERIFY_OPTIONS: { value: ServiceForm['tls_verify']; label: string }[] = [
+  { value: 'inherit', label: 'Use Kong default' },
+  { value: 'true', label: 'Yes' },
+  { value: 'false', label: 'No' },
+]
 
 const props = defineProps<{ modelValue: ServiceForm; disabled?: boolean; fieldErrors?: Record<string, string> }>()
 const emit = defineEmits<{ 'update:modelValue': [value: ServiceForm] }>()
@@ -42,18 +49,17 @@ const usesTls = computed(() => serviceProtocolUsesTls(props.modelValue.protocol)
           />
           <FieldError :message="fieldErrors?.name" />
         </label>
-        <label>
+        <div>
           <span class="field-label">Protocol</span>
-          <select
-            class="input-field"
+          <AppSelect
+            :model-value="modelValue.protocol"
+            :options="SERVICE_PROTOCOLS.map((protocol) => ({ value: protocol, label: protocol }))"
+            aria-label="Protocol"
             data-testid="service-protocol"
-            :value="modelValue.protocol"
-            @change="set('protocol', text($event))"
-          >
-            <option v-for="protocol in SERVICE_PROTOCOLS" :key="protocol" :value="protocol">{{ protocol }}</option>
-          </select>
+            @update:model-value="(value) => set('protocol', value)"
+          />
           <FieldError :message="fieldErrors?.protocol" />
-        </label>
+        </div>
         <label>
           <span class="field-label">Host</span>
           <input
@@ -150,18 +156,15 @@ const usesTls = computed(() => serviceProtocolUsesTls(props.modelValue.protocol)
           />
           <FieldError :message="fieldErrors?.client_certificate" />
         </label>
-        <label>
+        <div>
           <span class="field-label">Verify upstream certificate</span>
-          <select
-            class="input-field"
-            :value="modelValue.tls_verify"
-            @change="set('tls_verify', text($event) as ServiceForm['tls_verify'])"
-          >
-            <option value="inherit">Use Kong default</option>
-            <option value="true">Yes</option>
-            <option value="false">No</option>
-          </select>
-        </label>
+          <AppSelect
+            :model-value="modelValue.tls_verify"
+            :options="TLS_VERIFY_OPTIONS"
+            aria-label="Verify upstream certificate"
+            @update:model-value="(value) => set('tls_verify', value)"
+          />
+        </div>
         <label>
           <span class="field-label">Verify depth</span>
           <input

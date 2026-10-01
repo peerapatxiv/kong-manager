@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import SecretField from './shared/SecretField.vue'
+import SegmentedToggle from './shared/SegmentedToggle.vue'
 import { composeBaseUrl, normalizeHostInput } from '../lib/connectionUrl'
 import type { ConnectionProtocol } from '../lib/connectionUrl'
 import type { KongAdminAuth } from '../lib/kongAdminApi'
@@ -10,6 +11,11 @@ const props = defineProps<{ connecting: boolean }>()
 const emit = defineEmits<{
   connect: [payload: { baseUrl: string; auth: KongAdminAuth; name?: string }]
 }>()
+
+const PROTOCOL_OPTIONS: { value: ConnectionProtocol; label: string }[] = [
+  { value: 'http', label: 'HTTP' },
+  { value: 'https', label: 'HTTPS' },
+]
 
 const protocol = ref<ConnectionProtocol>('http')
 const host = ref('')
@@ -51,15 +57,13 @@ function submit() {
       <div>
         <span class="field-label">Admin API</span>
         <div class="flex">
-          <select
+          <SegmentedToggle
             v-model="protocol"
+            :options="PROTOCOL_OPTIONS"
             data-testid="protocol"
             aria-label="Protocol"
-            class="input-field !w-auto rounded-r-none border-r-0 bg-elevated/60 font-mono font-medium"
-          >
-            <option value="http">HTTP</option>
-            <option value="https">HTTPS</option>
-          </select>
+            class="shrink-0 rounded-r-none border-r-0 font-mono"
+          />
           <input
             :value="host"
             data-testid="host"

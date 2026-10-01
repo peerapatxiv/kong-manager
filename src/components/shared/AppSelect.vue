@@ -198,6 +198,7 @@ onBeforeUnmount(() => document.removeEventListener('pointerdown', onOutsidePoint
           role="option"
           :aria-selected="option.value === modelValue"
           :data-active="index === activeIndex"
+          :data-value="option.value"
           :title="option.label"
           class="flex cursor-pointer items-center gap-2 rounded-lg px-2.5 py-1.5 text-sm transition-colors duration-100"
           :class="[

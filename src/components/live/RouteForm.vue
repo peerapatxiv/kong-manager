@@ -3,6 +3,8 @@ import { computed } from 'vue'
 import { ROUTE_PROTOCOLS, routeFamily } from '../../lib/live/routeForm'
 import type { RouteForm } from '../../lib/live/routeForm'
 import FieldError from './FieldError.vue'
+import AppSelect from '../shared/AppSelect.vue'
+import SegmentedToggle from '../shared/SegmentedToggle.vue'
 import ServicePicker from './ServicePicker.vue'
 import type { ServiceOption } from './ServicePicker.vue'
 import MethodPicker from '../shared/MethodPicker.vue'
@@ -10,6 +12,12 @@ import ProtocolPicker from '../shared/ProtocolPicker.vue'
 import TagInput from '../shared/TagInput.vue'
 import ToggleSwitch from '../shared/ToggleSwitch.vue'
 import ValueListEditor from '../shared/ValueListEditor.vue'
+
+const REDIRECT_CODES = [426, 301, 302, 307, 308]
+const PATH_HANDLING_OPTIONS = [
+  { value: 'v0', label: 'v0' },
+  { value: 'v1', label: 'v1' },
+]
 
 const props = defineProps<{
   modelValue: RouteForm
@@ -150,16 +158,15 @@ const showStreamFields = computed(() => family.value === 'stream' || family.valu
     <section class="space-y-3 border-t border-border pt-4">
       <h4 class="section-heading">Behavior</h4>
       <div class="grid grid-cols-1 gap-3 md:grid-cols-3">
-        <label>
+        <div>
           <span class="field-label">HTTPS redirect status</span>
-          <select
-            class="input-field"
-            :value="modelValue.https_redirect_status_code"
-            @change="set('https_redirect_status_code', numeric($event))"
-          >
-            <option v-for="code in [426, 301, 302, 307, 308]" :key="code" :value="code">{{ code }}</option>
-          </select>
-        </label>
+          <AppSelect
+            :model-value="modelValue.https_redirect_status_code"
+            :options="REDIRECT_CODES.map((code) => ({ value: code, label: String(code) }))"
+            aria-label="HTTPS redirect status"
+            @update:model-value="(value) => set('https_redirect_status_code', value)"
+          />
+        </div>
         <label>
           <span class="field-label">Regex priority</span>
           <input
@@ -169,13 +176,15 @@ const showStreamFields = computed(() => family.value === 'stream' || family.valu
             @input="set('regex_priority', numeric($event))"
           />
         </label>
-        <label>
+        <div>
           <span class="field-label">Path handling</span>
-          <select class="input-field" :value="modelValue.path_handling" @change="set('path_handling', text($event))">
-            <option value="v0">v0</option>
-            <option value="v1">v1</option>
-          </select>
-        </label>
+          <SegmentedToggle
+            :model-value="modelValue.path_handling"
+            :options="PATH_HANDLING_OPTIONS"
+            aria-label="Path handling"
+            @update:model-value="(value) => set('path_handling', value)"
+          />
+        </div>
       </div>
       <div class="flex flex-wrap gap-x-6 gap-y-2">
         <ToggleSwitch label="Strip path" :model-value="modelValue.strip_path" @update:model-value="(v) => set('strip_path', v)" />

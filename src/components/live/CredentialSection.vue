@@ -5,6 +5,7 @@ import type { LiveEntity } from '../../composables/useLiveEntities'
 import { newCredentialForm, toCredentialPayload, validateCredential } from '../../lib/live/credentials'
 import type { CredentialForm, CredentialType } from '../../lib/live/credentials'
 import FieldError from './FieldError.vue'
+import AppSelect from '../shared/AppSelect.vue'
 import LiveErrorBanner from './LiveErrorBanner.vue'
 import SecretField from '../shared/SecretField.vue'
 import ToggleSwitch from '../shared/ToggleSwitch.vue'
@@ -58,6 +59,12 @@ function inputNumber(event: Event): number | '' {
   return value === '' ? '' : Number(value)
 }
 const textOf = (key: string): string => String(form.value[key] ?? '')
+
+// A field with no default gets an explicit empty choice so it can be left unset.
+function selectOptions(field: { options?: readonly string[]; default?: unknown }) {
+  const choices = (field.options ?? []).map((option) => ({ value: option, label: option }))
+  return field.default === undefined ? [{ value: '', label: '(default)' }, ...choices] : choices
+}
 const listOf = (key: string): string[] => (Array.isArray(form.value[key]) ? (form.value[key] as string[]) : [])
 
 async function add() {
@@ -160,15 +167,13 @@ onMounted(() => void load())
               :value="form[field.key] as number | string"
               @input="setField(field.key, inputNumber($event))"
             />
-            <select
+            <AppSelect
               v-else-if="field.kind === 'select'"
-              class="input-field"
-              :value="textOf(field.key)"
-              @change="setField(field.key, inputText($event))"
-            >
-              <option v-if="field.default === undefined" value="">(default)</option>
-              <option v-for="option in field.options" :key="option" :value="option">{{ option }}</option>
-            </select>
+              :model-value="textOf(field.key)"
+              :options="selectOptions(field)"
+              :aria-label="field.label"
+              @update:model-value="(value) => setField(field.key, value)"
+            />
             <textarea
               v-else-if="field.kind === 'textarea'"
               rows="4"
