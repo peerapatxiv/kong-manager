@@ -4,10 +4,10 @@ import { useSavedConnectionsStore } from '../stores/savedConnections'
 import type { SavedConnection } from '../lib/savedConnections'
 
 const savedConnectionsStore = useSavedConnectionsStore()
-const emit = defineEmits<{ connect: [payload: { baseUrl: string; username?: string; password?: string }] }>()
+const emit = defineEmits<{ connect: [payload: { baseUrl: string; username?: string; password?: string; name?: string }] }>()
 
 function select(conn: SavedConnection) {
-  emit('connect', { baseUrl: conn.baseUrl, username: conn.username, password: conn.password })
+  emit('connect', { baseUrl: conn.baseUrl, username: conn.username, password: conn.password, name: conn.name })
 }
 
 function displayName(conn: SavedConnection): string {

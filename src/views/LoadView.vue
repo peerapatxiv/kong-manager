@@ -49,7 +49,7 @@ async function onConnect({ baseUrl, auth, name }: ConnectRequest) {
     // (that is DB-less only), so it goes straight to live editing instead of failing.
     let info: KongNodeInfo | null = null
     try {
-      await connectionStore.connect({ baseUrl, auth })
+      await connectionStore.connect({ baseUrl, auth, name })
       info = connectionStore.info
     } catch {
       // A failed probe also drops any earlier connection, so live edits can never
@@ -80,8 +80,18 @@ function disconnect() {
   if (!configStore.isLoaded) formExpanded.value = true
 }
 
-function onSelectSaved({ baseUrl, username, password }: { baseUrl: string; username?: string; password?: string }) {
-  onConnect({ baseUrl, auth: { username, password } })
+function onSelectSaved({
+  baseUrl,
+  username,
+  password,
+  name,
+}: {
+  baseUrl: string
+  username?: string
+  password?: string
+  name?: string
+}) {
+  onConnect({ baseUrl, auth: { username, password }, name })
 }
 </script>
 

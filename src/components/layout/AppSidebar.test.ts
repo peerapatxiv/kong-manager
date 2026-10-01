@@ -53,6 +53,42 @@ describe('AppSidebar', () => {
     ])
   })
 
+  it('shows the connection name with its host in the Live group', () => {
+    useConnectionStore().$patch({
+      active: { baseUrl: 'https://kong.example.com/admin-api', name: 'Kong CE' },
+      info: { version: '3.5.0', database: 'postgres' },
+    })
+    const wrapper = mount(AppSidebar, { global: { plugins: [testRouter()] } })
+
+    expect(wrapper.find('[data-testid="live-connection"]').text()).toContain('Kong CE')
+    expect(wrapper.find('[data-testid="live-connection"]').text()).toContain('kong.example.com')
+  })
+
+  it('falls back to the host alone when the connection has no name', () => {
+    useConnectionStore().$patch({ active: { baseUrl: 'http://kong:8001' }, info: { version: '3.4.0', database: 'postgres' } })
+    const wrapper = mount(AppSidebar, { global: { plugins: [testRouter()] } })
+
+    expect(wrapper.find('[data-testid="live-connection"]').text()).toBe('kong:8001')
+  })
+
+  it('hides the locked Browse and Compare entries while connected live with no config', () => {
+    useConnectionStore().$patch({ active: { baseUrl: 'http://kong:8001' }, info: { version: '3.4.0', database: 'postgres' } })
+    const wrapper = mount(AppSidebar, { global: { plugins: [testRouter()] } })
+
+    expect(wrapper.text()).not.toContain('Browse')
+    expect(wrapper.text()).not.toContain('Compare')
+    expect(wrapper.find('span[title="Load a config first"]').exists()).toBe(false)
+  })
+
+  it('hides the Live group once a config is loaded, even if a connection is still open', () => {
+    useConnectionStore().$patch({ active: { baseUrl: 'http://kong:8001' }, info: { version: '3.4.0', database: 'postgres' } })
+    useConfigStore().loadPrimary('a.yaml', '_format_version: "3.0"\nservices:\n- name: svc-a\n  host: a.internal\n')
+    const wrapper = mount(AppSidebar, { global: { plugins: [testRouter()] } })
+
+    expect(wrapper.text()).not.toContain('Live')
+    expect(wrapper.findAll('a').map((a) => a.text())).toEqual(['Load', 'Browse', 'Compare'])
+  })
+
   it('shows disabled Browse/Compare links and no Change control until a config is loaded', () => {
     const wrapper = mount(AppSidebar, { global: { plugins: [testRouter()] } })
 

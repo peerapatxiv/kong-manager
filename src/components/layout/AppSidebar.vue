@@ -43,6 +43,11 @@ const liveLinks: { to: string; label: string; icon: IconName }[] = [
   { to: '/live/consumers', label: 'Consumers', icon: 'user' },
 ]
 
+// One mode at a time, as on the Load page: a loaded config means file browsing, a live
+// connection without one means live editing.
+const showLive = computed(() => connectionStore.isConnected && !configStore.isLoaded)
+const showFileLinks = computed(() => configStore.isLoaded || !connectionStore.isConnected)
+
 const liveHost = computed(() => {
   const baseUrl = connectionStore.active?.baseUrl
   if (!baseUrl) return ''
@@ -71,32 +76,40 @@ const liveHost = computed(() => {
     <nav class="flex flex-col gap-0.5 px-3">
       <p class="section-heading px-2.5 pb-1 pt-1">Workspace</p>
       <SidebarLink to="/" label="Load" icon="home" @navigate="emit('navigate')" />
-      <SidebarLink
-        to="/browse"
-        label="Browse"
-        icon="list"
-        :locked="!configStore.isLoaded"
-        locked-title="Load a config first"
-        @navigate="emit('navigate')"
-      />
-      <SidebarLink
-        to="/compare"
-        label="Compare"
-        icon="compare"
-        :locked="!configStore.isLoaded"
-        locked-title="Load a config first"
-        @navigate="emit('navigate')"
-      />
+      <template v-if="showFileLinks">
+        <SidebarLink
+          to="/browse"
+          label="Browse"
+          icon="list"
+          :locked="!configStore.isLoaded"
+          locked-title="Load a config first"
+          @navigate="emit('navigate')"
+        />
+        <SidebarLink
+          to="/compare"
+          label="Compare"
+          icon="compare"
+          :locked="!configStore.isLoaded"
+          locked-title="Load a config first"
+          @navigate="emit('navigate')"
+        />
+      </template>
 
-      <template v-if="connectionStore.isConnected">
+      <template v-if="showLive">
         <p class="section-heading px-2.5 pb-1 pt-5">Live</p>
-        <p
-          class="mx-1 mb-1 flex items-center gap-2 rounded-lg bg-elevated/60 px-2.5 py-1.5 text-[11px] text-ink-muted"
+        <div
+          class="mx-1 mb-1 flex items-center gap-2.5 rounded-lg bg-elevated/60 px-2.5 py-2"
+          data-testid="live-connection"
           :title="connectionStore.active?.baseUrl"
         >
-          <span class="h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-500" />
-          <span class="truncate font-mono">{{ liveHost }}</span>
-        </p>
+          <span class="h-2 w-2 shrink-0 rounded-full bg-emerald-500 ring-4 ring-emerald-500/20" />
+          <span class="min-w-0 leading-tight">
+            <span v-if="connectionStore.active?.name" class="block truncate text-xs font-semibold text-ink">
+              {{ connectionStore.active.name }}
+            </span>
+            <span class="block truncate font-mono text-[11px] text-ink-muted">{{ liveHost }}</span>
+          </span>
+        </div>
         <SidebarLink
           v-for="link in liveLinks"
           :key="link.to"

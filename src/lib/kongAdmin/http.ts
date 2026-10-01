@@ -6,6 +6,8 @@ export type KongAdminAuth = {
 
 export type KongAdminConnection = {
   baseUrl: string
+  /** The label the user gave this connection; shown in the sidebar. */
+  name?: string
   auth?: KongAdminAuth
 }
 
