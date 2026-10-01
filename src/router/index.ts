@@ -7,6 +7,7 @@ import LiveRoutesView from '../views/live/LiveRoutesView.vue'
 import LiveConsumersView from '../views/live/LiveConsumersView.vue'
 import LivePluginsView from '../views/live/LivePluginsView.vue'
 import LiveDashboardView from '../views/live/LiveDashboardView.vue'
+import { redirectToHomeOnLoad } from './redirectToHomeOnLoad'
 
 export const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -22,3 +23,5 @@ export const router = createRouter({
     { path: '/live/consumers', name: 'live-consumers', component: LiveConsumersView },
   ],
 })
+
+redirectToHomeOnLoad(router)

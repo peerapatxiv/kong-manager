@@ -240,18 +240,6 @@ watch(
             @click="select(plugin)"
           >
             {{ label(plugin) }}
-            <template #sub>
-              <span class="flex items-center gap-1.5">
-                <span
-                  v-for="part in scopeOf(plugin)"
-                  :key="part.kind"
-                  class="min-w-0 truncate rounded bg-elevated px-1.5 py-px text-[10px] font-medium"
-                  :title="`${part.kind}: ${part.label}`"
-                >
-                  <template v-if="part.kind !== 'global'">{{ part.kind }}: </template>{{ part.label }}
-                </span>
-              </span>
-            </template>
             <template #trail>
               <fieldset :disabled="!connection.canWrite" class="contents" @click.stop>
                 <ToggleSwitch

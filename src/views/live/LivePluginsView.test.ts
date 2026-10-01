@@ -103,17 +103,14 @@ describe('LivePluginsView', () => {
     expect(calls).toHaveLength(0)
   })
 
-  it('lists plugins with where each one applies', async () => {
+  it('lists plugins by name only, leaving where each one applies to the form', async () => {
     connect()
     fakeKong()
     const wrapper = await open()
 
     expect(rows(wrapper)).toHaveLength(2)
-    expect(rows(wrapper)[0].text()).toContain('cors')
-    expect(rows(wrapper)[0].text()).toContain('global')
-    expect(rows(wrapper)[1].text()).toContain('rate-limiting')
-    expect(rows(wrapper)[1].text()).toContain('billing')
-    expect(rows(wrapper)[1].text()).toContain('alice')
+    expect(rows(wrapper)[0].text()).toBe('cors')
+    expect(rows(wrapper)[1].text()).toBe('rate-limiting')
   })
 
   it('searches by plugin name and by what it applies to', async () => {
