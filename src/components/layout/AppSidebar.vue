@@ -75,7 +75,7 @@ const liveHost = computed(() => {
 
     <nav class="flex flex-col gap-0.5 px-3">
       <p class="section-heading px-2.5 pb-1 pt-1">Workspace</p>
-      <SidebarLink to="/" label="Load" icon="home" @navigate="emit('navigate')" />
+      <SidebarLink to="/" label="Overview" icon="home" @navigate="emit('navigate')" />
       <template v-if="showFileLinks">
         <SidebarLink
           to="/browse"

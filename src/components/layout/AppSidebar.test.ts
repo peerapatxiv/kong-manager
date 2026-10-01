@@ -37,7 +37,7 @@ describe('AppSidebar', () => {
 
     expect(wrapper.text()).not.toContain('Live')
     expect(wrapper.find('span[title="Connect to a live Kong first"]').exists()).toBe(false)
-    expect(wrapper.findAll('a').map((a) => a.text())).toEqual(['Load'])
+    expect(wrapper.findAll('a').map((a) => a.text())).toEqual(['Overview'])
   })
 
   it('links to the live services, routes and consumers once connected', () => {
@@ -86,7 +86,7 @@ describe('AppSidebar', () => {
     const wrapper = mount(AppSidebar, { global: { plugins: [testRouter()] } })
 
     expect(wrapper.text()).not.toContain('Live')
-    expect(wrapper.findAll('a').map((a) => a.text())).toEqual(['Load', 'Browse', 'Compare'])
+    expect(wrapper.findAll('a').map((a) => a.text())).toEqual(['Overview', 'Browse', 'Compare'])
   })
 
   it('shows disabled Browse/Compare links and no Change control until a config is loaded', () => {
@@ -94,7 +94,7 @@ describe('AppSidebar', () => {
 
     expect(wrapper.text()).toContain('No config loaded')
     expect(wrapper.text()).not.toContain('Change')
-    expect(wrapper.findAll('a').map((a) => a.text())).toEqual(['Load'])
+    expect(wrapper.findAll('a').map((a) => a.text())).toEqual(['Overview'])
   })
 
   it('the Change control loads a new file and replaces the primary config in place', async () => {
