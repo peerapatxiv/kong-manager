@@ -34,6 +34,34 @@ describe('useConnectionStore', () => {
     expect(store.info).toEqual({ version: '3.4.1', database: 'postgres' })
   })
 
+  it('remembers which plugins the node has installed, sorted by name', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        rootResponse({
+          version: '3.5.0',
+          configuration: { database: 'postgres' },
+          plugins: { available_on_server: { 'rate-limiting': {}, cors: {}, 'key-auth': {} } },
+        }),
+      ),
+    )
+    const store = useConnectionStore()
+    await store.connect(conn)
+
+    expect(store.availablePlugins).toEqual(['cors', 'key-auth', 'rate-limiting'])
+  })
+
+  it('has no installed plugins listed when Kong does not report any, and forgets them on disconnect', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(rootResponse({ version: '3.5.0' })))
+    const store = useConnectionStore()
+    await store.connect(conn)
+    expect(store.availablePlugins).toEqual([])
+
+    store.$patch({ availablePlugins: ['cors'] })
+    store.disconnect()
+    expect(store.availablePlugins).toEqual([])
+  })
+
   it('treats DB-less Kong as connected but read-only, and blocks writes before any request', async () => {
     const f = vi.fn().mockResolvedValue(rootResponse({ version: '3.4.1', configuration: { database: 'off' } }))
     vi.stubGlobal('fetch', f)
