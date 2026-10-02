@@ -204,12 +204,7 @@ watch(
               <span
                 data-testid="service-route-count"
                 :title="`${routeCounts[service.id] ?? 0} routes`"
-                class="inline-flex h-5 min-w-[1.5rem] shrink-0 items-center justify-center rounded-full px-2 text-[11px] font-semibold tabular-nums"
-                :class="
-                  routeCounts[service.id]
-                    ? 'bg-accent/15 text-accent-secondary ring-1 ring-inset ring-accent/40 dark:bg-accent/20 dark:text-accent'
-                    : 'bg-elevated text-ink-muted'
-                "
+                class="inline-flex h-5 min-w-[1.5rem] shrink-0 items-center justify-center rounded-full bg-elevated px-2 text-[11px] font-semibold tabular-nums text-ink-muted"
               >
                 {{ (routeCounts[service.id] ?? 0).toLocaleString('en-US') }}
               </span>
