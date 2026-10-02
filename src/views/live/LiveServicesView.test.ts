@@ -26,7 +26,8 @@ function fakeKong(services: Record<string, unknown>[], failCreateWith?: { status
       calls.push({ method, url, body })
       if (method === 'GET' && url.includes('/services/svc-1/routes'))
         return reply({ data: [{ id: 'r-1', name: 'invoices', paths: ['/invoices'], methods: ['GET'] }] })
-      if (method === 'GET' && url.includes('/routes')) return reply({ data: [] })
+      if (method === 'GET' && url.includes('/routes'))
+        return reply({ data: [{ id: 'r-1', service: { id: 'svc-1' } }, { id: 'r-2', service: { id: 'svc-1' } }] })
       if (method === 'GET' && url.includes('/services')) return reply({ data: services })
       if (method === 'POST') {
         if (failCreateWith) return reply(failCreateWith.body, failCreateWith.status)
@@ -75,6 +76,15 @@ describe('LiveServicesView', () => {
 
     expect(byId(wrapper, 'live-not-connected').exists()).toBe(true)
     expect(calls).toHaveLength(0)
+  })
+
+  it('shows how many routes each service has in the list', async () => {
+    fakeKong(SERVICES)
+    connect()
+    const wrapper = await mountView()
+
+    const counts = wrapper.findAll('[data-testid="service-route-count"]').map((c) => c.text())
+    expect(counts).toEqual(['2', '0'])
   })
 
   it("shows the routes that belong to the selected service", async () => {

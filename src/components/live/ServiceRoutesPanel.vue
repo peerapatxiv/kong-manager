@@ -107,21 +107,23 @@ watch(() => props.serviceId, load)
       <div v-for="route in routes" :key="route.id" data-testid="service-route" class="card overflow-hidden">
         <button
           type="button"
-          class="flex w-full items-center gap-3 px-3.5 py-2.5 text-left transition-colors duration-150 hover:bg-elevated"
+          class="group flex w-full items-center gap-3 px-3.5 py-2.5 text-left transition-colors duration-150 hover:bg-elevated"
           :aria-expanded="expanded.has(route.id)"
           @click="toggle(route.id)"
         >
-          <AppIcon
-            name="chevron-right"
-            class="h-3.5 w-3.5 shrink-0 text-ink-muted transition-transform duration-150"
-            :class="expanded.has(route.id) ? 'rotate-90' : ''"
-          />
           <div class="min-w-0 flex-1">
             <p class="truncate font-mono text-sm text-ink" :title="label(route)">{{ label(route) }}</p>
             <p class="mt-0.5 truncate text-xs text-ink-muted">{{ summary(route) }}</p>
           </div>
-          <span class="shrink-0 text-xs font-medium text-accent-secondary">
-            {{ expanded.has(route.id) ? 'collapse' : 'expand' }}
+          <span
+            class="inline-flex shrink-0 items-center gap-1 rounded-full border border-border bg-elevated py-1 pl-2.5 pr-2 text-xs font-medium text-ink-muted transition-colors duration-150 group-hover:border-accent group-hover:text-ink"
+          >
+            {{ expanded.has(route.id) ? 'Collapse' : 'Expand' }}
+            <AppIcon
+              name="chevron-down"
+              class="h-3.5 w-3.5 transition-transform duration-150"
+              :class="expanded.has(route.id) ? 'rotate-180' : ''"
+            />
           </span>
         </button>
         <dl v-if="expanded.has(route.id)" class="space-y-2 border-t border-border bg-elevated/60 p-4 text-sm">

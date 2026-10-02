@@ -32,6 +32,24 @@ const {
   remove: removeEntity,
 } = useLiveEntities<LiveEntity>('services', { withTotal: true })
 
+// How many routes each service has, from one listing of every route. Empty until it arrives
+// (or if it fails), in which case the rows simply show no number.
+const routeCounts = ref<Record<string, number>>({})
+
+async function loadRouteCounts() {
+  try {
+    const routes = await connection.client<LiveEntity>('routes').listAll()
+    const counts: Record<string, number> = {}
+    for (const route of routes) {
+      const id = (route.service as { id?: string } | null | undefined)?.id
+      if (id) counts[id] = (counts[id] ?? 0) + 1
+    }
+    routeCounts.value = counts
+  } catch {
+    routeCounts.value = {}
+  }
+}
+
 const search = ref('')
 const selectedId = ref<string | null>(null)
 const creating = ref(false)
@@ -139,14 +157,21 @@ async function remove() {
 onBeforeRouteLeave(() => confirmDiscard())
 
 onMounted(() => {
-  if (connection.isConnected) void load()
+  if (connection.isConnected) {
+    void load()
+    void loadRouteCounts()
+  }
 })
 watch(
   () => connection.active?.baseUrl,
   (baseUrl) => {
     selectedId.value = null
     setForm(null)
-    if (baseUrl) void load()
+    routeCounts.value = {}
+    if (baseUrl) {
+      void load()
+      void loadRouteCounts()
+    }
   },
 )
 </script>
@@ -175,6 +200,20 @@ watch(
             @click="select(service)"
           >
             {{ label(service) }}
+            <template v-if="routeCounts[service.id] !== undefined || Object.keys(routeCounts).length > 0" #trail>
+              <span
+                data-testid="service-route-count"
+                :title="`${routeCounts[service.id] ?? 0} routes`"
+                class="inline-flex h-5 min-w-[1.5rem] shrink-0 items-center justify-center rounded-full px-2 text-[11px] font-semibold tabular-nums"
+                :class="
+                  routeCounts[service.id]
+                    ? 'bg-accent/15 text-accent-secondary ring-1 ring-inset ring-accent/40 dark:bg-accent/20 dark:text-accent'
+                    : 'bg-elevated text-ink-muted'
+                "
+              >
+                {{ (routeCounts[service.id] ?? 0).toLocaleString('en-US') }}
+              </span>
+            </template>
           </ListRow>
         </ul>
       </template>
