@@ -85,16 +85,18 @@ watch(() => props.serviceId, load)
         Routes
         <span
           v-if="!loading && !error"
-          class="rounded-full bg-elevated px-1.5 text-[10px] font-semibold tabular-nums text-ink-muted"
+          data-testid="service-routes-count"
+          class="inline-flex h-5 min-w-[1.5rem] items-center justify-center rounded-full bg-accent/15 px-2 text-[11px] font-semibold tabular-nums text-accent-secondary ring-1 ring-inset ring-accent/40 dark:bg-accent/20 dark:text-accent"
         >
-          {{ routes.length }}
+          {{ routes.length.toLocaleString('en-US') }}
         </span>
       </h4>
       <RouterLink
         :to="{ path: '/live/routes', query: { service: serviceId } }"
-        class="text-xs font-medium text-accent-secondary hover:underline"
+        class="btn-secondary btn-sm"
       >
         Open in Routes
+        <AppIcon name="chevron-right" class="h-3.5 w-3.5" />
       </RouterLink>
     </div>
 

@@ -88,6 +88,7 @@ describe('LiveServicesView', () => {
     expect(calls.some((c) => c.url.includes('/services/svc-1/routes'))).toBe(true)
     const rows = wrapper.findAll('[data-testid="service-route"]')
     expect(rows).toHaveLength(1)
+    expect(byId(wrapper, 'service-routes-count').text()).toBe('1')
     expect(rows[0].text()).toContain('invoices')
     expect(rows[0].text()).toContain('/invoices')
     expect(rows[0].text()).toContain('GET')
