@@ -10,6 +10,7 @@ import type { ServiceForm as ServiceFormModel } from '../../lib/live/serviceForm
 import LiveGate from '../../components/live/LiveGate.vue'
 import LiveErrorBanner from '../../components/live/LiveErrorBanner.vue'
 import ServiceForm from '../../components/live/ServiceForm.vue'
+import ServiceRoutesPanel from '../../components/live/ServiceRoutesPanel.vue'
 import LiveWorkspace from '../../components/live/LiveWorkspace.vue'
 import LiveListToolbar from '../../components/live/LiveListToolbar.vue'
 import LiveActionBar from '../../components/live/LiveActionBar.vue'
@@ -30,6 +31,24 @@ const {
   save: saveEntity,
   remove: removeEntity,
 } = useLiveEntities<LiveEntity>('services', { withTotal: true })
+
+// How many routes each service has, from one listing of every route. Empty until it arrives
+// (or if it fails), in which case the rows simply show no number.
+const routeCounts = ref<Record<string, number>>({})
+
+async function loadRouteCounts() {
+  try {
+    const routes = await connection.client<LiveEntity>('routes').listAll()
+    const counts: Record<string, number> = {}
+    for (const route of routes) {
+      const id = (route.service as { id?: string } | null | undefined)?.id
+      if (id) counts[id] = (counts[id] ?? 0) + 1
+    }
+    routeCounts.value = counts
+  } catch {
+    routeCounts.value = {}
+  }
+}
 
 const search = ref('')
 const selectedId = ref<string | null>(null)
@@ -138,14 +157,21 @@ async function remove() {
 onBeforeRouteLeave(() => confirmDiscard())
 
 onMounted(() => {
-  if (connection.isConnected) void load()
+  if (connection.isConnected) {
+    void load()
+    void loadRouteCounts()
+  }
 })
 watch(
   () => connection.active?.baseUrl,
   (baseUrl) => {
     selectedId.value = null
     setForm(null)
-    if (baseUrl) void load()
+    routeCounts.value = {}
+    if (baseUrl) {
+      void load()
+      void loadRouteCounts()
+    }
   },
 )
 </script>
@@ -174,6 +200,15 @@ watch(
             @click="select(service)"
           >
             {{ label(service) }}
+            <template v-if="routeCounts[service.id] !== undefined || Object.keys(routeCounts).length > 0" #trail>
+              <span
+                data-testid="service-route-count"
+                :title="`${routeCounts[service.id] ?? 0} routes`"
+                class="inline-flex h-5 min-w-[1.5rem] shrink-0 items-center justify-center rounded-full bg-elevated px-2 text-[11px] font-semibold tabular-nums text-ink-muted"
+              >
+                {{ (routeCounts[service.id] ?? 0).toLocaleString('en-US') }}
+              </span>
+            </template>
           </ListRow>
         </ul>
       </template>
@@ -193,6 +228,9 @@ watch(
               :subtitle="!creating && selectedId ? selectedId : undefined"
             />
             <ServiceForm v-model="form" :disabled="!connection.canWrite" :field-errors="fieldErrors" />
+          </div>
+          <div v-if="!creating && selectedId" class="card p-5">
+            <ServiceRoutesPanel :service-id="selectedId" />
           </div>
         </div>
         <EmptyState v-else icon="server" title="Select a service from the list, or create a new one." />

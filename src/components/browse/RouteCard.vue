@@ -41,18 +41,22 @@ function onPluginUpdate(index: number, updated: NonNullable<KongRoute['plugins']
     <button
       v-if="!defaultExpanded"
       type="button"
-      class="flex w-full items-center gap-3 px-3.5 py-2.5 text-left transition-colors duration-150 hover:bg-elevated"
+      class="group flex w-full items-center gap-3 px-3.5 py-2.5 text-left transition-colors duration-150 hover:bg-elevated"
       :aria-expanded="expanded"
       @click="expanded = !expanded"
     >
-      <AppIcon name="chevron-right" class="h-3.5 w-3.5 shrink-0 text-ink-muted transition-transform duration-150" :class="expanded ? 'rotate-90' : ''" />
       <div class="min-w-0 flex-1">
         <p class="truncate font-mono text-sm text-ink" :title="modelValue.name ?? '(unnamed route)'">
           {{ modelValue.name ?? '(unnamed route)' }}
         </p>
         <p class="mt-0.5 truncate text-xs text-ink-muted">{{ summary.join(' · ') }}</p>
       </div>
-      <span class="shrink-0 text-xs font-medium text-accent-secondary">{{ expanded ? 'collapse' : 'expand' }}</span>
+      <span
+        class="inline-flex shrink-0 items-center gap-1 rounded-full border border-border bg-elevated py-1 pl-2.5 pr-2 text-xs font-medium text-ink-muted transition-colors duration-150 group-hover:border-accent group-hover:text-ink"
+      >
+        {{ expanded ? 'Collapse' : 'Expand' }}
+        <AppIcon name="chevron-down" class="h-3.5 w-3.5 transition-transform duration-150" :class="expanded ? 'rotate-180' : ''" />
+      </span>
     </button>
 
     <div class="grid transition-[grid-template-rows] duration-200 ease-out" :style="{ gridTemplateRows: expanded ? '1fr' : '0fr' }">
