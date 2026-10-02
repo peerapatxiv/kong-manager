@@ -10,6 +10,7 @@ import type { ServiceForm as ServiceFormModel } from '../../lib/live/serviceForm
 import LiveGate from '../../components/live/LiveGate.vue'
 import LiveErrorBanner from '../../components/live/LiveErrorBanner.vue'
 import ServiceForm from '../../components/live/ServiceForm.vue'
+import ServiceRoutesPanel from '../../components/live/ServiceRoutesPanel.vue'
 import LiveWorkspace from '../../components/live/LiveWorkspace.vue'
 import LiveListToolbar from '../../components/live/LiveListToolbar.vue'
 import LiveActionBar from '../../components/live/LiveActionBar.vue'
@@ -193,6 +194,9 @@ watch(
               :subtitle="!creating && selectedId ? selectedId : undefined"
             />
             <ServiceForm v-model="form" :disabled="!connection.canWrite" :field-errors="fieldErrors" />
+          </div>
+          <div v-if="!creating && selectedId" class="card p-5">
+            <ServiceRoutesPanel :service-id="selectedId" />
           </div>
         </div>
         <EmptyState v-else icon="server" title="Select a service from the list, or create a new one." />

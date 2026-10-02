@@ -24,6 +24,9 @@ function fakeKong(services: Record<string, unknown>[], failCreateWith?: { status
       const method = init.method ?? 'GET'
       const body = init.body ? (JSON.parse(init.body as string) as Record<string, unknown>) : undefined
       calls.push({ method, url, body })
+      if (method === 'GET' && url.includes('/services/svc-1/routes'))
+        return reply({ data: [{ id: 'r-1', name: 'invoices', paths: ['/invoices'], methods: ['GET'] }] })
+      if (method === 'GET' && url.includes('/routes')) return reply({ data: [] })
       if (method === 'GET' && url.includes('/services')) return reply({ data: services })
       if (method === 'POST') {
         if (failCreateWith) return reply(failCreateWith.body, failCreateWith.status)
@@ -72,6 +75,21 @@ describe('LiveServicesView', () => {
 
     expect(byId(wrapper, 'live-not-connected').exists()).toBe(true)
     expect(calls).toHaveLength(0)
+  })
+
+  it("shows the routes that belong to the selected service", async () => {
+    const calls = fakeKong(SERVICES)
+    connect()
+    const wrapper = await mountView()
+
+    await wrapper.findAll('[data-testid="service-row"]')[0].trigger('click')
+    await flushPromises()
+
+    expect(calls.some((c) => c.url.includes('/services/svc-1/routes'))).toBe(true)
+    const rows = wrapper.findAll('[data-testid="service-route"]')
+    expect(rows).toHaveLength(1)
+    expect(rows[0].text()).toContain('invoices')
+    expect(rows[0].text()).toContain('/invoices')
   })
 
   it('lists services from the API and filters the loaded ones by the search box', async () => {
