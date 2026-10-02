@@ -90,6 +90,9 @@ describe('LiveServicesView', () => {
     expect(rows).toHaveLength(1)
     expect(rows[0].text()).toContain('invoices')
     expect(rows[0].text()).toContain('/invoices')
+    expect(rows[0].text()).toContain('GET')
+    await rows[0].find('button').trigger('click')
+    expect(rows[0].find('dl').exists()).toBe(true)
   })
 
   it('lists services from the API and filters the loaded ones by the search box', async () => {
