@@ -40,7 +40,7 @@ Live mode manages services, routes, plugins and consumers against a connected Ko
 
 ### 2. API layer
 
-- `getUpstreamHealth(connection, upstreamId)` in `src/lib/kongAdmin/` calls `GET /upstreams/{id}/health` through `adminJson` and returns `{ data: TargetHealth[] }`, where `TargetHealth` is `{ target: string; weight: number; health: string }` (other fields ignored).
+- `getUpstreamHealth(connection, upstreamId)` in `src/lib/kongAdmin/` calls `GET /upstreams/{id}/health` through `adminJson` and returns `TargetHealth[]`, where `TargetHealth` is `{ target: string; weight: number | undefined; health: string | undefined }` (other fields ignored).
 - `parseUpstreamHealth(raw)` is tolerant: a malformed body yields `[]`, unknown `health` strings are passed through, and a missing `health` becomes `undefined`.
 
 ### 3. Forms (`src/lib/live/`)
