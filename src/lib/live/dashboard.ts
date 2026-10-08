@@ -1,4 +1,5 @@
 type Entity = Record<string, unknown>
+import type { TargetHealth } from '../kongAdmin/health'
 
 export type ServiceSummary = { total: number; enabled: number; disabled: number }
 export type LabelCount = { label: string; count: number }
@@ -52,4 +53,42 @@ export function parseNodeStatus(raw: unknown): NodeStatus | null {
     totalRequests: asNumber(body.server?.total_requests),
     activeConnections: asNumber(body.server?.connections_active),
   }
+}
+
+export type UpstreamHealthSummary = { upstreams: number; targets: number; unhealthy: number; unknown: number }
+
+const UNHEALTHY_STATES = ['UNHEALTHY', 'DNS_ERROR']
+
+/**
+ * Rolls per-upstream health up for the dashboard. `null` stands for an upstream whose request
+ * failed: it counts as one unknown and adds no targets.
+ */
+export function summarizeUpstreamHealth(results: (TargetHealth[] | null)[]): UpstreamHealthSummary {
+  const summary: UpstreamHealthSummary = { upstreams: results.length, targets: 0, unhealthy: 0, unknown: 0 }
+  for (const result of results) {
+    if (result === null) {
+      summary.unknown += 1
+      continue
+    }
+    for (const row of result) {
+      summary.targets += 1
+      if (row.health !== undefined && UNHEALTHY_STATES.includes(row.health)) summary.unhealthy += 1
+      else if (row.health !== 'HEALTHY') summary.unknown += 1
+    }
+  }
+  return summary
+}
+
+/** Maps `items` through `fn` with at most `limit` calls running at once; results keep the input order. */
+export async function mapLimit<T, R>(items: T[], limit: number, fn: (item: T) => Promise<R>): Promise<R[]> {
+  const results = new Array<R>(items.length)
+  let next = 0
+  async function worker() {
+    while (next < items.length) {
+      const index = next++
+      results[index] = await fn(items[index])
+    }
+  }
+  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, worker))
+  return results
 }

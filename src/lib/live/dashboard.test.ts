@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { summarizeServices, countRouteProtocols, topPlugins, parseNodeStatus } from './dashboard'
+import { summarizeServices, countRouteProtocols, topPlugins, parseNodeStatus, summarizeUpstreamHealth, mapLimit } from './dashboard'
 
 describe('summarizeServices', () => {
   it('counts enabled and disabled services, treating a missing flag as enabled', () => {
@@ -77,5 +77,45 @@ describe('parseNodeStatus', () => {
   it('returns null when the response is not an object', () => {
     expect(parseNodeStatus(null)).toBeNull()
     expect(parseNodeStatus('ok')).toBeNull()
+  })
+})
+
+describe('summarizeUpstreamHealth', () => {
+  const row = (health: string | undefined) => ({ target: 't', weight: 1, health })
+
+  it('counts upstreams, targets, unhealthy and unknown targets', () => {
+    const summary = summarizeUpstreamHealth([
+      [row('HEALTHY'), row('UNHEALTHY'), row('DNS_ERROR')],
+      [row('HEALTHCHECKS_OFF'), row(undefined), row('HEALTHY')],
+    ])
+    expect(summary).toEqual({ upstreams: 2, targets: 6, unhealthy: 2, unknown: 2 })
+  })
+
+  it('counts an upstream whose request failed as one unknown, without adding targets', () => {
+    expect(summarizeUpstreamHealth([[row('HEALTHY')], null])).toEqual({ upstreams: 2, targets: 1, unhealthy: 0, unknown: 1 })
+  })
+
+  it('handles no upstreams', () => {
+    expect(summarizeUpstreamHealth([])).toEqual({ upstreams: 0, targets: 0, unhealthy: 0, unknown: 0 })
+  })
+})
+
+describe('mapLimit', () => {
+  it('keeps the order of the results and never runs more than the limit at once', async () => {
+    let running = 0
+    let peak = 0
+    const results = await mapLimit([1, 2, 3, 4, 5, 6, 7], 3, async (n) => {
+      running += 1
+      peak = Math.max(peak, running)
+      await new Promise((resolve) => setTimeout(resolve, 5))
+      running -= 1
+      return n * 2
+    })
+    expect(results).toEqual([2, 4, 6, 8, 10, 12, 14])
+    expect(peak).toBe(3)
+  })
+
+  it('returns [] for no items', async () => {
+    expect(await mapLimit([], 3, async (n: number) => n)).toEqual([])
   })
 })
