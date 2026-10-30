@@ -1,6 +1,14 @@
 export type TargetForm = { target: string; weight: number | ''; tags: string[] }
 
-export type TargetLike = { target?: unknown; weight?: unknown; created_at?: unknown; upstream?: unknown }
+// The index signature lets Kong rows typed as LiveEntity match; without it TypeScript treats
+// an all-optional type as "weak" and rejects them.
+export type TargetLike = {
+  target?: unknown
+  weight?: unknown
+  created_at?: unknown
+  upstream?: unknown
+  [key: string]: unknown
+}
 
 export function newTargetForm(): TargetForm {
   return { target: '', weight: 100, tags: [] }
