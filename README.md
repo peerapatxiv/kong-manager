@@ -45,6 +45,27 @@ npm run dev:proxy
 
 Then open http://localhost:5173/kong-manager/.
 
+### Desktop app (macOS)
+
+To open the app like any other Mac app, without a terminal or editor:
+
+```bash
+npm run app:install
+```
+
+This adds **Kong Manager** to `~/Applications`, so you can find it in Launchpad or Spotlight or
+keep it in the Dock. Opening it builds the app, starts the local server with the Kong proxy in
+the background, and opens http://localhost:4173/kong-manager/ in your browser. Close every
+Kong Manager tab and the server stops by itself about 10 seconds later (reloading the page
+doesn't count). Open the app again while the server is running to choose **Open** or
+**Stop server**. Logs go to `~/Library/Logs/kong-manager.log`.
+
+Only the app stops the server on its own: `npm start` and `npm run dev:proxy` keep running
+until you stop them.
+
+The app runs the code in this folder, so it always uses your latest changes. If you move the
+folder, run `npm run app:install` again.
+
 ### Commands
 
 | Command | What it does |
